@@ -7,3 +7,7 @@
 /out/production/UCAH-Manager/urls.py
 /out/production/UCAH-Manager/utils.py
 /out/production/UCAH-Manager/wsgi.py
+/venv/
+/shelf/
+/workspace.xml
+/.idea/workspace.xml
