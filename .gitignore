@@ -1,0 +1,9 @@
+/out/production/UCAH-Manager/__init__.py
+/out/test/UCAH-Manager/__init__.py
+/out/production/UCAH-Manager/asgi.py
+/out/production/UCAH-Manager/models.py
+/out/production/UCAH-Manager/settings.py
+/out/test/UCAH-Manager/test_db_preliminary.py
+/out/production/UCAH-Manager/urls.py
+/out/production/UCAH-Manager/utils.py
+/out/production/UCAH-Manager/wsgi.py
