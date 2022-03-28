@@ -1,6 +1,8 @@
 Unified Cross-posting and Aggregation Hub Manager
 
 
+(TODO: properly format README)
+
 Software for cross-posting and aggregation of content in social networks
 
 Pull and setup docker container:
