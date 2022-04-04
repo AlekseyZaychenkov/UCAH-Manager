@@ -5,15 +5,11 @@ from datetime import datetime
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 from cassandra.cqlengine import connection
-
-
 import sys
 
 from utils import Utils
-
 sys.path.append("..")
 from models import ExampleModel
-
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 

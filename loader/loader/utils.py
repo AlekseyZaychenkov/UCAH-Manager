@@ -1,4 +1,7 @@
 from cassandra.cqlengine import connection
+from models import ExampleModel, TumblerCredentials
+from cassandra.cqlengine.management import sync_table
+from cassandra.cqlengine.management import drop_table
 
 import sys
 sys.path.append("..")
@@ -13,3 +16,18 @@ class Utils:
             connection.setup(DB_ADRESSES.split(","), TEST_KEYSPACE_NAME, protocol_version=3)
         else:
             connection.setup(DB_ADRESSES.split(","), KEYSPACE_NAME, protocol_version=3)
+
+
+    @staticmethod
+    def syncModels():
+        sync_table(ExampleModel)
+        sync_table(TumblerCredentials)
+
+
+    @staticmethod
+    def dropModels():
+        drop_table(ExampleModel)
+        drop_table(TumblerCredentials)
+
+
+

@@ -2,3 +2,4 @@ cassandra-driver==3.5.0
 Django==4.0.3
 django-cassandra-engine==1.7.0
 
+PyTumblr== 0.1.0
