@@ -1,5 +1,4 @@
 from cassandra.cqlengine import connection
-from models import ExampleModel, TumblerCredentials
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 

@@ -7,7 +7,6 @@ sys.path.append("..")
 
 
 #  TODO: to figure out, what object type to use for translating search queries from user to backand application
-
 class ExampleModel(Model):
     example_id      = columns.UUID(primary_key=True, default=uuid.uuid4)
     example_type    = columns.Integer(index=True)
@@ -15,37 +14,34 @@ class ExampleModel(Model):
     description     = columns.Text(required=False)
 
 
-class TumblerCredentials(Model):
-    id              = columns.UUID(primary_key=True, default=uuid.uuid4)
-    example_type    = columns.Integer(index=True)
-    created_at      = columns.DateTime()
-    description     = columns.Text(required=False)
-
-
 class PostEntry(Model):
-    id                  = columns.UUID(primary_key=True, default=uuid.uuid4)
+    id                        = columns.UUID(primary_key=True, default=uuid.uuid4)
 
     # information about original post
-    originalResource    = columns.CharField(max_length=20, required=False)
-    originalBlogName    = columns.CharField(max_length=20, required=True)
-    originalBlogUrl     = columns.CharField(max_length=50, required=True)
-    originalId          = columns.Integer(required=False)
-    originalUrl         = columns.CharField(max_length=50, required=True)
-    originalPostedDate  = columns.DateTime()
-    originalPostTags    = columns.CharField(max_length=1000, required=True)
-    originalText        = columns.Text(required=False)
-    originalImageUrls   = models.Text(required=False)  # list of urls
+    originalResource          = columns.Text(max_length=20, required=False)
+    originalBlogName          = columns.Text(max_length=50, required=True)
+    originalBlogUrl           = columns.Text(max_length=250, required=True)
+    originalPostId            = columns.BigInt(required=False, index=True)
+    originalPostUrl           = columns.Text(max_length=250, required=True)
+    originalPostedDate        = columns.Text(max_length=30)
+    originalPostTags          = columns.List(value_type=columns.Text, required=True)
+    originalText              = columns.Text(required=False)
+    originalFileUrls          = columns.List(value_type=columns.Text, required=False)  # list of urls
+    originalExternalLinkUrls  = columns.List(value_type=columns.Text, required=False)  # list of urls to external resoueces for instance youtube
 
     # information about search query parameters
-    searchTags          = columns.CharField(max_length=200, required=True)
-    downloatedDate      = columns.DateTime(default=datetime.now)
+    searchTags                = columns.List(value_type=columns.Text, required=False)
+    downloatedDate            = columns.Text(max_length=30, required=True)
 
     # information for posting
-    text                = columns.Text(required=False)
-    imageUrls           = models.Text(required=False)  # list of local paths or urls do download
+    text                      = columns.Text(required=False)
+    fileUrls                  = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download
+    externalLinkUrls          = columns.List(value_type=columns.Text, required=False)
 
-    # information for administration notes
-    description         = columns.Text(required=False)
+    # information for administration notes and file storing
+    description               = columns.Text(required=False)
+    storage                   = columns.Text(max_length=500, required=True)
 
     # information about posting
-    wherePosted         = columns.Text(required=False)  # list of dicts "blogName: {'dateTime1 - postUrl1', 'dateTime2 - postUrl2', ...}"
+    # TODO: implement special map-like structure for storing published posts with statistic about them (postUrl1, likes, comments, likes under comments)
+    wherePosted               = columns.Map(key_type=columns.Text, value_type=columns.Text, required=False)  # list of dicts "blogName: {'dateTime1 - postUrl1', 'dateTime2 - postUrl2', ...}"

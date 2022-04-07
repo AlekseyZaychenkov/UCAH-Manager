@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import sys
+import os
 
 
 
@@ -40,6 +41,10 @@ DB_ADRESSES = '127.0.0.1'
 KEYSPACE_NAME = 'db'
 TEST_KEYSPACE_NAME = 'test_db'
 
+
+# IMAGES AND VIDEO STORING
+# TODO: create set of storages for specific user
+PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "photo_and_video_storage")
 
 
 # Application definition

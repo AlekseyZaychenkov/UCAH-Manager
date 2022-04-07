@@ -2,8 +2,16 @@ import os
 
 import pathlib
 import pytumblr as pytumblr
-from pathlib import Path
+import urllib.request
+import xml.etree.ElementTree as ET
+import xml.etree.HTMLParser as HP
+import re
 
+from pathlib import Path
+from cassandra.cqlengine.management import sync_table
+from models import PostEntry
+from datetime import datetime
+from loader.loader.settings import PATH_TO_STORE
 
 
 # documentation: https://openbase.com/python/PyTumblr/documentation
@@ -16,81 +24,172 @@ class TumblrLoader:
             oath_token,
             oath_secret,
         )
+        sync_table(PostEntry)
 
 
+    def save_files(self, storagePach, postId, file_urls):
+        # TODO: implement realization for cloud (google-drive) storing
+        # fullPath = Path(strFullPath)
 
-    def get_from_anywhere(self, tags, blog=None):
-        print(f"Getting posts from Tambler by tags '{tags}'")
 
+        savedFileAddresses = list()
+        print(f"Downloading and saving images to '{storagePach}'")
+        for image_url in file_urls:
+            path_to_image = os.path.join(storagePach, os.path.basename(image_url))
+
+
+            opener = urllib.request.URLopener()
+            opener.addheader('User-Agent', 'Mozilla/5.0')
+            filename, headers = opener.retrieve(image_url, path_to_image)
+
+            # urllib.request.urlretrieve(image_url, path_to_image)
+            savedFileAddresses.append(path_to_image)
+
+        return savedFileAddresses
+
+
+    def get_posts(self, storagePath, tags, blog=None):
+        print(f"Getting posts from Tambler by tags: '{tags}'")
+
+        print(f"Trying to create directory '{storagePath}'")
+        os.makedirs(storagePath)
 
         # TODO: figure out how to use offset
-        offset = None
+        # offset = None
+        # for i in range(3):
 
-        for i in range(3):
-            #response = client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
-            print(f"Flag i: {i}")
-
-            # TODO: try to move request out of cicle for
-            # TODO: read all post in the blog for first version
-            #  and check if posts with this original id already in cassandra
-            # TODO: try to save all date with images
-
-            # TODO: this oner read all posts. Try to use read only specific blog
-            # TODO: read posts from top to botton
-
-            # TODO: change 'paleontology' to list of tags
-            response = self.client.tagged(tag='paleontology', limit=20) if blog == None \
-                else client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
-            print(f"response: {response}")
+        # print(f"Flag i: {i}")
 
 
+        # TODO: try to move request out of cicle for
+        # TODO: read all post in the blog for first version
+        #  and check if posts with this original id already in cassandra
+        # TODO: try to save all date with images
+
+        # TODO: this oner read all posts. Try to use read only specific blog
+        # TODO: read posts from top to botton
+
+        # TODO: change tags[0] to list of tags
+        response = self.client.tagged(tag=tags[0], limit=20) if blog == None \
+            else client.posts(blog, limit=20, offset=offset, reblog_info=True, notes_info=True)
+        # print(f"response: {response}")
+
+
+        print(f"<===== ===== =====  Parsing  ===== ===== =====>")
+        for post in response:
+
+            postId = post['id']
+
+            if postId != 680857344253591552:
+                continue
+
+            print(f"\npost['blog']['name']: {post['blog']['name']}"
+                  f"\npostId: {postId}"
+                  f"\npost['post_url']: {post['post_url']}\n\n")
+            print(f"Post:"
+                  f"\n{post}+\n\n")
 
 
 
-            print(f"<===== ===== =====  Parsing  ===== ===== =====>")
+            # if('photos' not in post):
+            #     print(f"post: {post}")
+            #     if('body' in post):
+            #
+            #         body = post['body']
+            #         body = body.split('<')
+            #         print(f"Flag 01: type(body): {type(body)}")
+            #         print(f"Flag 01: body: {body}")
+            #
+            #         body = [b for b in body if 'img src=' in b]
+            #         print(f"Flag 02: body: {body}")
+            #         if(body):
+            #             images = list()
+            #             for b in body:
+            #                 if type(b)==list and len(b) >= 2:
+            #                     images.append(b[1])
+            #
+            #             body = body[0].split('\'')
+            #
+            #             print(f"Flag 03: images: {images}")
+            #             if images:
+            #                 yield images
+            #         else:
+            #             print(f"Flag 04 (else): {body}")
+            #         yield
+            #
+            #
+            # else:
+            #     print(f"post['photos'][0]['original_size']['url']: {post['photos'][0]['original_size']['url']}")
+            #
+            #     yield post['photos'][0]['original_size']['url']
 
-            for post in response:
-                print(f"Post:"
-                      f"\n{post}+\n\n")
+            file_urls = list()
+            external_urls = list()
+            # if('photos' not in post):
+            if('body' in post):
+                body = post['body']
+                print(f"Flag 00 body: {body}\n")
+                body = body.replace('&rsquo;', '')
+                body = body.replace('&lsquo;', '')
+
+                # tree = ET.fromstring(f"<root>{body}</root>")
+                tree = HP.fromstring(f"<root>{body}</root>", method="html")
+
+
+                for img in tree.findall('.//img[@src]'):
+                    file_urls.append(img.get('src'))
+
+                # TODO: rewrite this part same like for img
+                ext_body = [b for b in body if 'data-url=' in b]
+                if(ext_body):
+                    for b in ext_body:
+                        if type(b)==list and len(b) >= 2:
+                            external_urls.append(b[1])
+
+            # TODO: check implementation returning of list
+            if('photos' in post):
+                for p in post['photos']:
+                    file_urls.append(p['original_size']['url'])
+
+
+            # TODO: implement method for saving images from urls to local or cloud storage
+            # TODO: use enam for choising type of storage
+
+            savedFileAddresses = self.save_files(storagePath, postId, file_urls)
+
+
+            PostEntry.create(
+                # information about original post
+                originalResource          = 'Tumbler',
+                originalBlogName          = post['blog']['name'],
+                originalBlogUrl           = post['blog']['url'],
+                originalPostId            = postId,
+                originalPostUrl           = post['post_url'],
+                originalPostedDate        = post['date'],
+                originalPostTags          = post['tags'],
+                originalText              = post['body'] if 'body' in post else "",
+                originalFileUrls          = file_urls,
+                originalExternalLinkUrls  = external_urls,
+
+                # information about search query parameters
+                searchTags                = tags,
+                downloatedDate            = str(datetime.now()),
+
+                # information for posting
+                text                      = post['body'] if 'body' in post else "",
+                fileUrls                  = savedFileAddresses,
+                externalLinkUrls          = external_urls,
+
+                # information for administration notes and file storing
+                storage                   = PATH_TO_STORE
+            )
+
+        # # move to the next offset
+        # offset = response[-1]['timestamp']
 
 
 
-                # if('photos' not in post):
-                #     print(f"post: {post}")
-                #     if('body' in post):
-                #
-                #         body = post['body']
-                #         body = body.split('<')
-                #         print(f"Flag 01: type(body): {type(body)}")
-                #         print(f"Flag 01: body: {body}")
-                #
-                #         body = [b for b in body if 'img src=' in b]
-                #         print(f"Flag 02: body: {body}")
-                #         if(body):
-                #             images = list()
-                #             for b in body:
-                #                 if type(b)==list and len(b) >= 2:
-                #                     images.append(b[1])
-                #
-                #             body = body[0].split('\'')
-                #
-                #             print(f"Flag 03: images: {images}")
-                #             if images:
-                #                 yield images
-                #         else:
-                #             print(f"Flag 04 (else): {body}")
-                #         yield
-                #
-                #
-                # else:
-                #     print(f"post['photos'][0]['original_size']['url']: {post['photos'][0]['original_size']['url']}")
-                #
-                #     yield post['photos'][0]['original_size']['url']
-
-
-            # move to the next offset
-            offset = response[-1]['timestamp']
-        print(offset)
+        # print(f"offset: {offset}")
 
 
     def get_from_blog(self, tags, blog):
@@ -104,38 +203,17 @@ class TumblrLoader:
 
 
 
-
     def download(self, tags, blogs=None):
-
+        # fullPath.touch(exist_ok=True)  # will create file, if it exists will do nothing
+        blogs = f"-blogs--{'_'.join(blogs)}" if blogs else ""
+        storagePath = os.path.join(
+            PATH_TO_STORE, f"tags--{'_'.join(tags)}{blogs}-datetime--{datetime.now()}"
+        )
         if blogs and len(blogs) > 0:
-            # self.get_all_posts(blog, tags)
-
-
             for blog in blogs:
-                blogsName = pathlib.PurePath(blog).name
-
-                curpath = os.path.abspath(os.curdir)
-                strFullPath = os.path.join(curpath, f"{blogsName}-posts.txt")
-
-                print(f"Trying to create or rewrite file '{strFullPath}'")
-                fullPath = Path(strFullPath)
-                fullPath.touch(exist_ok=True)  # will create file, if it exists will do nothing
-
-                with open(fullPath, "w+") as out_file:
-                    for post in self.get_from_blog(blog, tags):
-                        print(post, file=out_file)
+                self.get_posts(storagePath, blog, tags)
         else:
-
-            curpath = os.path.abspath(os.curdir)
-            strFullPath = os.path.join(curpath, f"tags--{'_'.join(tags)}-posts.txt")
-
-            print(f"Trying to create or rewrite file '{strFullPath}'")
-            fullPath = Path(strFullPath)
-            fullPath.touch(exist_ok=True)  # will create file, if it exists will do nothing
-
-            with open(fullPath, "w+") as out_file:
-                for post in self.get_from_anywhere(tags):
-                    print(post, file=out_file)
+             self.get_posts(storagePath, tags)
 
 
 
