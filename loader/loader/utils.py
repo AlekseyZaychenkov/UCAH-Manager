@@ -20,13 +20,15 @@ class Utils:
     @staticmethod
     def syncModels():
         sync_table(ExampleModel)
-        sync_table(TumblerCredentials)
+        sync_table(PostEntry)
+        sync_table(Compilation)
 
 
     @staticmethod
     def dropModels():
         drop_table(ExampleModel)
-        drop_table(TumblerCredentials)
+        drop_table(PostEntry)
+        drop_table(Compilation)
 
 
 
