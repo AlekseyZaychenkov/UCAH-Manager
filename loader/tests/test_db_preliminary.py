@@ -5,15 +5,11 @@ from datetime import datetime
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 from cassandra.cqlengine import connection
-
-
-import sys
-
 from utils import Utils
 
+import sys
 sys.path.append("..")
 from models import ExampleModel
-
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
@@ -27,7 +23,6 @@ class Test_DB(SimpleTestCase):
         sync_table(ExampleModel)
 
         # TODO: change to real objects
-
         em1 = ExampleModel.create(example_type=0, description="example1", created_at=datetime.now())
         em2 = ExampleModel.create(example_type=0, description="example2", created_at=datetime.now())
         em3 = ExampleModel.create(example_type=0, description="example3", created_at=datetime.now())
