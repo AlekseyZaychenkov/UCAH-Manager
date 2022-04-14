@@ -4,7 +4,7 @@ from cassandra.cqlengine.management import drop_table
 
 import sys
 sys.path.append("..")
-from loader.loader.settings import IS_TEST, DB_ADRESSES, TEST_KEYSPACE_NAME, KEYSPACE_NAME
+from settings import IS_TEST, DB_ADRESSES, TEST_KEYSPACE_NAME, KEYSPACE_NAME
 
 
 class Utils:

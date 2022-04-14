@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import sys
 import os
+from loader.credentials import SECRET_KEY
 
 
 
@@ -29,7 +30,7 @@ IS_TEST = 'test' in sys.argv
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-lvt5mjp&zer8@#=fy-h72^^za!quzcloo3r_vsy48m)9z@hgt7'
+SECRET_KEY = SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,18 +45,18 @@ TEST_KEYSPACE_NAME = 'test_db'
 
 # IMAGES AND VIDEO STORING
 # TODO: create set of storages for specific user
-PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "photo_and_video_storage")
+PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../..", "photo_and_video_storage")
 
 
 # Application definition
 INSTALLED_APPS = [
-    'django_cassandra_engine',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_cassandra_engine',
 ]
 
 MIDDLEWARE = [
