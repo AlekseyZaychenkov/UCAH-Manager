@@ -41,8 +41,7 @@ LOGIN_REDIRECT_URL = 'home'
 # Application definition
 INSTALLED_APPS = [
     # TODO: delete after creating compilation viewer
-    "ecomapp",
-
+    # "ecomapp",
 
     'account',
     'postCalendar',

@@ -1,6 +1,10 @@
 import uuid
 from cassandra.cqlengine import columns
 from cassandra.cqlengine.models import Model
+# Create your models here.
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from UCA_Manager.settings import AUTH_USER_MODEL
 
 import sys
 sys.path.append("../../loader")
@@ -56,3 +60,19 @@ class Compilation(Model):
     storage                      = columns.Text(max_length=2048, required=False)
 
     post_ids                     = columns.List(value_type=columns.UUID, required=False)
+
+
+
+#  From eco:
+
+def upload_location(instance, filename, **kwargs):
+    file_path = 'profile_images/{filename}'.format(
+        filename=hashlib.md5(str(instance.email).encode()).hexdigest() + os.path.splitext(filename)[1]
+    )
+    return file_path
+
+@receiver(post_save, sender=AUTH_USER_MODEL)
+def post_save_compress_img(sender, instance, *args, **kwargs):
+    if instance.profile_img:
+        picture = Image.open(instance.profile_img.path)
+        picture.save(instance.profile_img.path, optimize=True, quality=30)

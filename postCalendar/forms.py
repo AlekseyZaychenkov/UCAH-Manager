@@ -48,7 +48,7 @@ def get_calendars(user_id):
     return choices
 
 
-class CalendarEditForm(CalendarForm):
+class CalendarSettingsForm(CalendarForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
     calendar_id = forms.CharField(required=True)
@@ -58,7 +58,7 @@ class CalendarEditForm(CalendarForm):
         exclude = ("visible_for", "editable_by",)
 
     def __init__(self, *args, **kwargs):
-        super(CalendarEditForm, self).__init__(*args, **kwargs)
+        super(CalendarSettingsForm, self).__init__(*args, **kwargs)
         if self.initial:
             self.fields["calendars"] = forms.ChoiceField(choices=get_calendars(self.initial["user_id"]), required=True)
 
