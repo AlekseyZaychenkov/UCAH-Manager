@@ -19,6 +19,7 @@ def homeView(request):
     createEventForm = EventCreateForm()
     editEventForm = EventEditForm()
 
+
     # Events stuff
     if "selected_calendar" in request.GET:
         selected_calendar = request.GET["selected_calendar"]

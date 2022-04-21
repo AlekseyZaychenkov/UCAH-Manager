@@ -4,6 +4,7 @@ from mycalendar.models import Calendar, Event
 from account.models import Account
 from django.db.models import Q
 
+
 class CalendarForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
@@ -82,6 +83,7 @@ class CalendarEditForm(CalendarForm):
 
         return calendar
 
+
 class EventCreateForm(forms.ModelForm):
 
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
@@ -96,12 +98,12 @@ class EventCreateForm(forms.ModelForm):
         model = Event
         exclude = ('calendar',)
 
+
 class EventEditForm(forms.ModelForm):
 
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
     end_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=False)
     event_id = forms.CharField(required=True)
-
 
     def save(self, commit=True):
         event = Event.objects.get(event_id=self.cleaned_data["event_id"])

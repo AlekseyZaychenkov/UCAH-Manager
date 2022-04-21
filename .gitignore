@@ -14,3 +14,4 @@
 /loader/credentials.py
 /photo_and_video_storage/
 /loader/loader/credentials.py
+/db.sqlite3

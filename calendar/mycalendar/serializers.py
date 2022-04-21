@@ -38,6 +38,7 @@ class EventSerializer(serializers.ModelSerializer):
     def get_end(self,obj):
         return obj.end_date
 
+
     class Meta:
         model = Event
         fields = ("title","start","end","icon","event_id","event_type")

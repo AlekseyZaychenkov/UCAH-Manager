@@ -10,8 +10,8 @@
         <div class="container">
           <div class="row">
             <div class="col-md-9 col-lg-8 mx-auto">
-              <h1 class="login-heading mb-4">MyCalendar App</h1>
-                <h3 class="login-heading mb-4">Willkommen zurück</h3>
+              <h1 class="login-heading mb-4">Unified Cross-posting and Aggregation Manager</h1>
+                <h3 class="login-heading mb-4">Welcome back</h3>
               <form method="post">{% csrf_token %}
                 <div class="form-label-group">
                   {% render_field form.email class="form-control" %}
@@ -20,17 +20,12 @@
                 </div>
                 <div class="form-label-group">
                   {% render_field form.password class="form-control" type="password" %}
-                  <label for="id_password">Passwort</label>
+                  <label for="id_password">Password</label>
                     {{ form.password.errors }}
                 </div>
                 <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit">Login</button>
               </form>
-                <a class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" href="{% url 'registrieren' %}">Einen Account erstellen</a>
-                <p style="margin-top: 128px;">
-                <small>
-                    Photo by <a href="https://unsplash.com/@nate_dumlao?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Nathan Dumlao</a> on <a href="/s/photos/calendar?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
-                </small>
-                </p>
+                <a class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" href="{% url 'registrieren' %}">Create an account</a>
             </div>
           </div>
         </div>

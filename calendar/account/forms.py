@@ -26,7 +26,7 @@ class AccountAuthenticationForm(forms.ModelForm):
             password = self.cleaned_data['password']
 
             if not authenticate(email=email, password=password):
-                raise forms.ValidationError('E-Mail oder Passwort sind falsch.')
+                raise forms.ValidationError('Email or password is incorrect.')
 
 
 class AccountUpdateForm(forms.ModelForm):
