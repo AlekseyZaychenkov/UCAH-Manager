@@ -1,22 +1,21 @@
 import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UCA_Manager.settings")
+import django
+django.setup()
 
 from django.test import SimpleTestCase
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
+from django.conf import settings
+from loader.utils import Utils
 from credentials import OATH_SECRET, CONSUMER_SECRET, CONSUMER_KEY, OATH_TOKEN
-from settings import PATH_TO_STORE
+from loader.models import PostEntry, Compilation
+from UCA_Manager.settings import PATH_TO_STORE
 from tumblr_loader import TumblrLoader
-from utils import Utils
 
 import sys
-
-# from venv.bin import pytest.fixture
-
-sys.path.append("..")
-from models import PostEntry, Compilation
-
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+sys.path.append("../")
+import loader.models
 
 
 class Test_TumblrLoader(SimpleTestCase):
@@ -24,6 +23,8 @@ class Test_TumblrLoader(SimpleTestCase):
     # @pytest.fixture
     # TODO: make the function fixture
     def prepare_db(self):
+        # settings.configure()
+
         Utils.startSession()
 
         sync_table(PostEntry)
