@@ -1,4 +1,4 @@
-Unified Cross-posting and Aggregation Hub Manager
+Unified Cross-posting and Aggregation hub Manager
 
 
 (TODO: properly format README)

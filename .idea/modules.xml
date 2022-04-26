@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/UCAH-Manager.iml" filepath="$PROJECT_DIR$/UCAH-Manager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/UCA-Manager.iml" filepath="$PROJECT_DIR$/UCA-Manager.iml" />
     </modules>
   </component>
 </project>

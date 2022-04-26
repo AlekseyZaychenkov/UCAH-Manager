@@ -4,11 +4,10 @@ from django.test import SimpleTestCase
 from datetime import datetime
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
-from cassandra.cqlengine import connection
 from utils import Utils
 
 import sys
-sys.path.append("..")
+sys.path.append("../postCalendar")
 from models import ExampleModel
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
