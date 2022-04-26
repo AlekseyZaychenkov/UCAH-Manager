@@ -36,7 +36,7 @@ TEST_CASSANDRA_KEYSPACE_NAME = 'test_db'
 
 # IMAGES AND VIDEO STORING
 # TODO: create set of storages for specific user
-PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../../..", "photo_and_video_storage")
+PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "..", "photo_and_video_storage")
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
