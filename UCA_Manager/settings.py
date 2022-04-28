@@ -34,15 +34,16 @@ CASSANDRA_KEYSPACE_NAME = 'db'
 TEST_CASSANDRA_KEYSPACE_NAME = 'test_db'
 
 
-# IMAGES AND VIDEO STORING
-# TODO: create set of storages for specific user
-PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "..", "photo_and_video_storage")
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 
 # Application definition
 INSTALLED_APPS = [
+    # TODO: delete after creating compilation viewer
+    "ecomapp",
+
+
     'account',
     'postCalendar',
     'loader',
@@ -160,6 +161,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
+ROOT_DIR = os.path.join("..", os.path.dirname(os.path.abspath(__file__)))
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
@@ -167,3 +169,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn')
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+
+# IMAGES AND VIDEO STORING
+# TODO: create set of storages for specific user
+PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../..", MEDIA_ROOT, "photo_and_video_storage")

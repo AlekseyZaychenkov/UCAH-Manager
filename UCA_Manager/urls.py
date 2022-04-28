@@ -15,17 +15,30 @@ Including another URLconf
 """
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include\
+    # , re_path
 
 from UCA_Manager import settings
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # TODO: delete after creating compilation viewer
+    path("", include("ecomapp.urls")),
+
     path('', include('account.urls')),
     path('', include('postCalendar.urls')),
     path('', include('loader.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# urlpatterns += staticfiles_urlpatterns()
+# urlpatterns += static(settings.MEDIA_URL, document_root=MEDIA_ROOT)
+
+urlpatterns += staticfiles_urlpatterns()
+
+# if settings.DEBUG:
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

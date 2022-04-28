@@ -34,7 +34,7 @@ class PostEntry(Model):
 
     # information for posting
     text                         = columns.Text(required=False)
-    file_urls                    = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download
+    stored_file_urls             = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download
     external_link_urls           = columns.List(value_type=columns.Text, required=False)
 
     # information for administration notes and file storing

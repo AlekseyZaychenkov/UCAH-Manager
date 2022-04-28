@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from cassandra.cqlengine.management import sync_table
 from models import PostEntry, Compilation
 from datetime import datetime
+from UCA_Manager.settings import ROOT_DIR
 import pathlib
 
 
@@ -35,7 +36,9 @@ class TumblrLoader:
             opener = urllib.request.URLopener()
             opener.addheader('User-Agent', 'Mozilla/5.0')
             filename, headers = opener.retrieve(image_url, path_to_image)
-            savedFileAddresses.append(filename)
+            relative_path = os.path.relpath(filename, ROOT_DIR)
+
+            savedFileAddresses.append(relative_path)
 
 
         return savedFileAddresses
@@ -58,14 +61,13 @@ class TumblrLoader:
             external_urls = list()
             description = str()
 
+            description += f"original post has type '{post['type']}'"
             if post['type'] == 'video' and 'permalink_url' in post:
-                description += f"original's post 'type' is 'video'"
                 # TODO: check how it works with multiple videos, if it possible
                 external_urls.append(post['permalink_url'])
 
             if 'description' in post:
-                description = post['description']
-                soup = BeautifulSoup(description, 'html.parser')
+                soup = BeautifulSoup(post['description'], 'html.parser')
                 for link in soup.find_all('img'):
                     file_urls.append(link.get('src'))
 
@@ -113,7 +115,7 @@ class TumblrLoader:
 
                 # information for posting
                 text                         = post['body'] if 'body' in post else "",
-                file_urls                    = savedFileAddresses,
+                stored_file_urls             = savedFileAddresses,
                 external_link_urls           = external_urls,
 
                 # information for administration notes and file storing
@@ -201,5 +203,6 @@ class TumblrLoader:
 
 
     def generate_storage_patch(self, root_path, tags, blogs=None):
-        blogs = f"-blogs--{'_'.join(blogs)}" if blogs else ""
-        return os.path.join(root_path, f"tags--{'_'.join(tags)}{blogs}-datetime--{datetime.now()}")
+        b = '_'.join(blogs) if blogs else ""
+        t = tags if isinstance(tags, str) else '_'.join(tags)
+        return os.path.join(root_path, f"tags--{t}-blogs--{b}-datetime--{datetime.now()}")

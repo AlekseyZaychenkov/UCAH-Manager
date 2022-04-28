@@ -105,7 +105,7 @@ class Test_TumblrLoader(SimpleTestCase):
             # print(f"instance.downloaded_date: {instance.downloaded_date}")
 
             # print(f"instance.text: {instance.text}")
-            print(f"instance.file_urls: {instance.file_urls}")
+            print(f"instance.file_urls: {instance.stored_file_urls}")
             # print(f"instance.external_link_urls: {instance.external_link_urls}")
             #
             # print(f"instance.description: {instance.description}")
