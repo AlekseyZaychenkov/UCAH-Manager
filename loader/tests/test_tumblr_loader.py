@@ -11,11 +11,15 @@ from loader.utils import Utils
 from credentials import OATH_SECRET, CONSUMER_SECRET, CONSUMER_KEY, OATH_TOKEN
 from loader.models import PostEntry, Compilation
 from UCA_Manager.settings import PATH_TO_STORE
-from tumblr_loader import TumblrLoader
 
-import sys
-sys.path.append("../")
-import loader.models
+from loader.tumblr_loader import TumblrLoader
+
+# import sys
+# sys.path.append("../")
+
+# from postCalendar.models import Calendar
+# from account.models import Account
+# import loader.models
 
 
 class Test_TumblrLoader(SimpleTestCase):

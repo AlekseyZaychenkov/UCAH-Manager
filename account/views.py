@@ -15,6 +15,7 @@ def loginView(request):
             user = authenticate(email=email, password=password)
             login(request, user)
             return redirect('home')
+            # return redirect('home2')
     else:
         form = AccountAuthenticationForm()
     context['form'] = form
@@ -32,6 +33,7 @@ def registerView(request):
             user = form.save()
             login(request, user)
             return redirect('home')
+            # return redirect('home2')
     else:
         form = RegistrationForm()
     context['form'] = form

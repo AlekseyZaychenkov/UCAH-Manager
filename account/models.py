@@ -5,7 +5,6 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 from PIL import Image
 
-# Create your models here.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
