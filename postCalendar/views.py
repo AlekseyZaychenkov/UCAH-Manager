@@ -30,11 +30,9 @@ def getEventsForCalender(selected_calendar):
 
 @login_required
 def homeView(request):
-    print("<=== HomeView @login_required ===>")
     context = {}
     createEventForm = EventCreateForm()
     editEventForm = EventEditForm()
-
 
     # Events stuff
     if "selected_calendar" in request.GET:
@@ -98,26 +96,20 @@ def homeView(request):
     context["event_editform"] = editEventForm
 
 
-    print("<=== get_context_data() ===>")
-    # context = super().get_context_data(**kwargs)
-    # context['myname'] = "Dipak Niroula"
-
     all_opost_entries = PostEntry.objects.all()
     # all_products = Product.objects.all().order_by("-id")
     # TODO: change number of items and make slider
     paginator = Paginator(all_opost_entries, 8)
 
     page_number = request.GET.get('page')
-    print(page_number)
     product_list = paginator.get_page(page_number)
-    print(f"<=== Products ===>")
-    for p in product_list:
-        print(f"product: {product_list}")
+    # print(f"<=== Posts ===>")
+    # for p in product_list:
+        # print(f"post: {product_list}")
     context['product_list'] = product_list
 
 
     return render(request, "home.html", context)
-    # return render(request, "home2.html", context)
 
 
 
@@ -159,16 +151,8 @@ class EcomMixin(object):
 #         return context
 
 
-class AllProductsView(EcomMixin, TemplateView):
-    template_name = "allproducts.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['allcategories'] = Category.objects.all()
-        return context
 
 
-# class PostTextView(EcomMixin, TemplateView):
 class ProductDetailView(EcomMixin, TemplateView):
     template_name = "productdetail.html"
 
