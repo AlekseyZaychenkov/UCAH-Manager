@@ -71,8 +71,8 @@ def upload_location(instance, filename, **kwargs):
     )
     return file_path
 
-@receiver(post_save, sender=AUTH_USER_MODEL)
-def post_save_compress_img(sender, instance, *args, **kwargs):
-    if instance.profile_img:
-        picture = Image.open(instance.profile_img.path)
-        picture.save(instance.profile_img.path, optimize=True, quality=30)
+# @receiver(post_save, sender=AUTH_USER_MODEL)
+# def post_save_compress_img(sender, instance, *args, **kwargs):
+#     if instance.profile_img:
+#         picture = Image.open(instance.profile_img.path)
+#         picture.save(instance.profile_img.path, optimize=True, quality=30)

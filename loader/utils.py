@@ -29,6 +29,3 @@ class Utils:
         drop_table(ExampleModel)
         drop_table(PostEntry)
         drop_table(Compilation)
-
-
-

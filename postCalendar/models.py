@@ -2,8 +2,6 @@ from django.db import models
 from account.models import Account
 
 
-# Create your models here.
-
 class Calendar(models.Model):
     calendar_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
