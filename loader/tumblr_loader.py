@@ -99,27 +99,25 @@ class TumblrLoader:
 
             postEntry = PostEntry.create(
                 # information about original post
-                original_blog_name           = post['blog']['name'],
-                original_blog_url            = post['blog']['url'],
-                original_post_id             = postId,
-                original_post_url            = post['post_url'],
-                original_posted_date         = post['date'],
-                original_posted_timestamp    = post['timestamp'],
-                original_post_tags           = post['tags'],
-                original_text                = post['body'] if 'body' in post else "",
-                original_file_urls           = file_urls,
-                original_external_link_urls  = external_urls,
+                blog_name             = post['blog']['name'],
+                blog_url              = post['blog']['url'],
+                id_in_social_network  = postId,
+                url                   = post['post_url'],
+                posted_date           = post['date'],
+                posted_timestamp      = post['timestamp'],
+                tags                  = post['tags'],
+                text                  = post['body'] if 'body' in post else "",
+                file_urls             = file_urls,
 
                 # information about search query parameters
-                compilation_id               = compilation.id,
+                compilation_id        = compilation.id,
 
                 # information for posting
-                text                         = post['body'] if 'body' in post else "",
-                stored_file_urls             = savedFileAddresses,
-                external_link_urls           = external_urls,
+                stored_file_urls      = savedFileAddresses,
+                external_link_urls    = external_urls,
 
                 # information for administration notes and file storing
-                description                  = description
+                description           = description
             )
 
             if compilation.post_ids is None:
@@ -142,7 +140,7 @@ class TumblrLoader:
 
 
         compilation = Compilation.create(
-            original_resource            = 'Tumbler',
+            resource            = 'Tumbler',
             search_tag                   = tag,
             search_blogs                 = blogs,
             downloaded_date              = str(datetime.now()),
