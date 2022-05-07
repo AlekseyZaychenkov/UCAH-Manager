@@ -3,11 +3,23 @@ from django import forms
 from postCalendar.models import Calendar, Event
 from account.models import Account
 from django.db.models import Q
+from loader.models import Compilation
+from loader import tumblr_loader
+from loader.tests.test_tumblr_loader import Test_TumblrLoader
+from UCA_Manager.settings import PATH_TO_STORE
+
+from datetime import datetime
+
+from loader.utils import generate_storage_patch
+from loader.utils import create_compilation
 
 
 class CalendarForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
+    path = generate_storage_patch(PATH_TO_STORE, others='autocreated')
+    compilation = create_compilation(resource='CalendarForm', tag=None, blogs=None, storage=None)
+    compilation_id = compilation.id
 
     class Meta:
         model = Calendar
@@ -86,8 +98,8 @@ class CalendarSettingsForm(CalendarForm):
 
 class EventCreateForm(forms.ModelForm):
 
+    name = 'EventCreateForm test'
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
-    end_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=False)
 
     def set_calendar(self, calendar_id):
         event = self.instance
@@ -96,7 +108,7 @@ class EventCreateForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ('calendar',)
+        exclude = ('calendar', 'end_date', 'event_type')
 
 
 class EventEditForm(forms.ModelForm):
@@ -116,7 +128,43 @@ class EventEditForm(forms.ModelForm):
 
         return event
 
-
     class Meta:
         model = Event
         exclude = ("calendar",)
+
+
+        # compilation = Compilation.create(
+        #     name                         = 'Test',
+        #     resource                     = 'Tumbler',
+        #     search_tag                   = tag,
+        #     search_blogs                 = blogs,
+        #     downloaded_date              = str(datetime.now()),
+        #     storage                      = storagePath,
+        #
+        #     post_ids                     = list()
+        # )
+
+class CompilationCreateForm(forms.Form):
+
+    name                         = forms.CharField(required=True)
+    resource                     = 'Tumbler'
+    search_tag                   = forms.CharField(required=True)
+    search_blogs                 = forms.CharField(required=False)
+    downloaded_date              = str(datetime.now())
+
+    print(f"search_tag: '{search_tag}'")
+    search_tag  = 'paleontology'
+
+
+    storage                      = generate_storage_patch(PATH_TO_STORE, tags=search_tag)
+    post_ids                     = list()
+
+
+    # def set_compilation(self, compilation_id):
+    #     compilation = self.instance
+    #     compilation.id = compilation_id
+    #     self.instance = event
+    #
+    # class Meta:
+    #     model = Compilation
+    #     exclude = ('resource',)

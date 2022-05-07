@@ -16,7 +16,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 class Test_DB(SimpleTestCase):
 
     def test_writing_and_reading(self):
-        Utils.startSession()
+        Utils.start_session()
 
         drop_table(ExampleModel)
         sync_table(ExampleModel)

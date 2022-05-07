@@ -1,4 +1,8 @@
 import os
+
+from loader.utils import generate_storage_patch
+from loader.utils import create_compilation
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UCA_Manager.settings")
 import django
 django.setup()
@@ -8,7 +12,6 @@ from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 from django.conf import settings
 from loader.utils import Utils
-from credentials import OATH_SECRET, CONSUMER_SECRET, CONSUMER_KEY, OATH_TOKEN
 from loader.models import PostEntry, Compilation
 from UCA_Manager.settings import PATH_TO_STORE
 
@@ -29,7 +32,7 @@ class Test_TumblrLoader(SimpleTestCase):
     def prepare_db(self):
         # settings.configure()
 
-        Utils.startSession()
+        Utils.start_session()
 
         sync_table(PostEntry)
         sync_table(Compilation)
@@ -39,12 +42,7 @@ class Test_TumblrLoader(SimpleTestCase):
 
     # TODO: make the function fixture
     def create_parser(self):
-        return TumblrLoader(
-                    CONSUMER_KEY,
-                    CONSUMER_SECRET,
-                    OATH_TOKEN,
-                    OATH_SECRET
-                )
+        return TumblrLoader()
 
     # TODO: test method for generate_storage_patch()
     # TODO: test method for save_files()
@@ -75,15 +73,25 @@ class Test_TumblrLoader(SimpleTestCase):
         self.print_user_info(tmblr.client)
 
 
+
         tag = 'paleontology'
         number = 20
-        path = tmblr.generate_storage_patch(PATH_TO_STORE, tag)
+        path = generate_storage_patch(PATH_TO_STORE, tags=tag)
 
 
         # tmblr.download(number, tag=tag)
 
         blogs = ['netmassimo', 'kinogane']
-        tmblr.download(number, storagePath=path, blogs=blogs)
+
+        compilation = create_compilation(
+            resource='Tumbler',
+            name='Test',
+            tag=tag,
+            blogs=blogs,
+            storage=path
+        )
+
+        tmblr.download(compilation, number, storagePath=path, blogs=blogs)
 
 
         pe = PostEntry.objects.all()
@@ -123,7 +131,7 @@ class Test_TumblrLoader(SimpleTestCase):
             print(f"comp.resource {comp.resource}")
             print(f"comp.search_tag {comp.search_tag}")
             print(f"comp.search_blogs {comp.search_blogs}")
-            print(f"comp.downloaded_date {comp.downloaded_date}")
+            print(f"comp.update_date {comp.update_date}")
             print(f"comp.storage {comp.storage }")
 
             print(f"comp.post_ids {comp.post_ids}")

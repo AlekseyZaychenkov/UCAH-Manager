@@ -1,26 +1,18 @@
 import os
-import uuid
-import pytumblr as pytumblr
 import urllib.request
 from bs4 import BeautifulSoup
 
 
 from cassandra.cqlengine.management import sync_table
-from models import PostEntry, Compilation
-from datetime import datetime
+from loader.models import PostEntry, Compilation
+from loader.utils import Utils
 from UCA_Manager.settings import ROOT_DIR
-import pathlib
 
 
 class TumblrLoader:
 
-    def __init__(self, consumer_key, consumer_secret, oath_token, oath_secret):
-        self.client = pytumblr.TumblrRestClient(
-            consumer_key,
-            consumer_secret,
-            oath_token,
-            oath_secret,
-        )
+    def __init__(self):
+        self.client = Utils.createTumblrClient()
         sync_table(PostEntry)
         sync_table(Compilation)
 
@@ -129,7 +121,7 @@ class TumblrLoader:
 
 
 
-    def download(self, number, storagePath=None, tag=None, blogs=None):
+    def download(self, compilation, number, storagePath=None, tag=None, blogs=None):
         print(f"Getting '{number}' posts from Tambler by tag: '{tag}' and blogs '{blogs}'")
         if storagePath is not None:
             print(f"Trying to create directory '{storagePath}'")
@@ -137,18 +129,6 @@ class TumblrLoader:
 
         look_before = 0
         response = list()
-
-
-        compilation = Compilation.create(
-            resource            = 'Tumbler',
-            search_tag                   = tag,
-            search_blogs                 = blogs,
-            downloaded_date              = str(datetime.now()),
-            storage                      = storagePath,
-
-            post_ids                     = list()
-        )
-
 
         if blogs == None:
             while number > 0:
@@ -198,9 +178,3 @@ class TumblrLoader:
 
                 look_before = response[-1]['timestamp']
                 number -= len(response)
-
-
-    def generate_storage_patch(self, root_path, tags, blogs=None):
-        b = '_'.join(blogs) if blogs else ""
-        t = tags if isinstance(tags, str) else '_'.join(tags)
-        return os.path.join(root_path, f"tags--{t}-blogs--{b}-datetime--{datetime.now()}")

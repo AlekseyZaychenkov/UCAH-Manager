@@ -33,7 +33,7 @@ class PostEntry(Model):
     file_urls             = columns.List(value_type=columns.Text, required=False)  # list of urls
 
     # information about search query parameters
-    compilation_id        = columns.UUID(required=True)
+    compilation_id        = columns.UUID(required=False)
 
     # information for posting
     stored_file_urls      = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download
@@ -50,10 +50,12 @@ class PostEntry(Model):
 class Compilation(Model):
     id                    = columns.UUID(primary_key=True, default=uuid.uuid4)
 
-    resource              = columns.Text(max_length=20, required=False)
+    name                  = columns.Text(max_length=512, required=False)
+
+    resource              = columns.Text(max_length=64, required=False)
     search_tag            = columns.Text(max_length=512, required=False)
     search_blogs          = columns.List(value_type=columns.Text, required=False)
-    downloaded_date       = columns.Text(max_length=30, required=True, index=True)
+    update_date           = columns.Text(max_length=30, required=True, index=True)
     description           = columns.Text(required=False)
     storage               = columns.Text(max_length=2048, required=False)
 
