@@ -4,11 +4,10 @@ from django.test import SimpleTestCase
 from datetime import datetime
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
-from cassandra.cqlengine import connection
 from utils import Utils
 
 import sys
-sys.path.append("..")
+sys.path.append("../postCalendar")
 from models import ExampleModel
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
@@ -17,7 +16,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 class Test_DB(SimpleTestCase):
 
     def test_writing_and_reading(self):
-        Utils.startSession()
+        Utils.start_session()
 
         drop_table(ExampleModel)
         sync_table(ExampleModel)

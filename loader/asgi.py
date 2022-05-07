@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'loader.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'UCA_Manager.settings')
 
 application = get_asgi_application()

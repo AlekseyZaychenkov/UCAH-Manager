@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import sys
 import os
-from loader.credentials import SECRET_KEY
+from credentials import LOADER_SECRET_KEY
 
 
 
@@ -30,7 +30,7 @@ IS_TEST = 'test' in sys.argv
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = SECRET_KEY
+SECRET_KEY = LOADER_SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,14 +38,14 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # CONNECTION SETTINGS
-DB_ADRESSES = '127.0.0.1'
-KEYSPACE_NAME = 'db'
-TEST_KEYSPACE_NAME = 'test_db'
+CASSANDRA_DB_ADRESSES = '127.0.0.1'
+CASSANDRA_KEYSPACE_NAME = 'db'
+TEST_CASSANDRA_KEYSPACE_NAME = 'test_db'
 
 
 # IMAGES AND VIDEO STORING
 # TODO: create set of storages for specific user
-PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../..", "photo_and_video_storage")
+PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "..", "photo_and_video_storage")
 
 
 # Application definition
@@ -95,10 +95,14 @@ WSGI_APPLICATION = 'loader.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    },
+    'cassandra': {
         'ENGINE': 'django_cassandra_engine',
-        'NAME': KEYSPACE_NAME,
-        'TEST_NAME': TEST_KEYSPACE_NAME,
-        'HOST': DB_ADRESSES,
+        'NAME': CASSANDRA_KEYSPACE_NAME,
+        'TEST_NAME': TEST_CASSANDRA_KEYSPACE_NAME,
+        'HOST': CASSANDRA_DB_ADRESSES,
         'OPTIONS': {
             'replication': {
                 'strategy_class': 'SimpleStrategy',
@@ -133,9 +137,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Istanbul'
 
-USE_I18N = True
+USE_I18N = False
 
 USE_TZ = True
 
