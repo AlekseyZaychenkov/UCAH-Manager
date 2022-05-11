@@ -63,7 +63,8 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
 
 
 def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
+    b = '_'.join(blogs) if blogs else ''
+    t = ''
     if isinstance(tags, str):
         t = tags
     if isinstance(tags, list):

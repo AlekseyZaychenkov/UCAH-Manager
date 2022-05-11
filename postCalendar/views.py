@@ -49,12 +49,9 @@ def homeView(request):
         selected_compilation = request.GET["selected_compilation"]
         firstCompilation = True
     else:
-        print("Getting firstCompilation")
         firstCompilation = Compilation.objects.limit(0)[0]
-        print(f"firstCompilation: '{firstCompilation}'")
         if firstCompilation:
             selected_compilation = firstCompilation.id
-
 
     if request.POST:
         if request.POST['action'] == 'create':
@@ -62,8 +59,6 @@ def homeView(request):
             if form.is_valid():
                 form.set_owner(request.user)
                 form.save()
-
-
 
 
         if request.POST['action'] == 'edit':
@@ -80,15 +75,16 @@ def homeView(request):
                     selected_calendar = firstCalendar.calendar_id
 
         if request.POST['action'] == "create_event":
+            #  TODO: check if post already added in target compilation
+            #   and hide from source complilation if it was
             form = EventCreateForm(request.POST)
             if form.is_valid():
-                print("create_event form.is_valid()")
                 form.set_calendar(selected_calendar)
+                form.copy_post_to_compilation(selected_compilation)
                 form.save()
                 createEventForm = EventCreateForm()
             else:
                 createEventForm = form
-                print("create_event form.is NOT valid()")
 
         if request.POST['action'] == "edit_event":
             form = EventEditForm(request.POST)
@@ -97,7 +93,6 @@ def homeView(request):
                 editEventForm = EventEditForm()
             else:
                 editEventForm = form
-
 
 
         if request.POST['action'] == 'create_compilation':

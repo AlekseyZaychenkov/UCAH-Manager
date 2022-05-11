@@ -11,6 +11,9 @@
       <sourceFolder url="file://$MODULE_DIR$/static_cdn" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/templates" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/media" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/.ci" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/static" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/venv" isTestSource="false" generated="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
