@@ -90,7 +90,6 @@ class Test_TumblrLoader(SimpleTestCase):
             blogs=blogs,
             storage=path
         )
-
         tmblr.download(compilation, number, storagePath=path, blogs=blogs)
 
 

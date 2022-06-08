@@ -1,12 +1,11 @@
 import os
-import urllib.request
 from bs4 import BeautifulSoup
 
 
 from cassandra.cqlengine.management import sync_table
 from loader.models import PostEntry, Compilation
-from loader.utils import Utils
-from UCA_Manager.settings import ROOT_DIR
+from loader.utils import Utils, save_files
+
 import pathlib
 
 
@@ -18,26 +17,10 @@ class TumblrLoader:
         sync_table(Compilation)
 
 
-    def save_files(self, storagePach, file_urls):
-        # TODO: implement realization for cloud (google-drive) storing
-        savedFileAddresses = list()
 
-        print(f"Downloading and saving files (images and gifs) to '{storagePach}'")
-        for image_url in file_urls:
-            path_to_image = os.path.join(storagePach, os.path.basename(image_url))
-
-            opener = urllib.request.URLopener()
-            opener.addheader('User-Agent', 'Mozilla/5.0')
-            filename, headers = opener.retrieve(image_url, path_to_image)
-            relative_path = os.path.relpath(filename, ROOT_DIR)
-
-            savedFileAddresses.append(relative_path)
-
-
-        return savedFileAddresses
 
     # TODO: implement bool flag 'storeFilesLocal' (for downloading images and gifs or not)
-    def save(self, response, compilation, storagePath, tag=''):
+    def save(self, response, compilation, storagePath=None, tag=''):
         print(f"Start parsing response:")
         for post in response:
             postId = post['id']
@@ -88,7 +71,7 @@ class TumblrLoader:
             # TODO: implement method for saving images from urls to local or cloud storage
             # TODO: use enam for choising type of storage
             # TODO: figure is possible use mock for tests calling self.save_files() or not
-            savedFileAddresses = self.save_files(storagePath, file_urls) if storagePath is not None else None
+            savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
 
             postEntry = PostEntry.create(
                 # information about original post
@@ -124,9 +107,6 @@ class TumblrLoader:
 
     def download(self, compilation, number, storagePath=None, tag=None, blogs=None):
         print(f"Getting '{number}' posts from Tambler by tag: '{tag}' and blogs '{blogs}'")
-        if storagePath is not None:
-            print(f"Trying to create directory '{storagePath}'")
-            os.makedirs(storagePath)
 
         look_before = 0
         response = list()

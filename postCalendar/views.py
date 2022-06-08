@@ -3,7 +3,8 @@ from django.shortcuts import render
 
 from postCalendar.forms import CalendarForm, CalendarSettingsForm, EventCreateForm, EventEditForm, CompilationCreateForm
 from postCalendar.models import Calendar
-from postCalendar.serializers import CalendarSerializer, EventSerializer
+from postCalendar.serializers import CalendarSerializer\
+    # , PostSerializer
 from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
@@ -22,10 +23,27 @@ import requests
 
 
 
-def getEventsForCalender(selected_calendar):
+def getPostsForCalender(selected_calendar):
+    posts = list()
+
+    print(f"getPostsForCalender selected_calendar: {selected_calendar}")
     calendar = Calendar.objects.get(calendar_id=selected_calendar)
-    serializedEvents = EventSerializer(calendar.event_set.all(), many=True).data
-    return serializedEvents
+    print(f"getPostsForCalender calendar: {calendar}")
+
+    id = calendar.compilation_id
+    print(f"getPostsForCalender calendar.compilation_id: {id}")
+
+
+    compilation = Compilation.objects.get(id=calendar.compilation_id)
+    print(f"getPostsForCalender compilation: {compilation}")
+    if compilation:
+        post_ids = compilation.post_ids
+        print(f"getPostsForCalender post_ids: {str(post_ids)}")
+
+        for id in post_ids:
+            posts.append(PostEntry.objects(id=id))
+
+    return posts
 
 
 @login_required
@@ -45,15 +63,15 @@ def homeView(request):
 
     # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
     #  only current user compilations
-    if "selected_compilation" in request.GET:
-        selected_compilation = request.GET["selected_compilation"]
+    if "selected_compilation_id" in request.GET:
+        selected_compilation_id = request.GET["selected_compilation_id"]
         firstCompilation = True
     else:
         print("Getting firstCompilation")
         firstCompilation = Compilation.objects.limit(0)[0]
         print(f"firstCompilation: '{firstCompilation}'")
         if firstCompilation:
-            selected_compilation = firstCompilation.id
+            selected_compilation_id = firstCompilation.id
 
 
     if request.POST:
@@ -84,6 +102,7 @@ def homeView(request):
             if form.is_valid():
                 print("create_event form.is_valid()")
                 form.set_calendar(selected_calendar)
+                form.add_to_compilation(selected_calendar)
                 form.save()
                 createEventForm = EventCreateForm()
             else:
@@ -118,7 +137,7 @@ def homeView(request):
         #         firstCompilation = Compilation.objects.limit(0)[0]
         #         print(f"firstCompilation: '{firstCompilation}'")
         #         if firstCompilation:
-        #             selected_compilation = firstCompilation.id
+        #             selected_compilation_id = firstCompilation.id
 
 
 
@@ -138,7 +157,7 @@ def homeView(request):
     context["my_compilations"] = Compilation.objects.all()
 
     if firstCalendar:
-        context["events"] = getEventsForCalender(selected_calendar)
+        context["schedule_posts"] = getPostsForCalender(selected_calendar)
         context["selected_calendar"] = int(selected_calendar)
     context["event_createform"] = createEventForm
     context["event_editform"] = editEventForm
@@ -151,6 +170,9 @@ def homeView(request):
     page_number = request.GET.get('page')
     post_list = paginator.get_page(page_number)
     context['post_list'] = post_list
+
+
+
 
 
     return render(request, "home.html", context)

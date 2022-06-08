@@ -33,7 +33,7 @@ class PostEntry(Model):
     file_urls             = columns.List(value_type=columns.Text, required=False)  # list of urls
 
     # information about search query parameters
-    compilation_id        = columns.UUID(required=False)
+    compilation_id        = columns.UUID(required=False, primary_key=True, clustering_order="ASC")
 
     # information for posting
     stored_file_urls      = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download

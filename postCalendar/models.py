@@ -5,6 +5,7 @@ from account.models import Account
 class Calendar(models.Model):
     calendar_id     = models.AutoField(primary_key=True)
     compilation_id  = models.CharField(max_length=128, null=True, blank=True)
+    post_id         = models.CharField(max_length=128, null=True, blank=True)
     name            = models.CharField(max_length=255)
     owner           = models.ForeignKey(Account, on_delete=models.CASCADE)
     visible_for     = models.ManyToManyField(Account, related_name="visible_for")

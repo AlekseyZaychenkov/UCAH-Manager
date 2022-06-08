@@ -65,7 +65,101 @@
     <div class="row">
 
 
-        <div id="calendar" class="d-none d-md-flex col-md-7 col-lg-7 p-3"></div>
+<!--        <div id="calendar" class="d-none d-md-flex col-md-7 col-lg-7 p-3"></div>-->
+
+
+        <div class="container d-md-flex col-md-7 col-lg-7 p-3">
+            <hr>
+            <div class="row mt-5">
+                {% for post in schedule_posts%}
+                <div class="col-md-5 card">
+                    <div class="m-4">
+                        <form method="post" class="mt-3">
+                            {% csrf_token %}
+                            <div class="form-label-group">
+                                {% render_field event_createform.start_date class="form-control" type="datetime-local" %}
+                                <label for="id_start_date">Start:</label>
+                                {{ event_createform.start_date.errors }}
+                            </div>
+
+                            <!--class="d-none" - hiding field post_id-->
+                            <div class="d-none">
+                                {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id  %}
+                            </div>
+
+                            <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">Add</button>
+
+                            <!-- TODO: add proposed time field and showing -->
+                            <!-- TODO: add opportunity to change the time -->
+
+                            <!-- TODO: place picture more compact -->
+
+                            <p class="mt-3">{{post.text}}</p>
+                            <div class="row">
+                                {% for pi in post.stored_file_urls %}
+                                {% if forloop.counter == 1 %}
+                                <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+                                {% else %}
+                                <div class="col-md-4 p-2">
+                                    <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+                                </div>
+                                {% endif %}
+                                {% empty %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- TODO: make a text foldable-->
+
+                            <!--                                                                    <p class="mt-4">Description: '{{post.description}}'</p>-->
+
+                            <a href="{{post.url}}" target="_blank">Original post (for debug)</a>
+                            <!-- TODO: figure out and add other useful information -->
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <nav aria-label="...">
+                <ul class="pagination">
+                    {% if schedule_events.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ schedule_events.previous_page_number }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in schedule_events.paginator.page_range %}
+                    {% if i == schedule_events.number %}
+                    <li class="page-item active"><a class="page-link">{{i}}</a></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if schedule_events.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ schedule_events.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+        </div>
+
+
+
+
+
+
+
+
 
         <div class="col-md-5 col-lg-5" id="containerForSlideMenu">
             <div id="mySidenav" class="sidenav">
@@ -256,8 +350,8 @@
                                                 {% for compilation in my_compilations %}
                                                     {% if compilation.resource != Compilation.calendarFormCreated %}
                                                         <li class="list-group-item ml-3">
-                                                            {{ compilation.name }} (from {{ compilation.resource }}) {% if selected_compilation != compilation.id %}
-                                                            <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_compilation={{compilation.id}}">Show</a>
+                                                            {{ compilation.name }} (from {{ compilation.resource }}) {% if selected_compilation_id != compilation.id %}
+                                                            <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_compilation_id={{compilation.id}}">Show</a>
                                                             {% endif %}
                                                         </li>
                                                     {% endif %}
@@ -395,131 +489,5 @@
     </div>
 </div>
 
-{{ calendars|json_script:"calendar_data" }}{{ events|json_script:"events" }}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Initialize calendar
-        var calendarEl = document.getElementById("calendar");
-        events = JSON.parse(document.getElementById("events").textContent);
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            themeSystem: "bootstrap",
-            locale: "de",
-            timeZone: 'Europe/Istanbul',
-            firstDay: 1,
-            height: "100",
-            initialView: "dayGridMonth",
-            weekNumbers: true,
-            eventSources: [
-                // your event source
-                {
-                    events: events
-                },
-            ],
-            eventContent: function (args, createElement) {
-                const icon = args.event._def.extendedProps.icon;
-                const timeString = convertDatetimeForDisplay(args.event._instance.range.start);
-                const title = args.event._def.title;
-                return {
-                    html: "<i class='fa fa-" + icon + "'></i><div class='fc-event-time'>" + timeString + "</div> <div class='fc-event-title' data-toggle='tooltip' title='" + title + "'>" + title + "</div>",
-                };
-            },
-            eventClick: function (info) {
-                console.log(info.event);
-                edit_event_name = document.getElementById("id_name_edit_event");
-                edit_event_start = document.getElementById("id_edit_start_date");
-                edit_event_end = document.getElementById("id_edit_end_date");
-                edit_event_type = document.getElementById("id_edit_event_type");
-                edit_event_id= document.getElementById("id_event_id");
-                edit_event_id.value = info.event._def.extendedProps.event_id;
-                edit_event_name.value = info.event.title;
-                edit_event_start.value = convertDatetimeForEdit(info.event.start);
-                if(info.event.end != null)
-                    edit_event_end.value = convertDatetimeForEdit(info.event.end);
-                edit_event_type.value = info.event._def.extendedProps.event_type;
 
-
-                $("#eventEditModal").modal("show");
-            },
-        });
-        calendar.render();
-
-        // Calendar edit form
-        calendars = JSON.parse(document.getElementById("calendar_data").textContent);
-        input_calendars = document.getElementById("id_calendars");
-        input_name = document.getElementById("id_name");
-        input_visible_for = document.getElementById("id_visible_for");
-        input_editable_by = document.getElementById("id_editable_by");
-        input_calendar_id = document.getElementById("id_calendar_id");
-
-        if (calendars.length > 0) {
-            calendarChanged();
-        } else {
-            deactivateInputs();
-        }
-    });
-
-    function deactivateInputs() {
-        document.getElementById("settingscalendar-tab").classList.add("disabled");
-    }
-
-    function calendarChanged() {
-        calendars.forEach((element) => {
-            if (parseInt(element.calendar_id) === parseInt(input_calendars.value)) {
-                input_name.value = element.name;
-                input_visible_for.value = element.visible_for;
-                input_editable_by.value = element.editable_by;
-                input_calendar_id.value = element.calendar_id;
-            }
-        });
-    }
-
-    /* Set the width of the side navigation to 250px */
-    function openNav() {
-        container = document.getElementById("containerForSlideMenu").getBoundingClientRect();
-        slider = document.getElementById("mySidenav");
-        slider.style.width = container.width + "px";
-    }
-
-    function openNav2() {
-        container = document.getElementById("containerForSlideMenu").getBoundingClientRect();
-        slider = document.getElementById("mySidenav2");
-        slider.style.width = container.width + "px";
-    }
-
-    /* Set the width of the side navigation to 0 */
-    function closeNav2() {
-        document.getElementById("mySidenav2").style.width = "0";
-    }
-
-    /* Set the width of the side navigation to 0 */
-    function closeNav() {
-        document.getElementById("mySidenav").style.width = "0";
-    }
-
-    $(function () {
-        $('[data-toggle="tooltip"]').tooltip();
-        $('[data-toggle="popover"]').popover();
-    });
-
-    function convertDatetimeForEdit(startTime){
-        let timeString = startTime.getDate() + "." + (startTime.getMonth()+1) + "." + startTime.getFullYear() + " ";
-        timeString += startTime.getHours() + ":";
-        if (startTime.getMinutes() < 9) {
-            timeString += "0" + startTime.getMinutes();
-        } else {
-            timeString += startTime.getMinutes();
-        }
-        return timeString;
-    }
-
-    function convertDatetimeForDisplay(startTime){
-        let timeString = startTime.getHours() + ":";
-        if (startTime.getMinutes() < 9) {
-            timeString += "0" + startTime.getMinutes();
-        } else {
-            timeString += startTime.getMinutes();
-        }
-        return timeString;
-    }
-</script>
 {% endblock content %}

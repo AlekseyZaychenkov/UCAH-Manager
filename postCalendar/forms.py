@@ -12,14 +12,12 @@ from datetime import datetime
 
 from loader.utils import generate_storage_patch
 from loader.utils import create_compilation
+from postCalendar.utils import copy_post_to_compilation
 
 
 class CalendarForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
-    path = generate_storage_patch(PATH_TO_STORE, others='autocreated')
-    compilation = create_compilation(resource='CalendarForm', tag=None, blogs=None, storage=None)
-    compilation_id = compilation.id
 
     class Meta:
         model = Calendar
@@ -32,7 +30,7 @@ class CalendarForm(forms.ModelForm):
 
     def save(self, commit=True):
         calendar = self.instance
-
+        calendar.compilation_id = createCompilation().id
         calendar.save()
 
         for email in self.cleaned_data["visible_for"].split(";"):
@@ -76,6 +74,7 @@ class CalendarSettingsForm(CalendarForm):
 
     def save(self, commit=True):
         calendar = Calendar.objects.get(calendar_id=self.cleaned_data["calendar_id"])
+        calendar.compilation_id = createCompilation().id
         calendar.name = self.cleaned_data["name"]
         calendar.editable_by.clear()
         calendar.visible_for.clear()
@@ -100,11 +99,19 @@ class EventCreateForm(forms.ModelForm):
 
     name = 'EventCreateForm test'
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    post_id = forms.CharField(required=True)
+    print(f"EventCreateForm: start_date {start_date}")
+
 
     def set_calendar(self, calendar_id):
         event = self.instance
         event.calendar_id = calendar_id
         self.instance = event
+
+    def add_to_compilation(self, calendar_id):
+        calendar = Calendar.objects.get(calendar_id=calendar_id)
+        post_id = self.instance.post_id
+        copy_post_to_compilation(calendar.compilation_id, post_id, True)
 
     class Meta:
         model = Event
@@ -184,12 +191,14 @@ class CompilationCreateForm(forms.Form):
 class CompilationCreateForm(forms.Form):
 
     name                         = forms.CharField(required=True)
+    # TODO: remove hardcode
     resource                     = 'Tumbler'
     search_tag                   = forms.CharField(required=True)
     search_blogs                 = forms.CharField(required=False)
     downloaded_date              = str(datetime.now())
 
     print(f"search_tag: '{search_tag}'")
+    # TODO: remove hardcode
     search_tag  = 'paleontology'
 
 
@@ -242,3 +251,8 @@ class CompilationCreateForm(forms.Form):
     # class Meta:
     #     model = Compilation
     #     exclude = ('resource',)
+
+
+def createCompilation():
+    path = generate_storage_patch(PATH_TO_STORE, others='autocreated')
+    return create_compilation(resource='Created bu user', tag=None, blogs=None, storage=path)
