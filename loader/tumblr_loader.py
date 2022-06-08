@@ -7,6 +7,7 @@ from cassandra.cqlengine.management import sync_table
 from loader.models import PostEntry, Compilation
 from loader.utils import Utils
 from UCA_Manager.settings import ROOT_DIR
+import pathlib
 
 
 class TumblrLoader:

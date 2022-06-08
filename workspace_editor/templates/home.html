@@ -1,0 +1,482 @@
+{% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
+<style>
+    /* The side navigation menu */
+    .sidenav {
+        height: 100%; /* 100% Full-height */
+        width: 0; /* 0 width - change this with JavaScript */
+        position: fixed; /* Stay in place */
+        z-index: 2; /* Stay on top */
+        top: 0; /* Stay at the top */
+        right: 0;
+        background-color: gray; /* Black*/
+        overflow-x: hidden; /* Disable horizontal scroll */
+        padding-top: 60px; /* Place content 60px from the top */
+        transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+    }
+
+    /* The navigation menu links */
+    .sidenav a {
+        padding: 8px 8px 8px 32px;
+        text-decoration: none;
+        font-size: 18px;
+        color: white;
+        display: block;
+        transition: 0.3s;
+    }
+
+    .sidenav h2 {
+        padding: 8px 8px 8px 32px;
+        text-decoration: none;
+        color: white;
+        display: block;
+        transition: 0.3s;
+    }
+
+    /* When you mouse over the navigation links, change their color */
+    .sidenav a:hover {
+        font-size: 24px;
+    }
+
+    /* Position and style the close button (top right corner) */
+    .sidenav .closebtn {
+        position: absolute;
+        top: 0;
+        right: 25px;
+        font-size: 26px;
+        margin-left: 50px;
+    }
+
+    /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+    @media screen and (max-height: 450px) {
+        .sidenav {
+            padding-top: 15px;
+        }
+        .sidenav a {
+            font-size: 18px;
+        }
+    }
+
+    i.fa {
+        margin-left: 4px;
+        margin-right: 4px;
+    }
+</style>
+<div class="container-fluid">
+    <div class="row">
+
+
+<!--        <div id="calendar" class="d-none d-md-flex col-md-7 col-lg-7 p-3"></div>-->
+        <div class="container d-md-flex col-md-7 col-lg-7 p-3">
+            <hr>
+            <div class="row mt-5">
+                {% for post in scheduled_posts %}
+                <div class="col-md-5 card">
+                    <div class="m-4">
+                        <form method="post" class="mt-3">
+                            {% csrf_token %}
+                            <div class="form-label-group">
+                                {% render_field event_createform.start_date class="form-control" type="datetime-local" %}
+                                <label for="id_start_date">Start:</label>
+                                {{ event_createform.start_date.errors }}
+                            </div>
+
+                            <!--class="d-none" - hiding field post_id-->
+                            <div class="d-none">
+                                {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id  %}
+                            </div>
+
+                            <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">Add</button>
+
+                            <!-- TODO: add proposed time field and showing -->
+                            <!-- TODO: add opportunity to change the time -->
+
+                            <!-- TODO: place picture more compact -->
+
+                            <p class="mt-3">{{post.text}}</p>
+                            <div class="row">
+                                {% for pi in post.stored_file_urls %}
+                                {% if forloop.counter == 1 %}
+                                <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+                                {% else %}
+                                <div class="col-md-4 p-2">
+                                    <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+                                </div>
+                                {% endif %}
+                                {% empty %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- TODO: make a text foldable-->
+
+                            <!--                                                                    <p class="mt-4">Description: '{{post.description}}'</p>-->
+
+                            <a href="{{post.url}}" target="_blank">Original post (for debug)</a>
+                            <!-- TODO: figure out and add other useful information -->
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <nav aria-label="...">
+                <ul class="pagination">
+                    {% if scheduled_posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ scheduled_posts.previous_page_number }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in scheduled_posts.paginator.page_range %}
+                    {% if i == scheduled_posts.number %}
+                    <li class="page-item active"><a class="page-link">{{i}}</a></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if scheduled_posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ scheduled_posts.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+        </div>
+
+
+        <div class="col-md-5 col-lg-5" id="containerForSlideMenu">
+            <div id="mySidenav" class="sidenav">
+                <h2>Accounts</h2>
+                <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+                <a href="#">Profile</a>
+                <a href="{% url 'logout' %}">Log out</a>
+            </div>
+
+
+            <div class="login d-flex py-3">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="row my-2">
+                                <div class="col-md-3 my-auto" onclick="openNav()" style="cursor: pointer;">
+                                    Accounts
+                                </div>
+                            </div>
+
+                            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link active" id="editcalendar-tab" data-toggle="tab" href="#editcalendar" role="tab" aria-controls="editcalendar" aria-selected="true">Edit</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="mycalendars-tab" data-toggle="tab" href="#mycalendars" role="tab" aria-controls="mycalendars" aria-selected="false">Schedules</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="compilations-tab" data-toggle="tab" href="#compilations" role="tab" aria-controls="compilations" aria-selected="false">Compilations</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="settingscalendar-tab" data-toggle="tab" href="#settingscalendar" role="tab" aria-controls="settingscalendar" aria-selected="false">Settings</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="createcalendar-tab" data-toggle="tab" href="#createcalendar" role="tab" aria-controls="createcalendar" aria-selected="false">Create</a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="myTabContent">
+
+
+                                <div class="tab-pane fade show active" id="editcalendar" role="tabpanel" aria-labelledby="editcalendar-tab">
+                                    <form method="post" class="mt-3">
+                                        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.schedule_id.as_hidden }}
+                                        <div class="form-label-group">
+                                            {% render_field settingsform.schedules class="form-control" onchange="scheduleChanged()" %} {{ settingsform.schedules.errors }}
+                                        </div>
+                                        {% if schedules|length > 0 %}
+
+                                        <h4>Add to the schedule</h4>
+
+<!--                                            <div class="row my-2">-->
+<!--                                                <div class="col-md-3 my-auto" onclick="openNav()" style="cursor: pointer;">-->
+<!--                                                    Accounts-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+
+
+                                            <div class="container">
+                                                <hr>
+                                                <div class="row mt-5">
+                                                    {% for post in post_list %}
+                                                        <div class="col-md-5 card">
+                                                            <div class="m-4">
+                                                                <form method="post" class="mt-3">
+                                                                    {% csrf_token %}
+                                                                    <div class="form-label-group">
+                                                                        {% render_field event_createform.start_date class="form-control" type="datetime-local" %}
+                                                                        <label for="id_start_date">Start:</label>
+                                                                        {{ event_createform.start_date.errors }}
+                                                                    </div>
+
+                                                                    <!--class="d-none" - hiding field post_id-->
+                                                                    <div class="d-none">
+                                                                        {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id  %}
+                                                                    </div>
+
+                                                                    <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">Add</button>
+
+                                                                    <!-- TODO: add proposed time field and showing -->
+                                                                <!-- TODO: add opportunity to change the time -->
+
+                                                                <!-- TODO: place picture more compact -->
+
+                                                                    <p class="mt-3">{{post.text}}</p>
+                                                                    <div class="row">
+                                                                        {% for pi in post.stored_file_urls %}
+                                                                            {% if forloop.counter == 1 %}
+                                                                                <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+                                                                            {% else %}
+                                                                                <div class="col-md-4 p-2">
+                                                                                    <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+                                                                                </div>
+                                                                            {% endif %}
+                                                                            {% empty %}
+                                                                        {% endfor %}
+                                                                    </div>
+
+                                                                    <!-- TODO: make a text foldable-->
+
+<!--                                                                    <p class="mt-4">Description: '{{post.description}}'</p>-->
+
+                                                                    <a href="{{post.url}}" target="_blank">Original post (for debug)</a>
+                                                                    <!-- TODO: figure out and add other useful information -->
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                                <nav aria-label="...">
+                                                    <ul class="pagination">
+                                                        {% if post_list.has_previous %}
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?page={{ post_list.previous_page_number }}">Previous</a>
+                                                        </li>
+                                                        {% else %}
+                                                        <li class="page-item disabled">
+                                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                                        </li>
+                                                        {% endif %}
+
+                                                        {% for i in post_list.paginator.page_range %}
+                                                        {% if i == post_list.number %}
+                                                        <li class="page-item active"><a class="page-link">{{i}}</a></li>
+                                                        {% else %}
+                                                        <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+                                                        {% endif %}
+                                                        {% endfor %}
+
+                                                        {% if post_list.has_next %}
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?page={{ post_list.next_page_number }}">Next</a>
+                                                        </li>
+                                                        {% else %}
+                                                        <li class="page-item disabled">
+                                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                                                        </li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </nav>
+
+                                            </div>
+
+
+
+                                        </form>
+                                        {% endif %}
+                                    
+                                </div>
+
+
+
+                                <div class="tab-pane fade" id="mycalendars" role="tabpanel" aria-labelledby="mycalendars-tab">
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <ul class="list-group">
+                                                {% for schedule in schedules %}
+                                                <li class="list-group-item ml-3">
+                                                    {{ schedule.name }} {% if selected_schedule != schedule.schedule_id %}
+                                                    <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_schedule={{schedule.schedule_id}}">Show</a>
+                                                    {% endif %}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <hr />
+                                            {% if schedules|length > 0 %}
+                                            <h4>Create new post</h4>
+                                            <form method="post" class="mt-3">
+                                                {% csrf_token %}
+                                                <div class="form-label-group">
+                                                    {% render_field event_createform.start_date class="form-control" type="datetime-local" %}
+                                                    <label for="id_start_date">Start:</label>
+                                                    {{ event_createform.start_date.errors }}
+                                                </div>
+                                                <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create_event">Add</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="tab-pane fade" id="compilations" role="tabpanel" aria-labelledby="compilations-tab">
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <ul class="list-group">
+                                                {% for compilation in my_compilations %}
+                                                    {% if compilation.resource != Compilation.scheduleFormCreated %}
+                                                        <li class="list-group-item ml-3">
+                                                            {{ compilation.name }} (from {{ compilation.resource }}) {% if selected_compilation != compilation.id %}
+                                                            <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_compilation={{compilation.id}}">Show</a>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </ul>
+                                            <hr />
+<!--                                            <h4>TODO: Form Create new compilation</h4>                 -->
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="tab-pane fade" id="settingscalendar" role="tabpanel" aria-labelledby="settingscalendar-tab">
+                                    <form method="post" class="mt-3">
+                                        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.schedule_id.as_hidden }}
+                                        <div class="form-label-group">
+                                            {% render_field settingsform.schedules class="form-control" onchange="scheduleChanged()" %} {{ settingsform.schedules.errors }}
+                                        </div>
+                                        <div class="form-label-group">
+                                            {% render_field settingsform.name class="form-control" %}
+                                            <label for="id_name">Name:</label>
+                                            {{ settingsform.name.errors }}
+                                        </div>
+                                        <div class="form-label-group">
+                                            {% render_field settingsform.visible_for class="form-control" %}
+                                            <label for="id_visible_for">Visible for:</label>
+                                            {{ settingsform.visible_for.errors }}
+                                        </div>
+                                        <div class="form-label-group">
+                                            {% render_field settingsform.editable_by class="form-control" %}
+                                            <label for="id_editable_by">Editable by:</label>
+                                            {{ settingsform.editable_by.errors }} {{ settingsform.errors }}
+                                        </div>
+                                        <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="edit">Save changes</button>
+                                        <button class="btn btn-lg btn-danger btn-block btn-login text-uppercase font-weight-bold mb-2" type="button" data-toggle="modal" data-target="#deleteModal">Delete schedule</button>
+                                        <div class="modal" tabindex="-1" role="dialog" id="deleteModal">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Delete a schedule</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Do you really want to delete the schedule?</p>
+                                                        <small>All planned posts will also be irrevocably deleted.</small>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                                                        <button class="btn btn-danger" type="submit" name="action" value="delete">Yes</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+
+
+                                <div class="tab-pane fade" id="createcalendar" role="tabpanel" aria-labelledby="createcalendar-tab">
+                                    <form method="post" class="mt-3">
+                                        {% csrf_token %}
+                                        <div class="form-label-group">
+                                            {% render_field createform.name class="form-control" %}
+                                            <label for="id_owner">Name of the schedule</label>
+                                            {{ createform.name.errors }}
+                                        </div>
+                                        <div class="form-label-group">
+                                            {% render_field createform.visible_for class="form-control" %}
+                                            <label for="id_visible_for">Visible for:</label>
+                                            {{ createform.visible_for.errors }}
+                                        </div>
+                                        <div class="form-label-group">
+                                            {% render_field createform.editable_by class="form-control" %}
+                                            <label for="id_editable_by">Editable by:</label>
+                                            {{ createform.editable_by.errors }}
+                                        </div>
+                                        <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create">Create</button>
+                                    </form>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+    <div class="modal fade" id="eventEditModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    {{ event_editform.event_id.as_hidden }}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Edit post</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+<!--                        <div class="form-label-group">-->
+<!--                            {% render_field event_editform.name class="form-control" id="id_name_edit_event" %}-->
+<!--                            <label for="id_name_edit_event">Name of the post:</label>-->
+<!--                            {{ event_editform.name.errors }}-->
+<!--                        </div>-->
+                        <div class="form-label-group">
+                            {% render_field event_editform.start_date class="form-control" type="datetime-local" id="id_edit_start_date" %}
+                            <label for="id_edit_start_date">Beginning:</label>
+                            {{ event_editform.start_date.errors }}
+                        </div>
+<!--                        <div class="form-label-group">-->
+<!--                            {% render_field event_editform.end_date class="form-control" type="datetime-local" id="id_edit_end_date" %}-->
+<!--                            <label for="id_edit_end_date">End:</label>-->
+<!--                            {{ event_editform.end_date.errors }}-->
+<!--                        </div>-->
+<!--                        <div class="form-label-group">-->
+<!--                            {% render_field event_editform.event_type class="form-control" id="id_edit_event_type" %} {{ event_editform.event_type.errors }}-->
+<!--                        </div>-->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Quit</button>
+                        <button class="btn btn-primary" type="submit" name="action" value="edit_event">Accept change</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

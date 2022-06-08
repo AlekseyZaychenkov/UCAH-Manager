@@ -168,3 +168,77 @@ class CompilationCreateForm(forms.Form):
     # class Meta:
     #     model = Compilation
     #     exclude = ('resource',)
+
+
+        # compilation = Compilation.create(
+        #     name                         = 'Test',
+        #     resource                     = 'Tumbler',
+        #     search_tag                   = tag,
+        #     search_blogs                 = blogs,
+        #     downloaded_date              = str(datetime.now()),
+        #     storage                      = storagePath,
+        #
+        #     post_ids                     = list()
+        # )
+
+class CompilationCreateForm(forms.Form):
+
+    name                         = forms.CharField(required=True)
+    resource                     = 'Tumbler'
+    search_tag                   = forms.CharField(required=True)
+    search_blogs                 = forms.CharField(required=False)
+    downloaded_date              = str(datetime.now())
+
+    print(f"search_tag: '{search_tag}'")
+    search_tag  = 'paleontology'
+
+
+    storage                      = generate_storage_patch(PATH_TO_STORE, tags=search_tag)
+    post_ids                     = list()
+
+
+    # def set_compilation(self, compilation_id):
+    #     compilation = self.instance
+    #     compilation.id = compilation_id
+    #     self.instance = event
+    #
+    # class Meta:
+    #     model = Compilation
+    #     exclude = ('resource',)
+
+
+        # compilation = Compilation.create(
+        #     name                         = 'Test',
+        #     resource                     = 'Tumbler',
+        #     search_tag                   = tag,
+        #     search_blogs                 = blogs,
+        #     downloaded_date              = str(datetime.now()),
+        #     storage                      = storagePath,
+        #
+        #     post_ids                     = list()
+        # )
+
+class CompilationCreateForm(forms.Form):
+
+    name                         = forms.CharField(required=True)
+    resource                     = 'Tumbler'
+    search_tag                   = forms.CharField(required=True)
+    search_blogs                 = forms.CharField(required=False)
+    downloaded_date              = str(datetime.now())
+
+    print(f"search_tag: '{search_tag}'")
+    search_tag  = 'paleontology'
+
+
+    storage                      = generate_storage_patch(PATH_TO_STORE, tags=search_tag)
+    post_ids                     = list()
+
+
+    # def set_compilation(self, compilation_id):
+    #     compilation = self.instance
+    #     compilation.id = compilation_id
+    #     self.instance = event
+    #
+    # class Meta:
+    #     model = Compilation
+    #     exclude = ('resource',)

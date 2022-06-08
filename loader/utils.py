@@ -71,3 +71,71 @@ def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
     if tags == None:
         t = ''
     return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+
+
+    @staticmethod
+    def createTumblrClient():
+        return pytumblr.TumblrRestClient(
+            CONSUMER_KEY,
+            CONSUMER_SECRET,
+            OATH_TOKEN,
+            OATH_SECRET
+        )
+
+
+# TODO: rename storage to storage_path
+def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
+    return Compilation.create(
+        name            = name,
+        resource        = resource,
+        search_tag      = tag,
+        search_blogs    = blogs,
+        update_date     = str(datetime.now()),
+        storage         = storage,
+        post_ids        = list()
+    )
+
+
+def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
+    b = '_'.join(blogs) if blogs else ""
+    if isinstance(tags, str):
+        t = tags
+    if isinstance(tags, list):
+        t = '_'.join(tags)
+    if tags == None:
+        t = ''
+    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+
+
+    @staticmethod
+    def createTumblrClient():
+        return pytumblr.TumblrRestClient(
+            CONSUMER_KEY,
+            CONSUMER_SECRET,
+            OATH_TOKEN,
+            OATH_SECRET
+        )
+
+
+# TODO: rename storage to storage_path
+def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
+    return Compilation.create(
+        name            = name,
+        resource        = resource,
+        search_tag      = tag,
+        search_blogs    = blogs,
+        update_date     = str(datetime.now()),
+        storage         = storage,
+        post_ids        = list()
+    )
+
+
+def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
+    b = '_'.join(blogs) if blogs else ""
+    if isinstance(tags, str):
+        t = tags
+    if isinstance(tags, list):
+        t = '_'.join(tags)
+    if tags == None:
+        t = ''
+    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
