@@ -42,7 +42,7 @@
         position: absolute;
         top: 0;
         right: 25px;
-        font-size: 36px;
+        font-size: 26px;
         margin-left: 50px;
     }
 
@@ -127,7 +127,7 @@
                                             <div class="container">
                                                 <hr>
                                                 <div class="row mt-5">
-                                                    {% for p in post_list %}
+                                                    {% for post in post_list %}
                                                         <div class="col-md-5 card">
                                                             <div class="m-4">
                                                                 <form method="post" class="mt-3">
@@ -137,32 +137,38 @@
                                                                         <label for="id_start_date">Start:</label>
                                                                         {{ event_createform.start_date.errors }}
                                                                     </div>
-                                                                    <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create_event">TODO: make side menu "Edit Post"</button>
-                                                                    <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create_event">Add</button>
-                                                                <!-- TODO: add proposed time field and showing -->
+
+                                                                    <!--class="d-none" - hiding field post_id-->
+                                                                    <div class="d-none">
+                                                                        {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id  %}
+                                                                    </div>
+
+                                                                    <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">Add</button>
+
+                                                                    <!-- TODO: add proposed time field and showing -->
                                                                 <!-- TODO: add opportunity to change the time -->
 
                                                                 <!-- TODO: place picture more compact -->
 
-                                                                    <p class="mt-3">{{p.text}}</p>
+                                                                    <p class="mt-3">{{post.text}}</p>
                                                                     <div class="row">
-                                                                        {% for pi in p.stored_file_urls %}
-                                                                        {% if forloop.counter == 1 %}
-                                                                        <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
-                                                                        {% else %}
-                                                                        <div class="col-md-4 p-2">
-                                                                            <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
-                                                                        </div>
-                                                                        {% endif %}
-                                                                        {% empty %}
+                                                                        {% for pi in post.stored_file_urls %}
+                                                                            {% if forloop.counter == 1 %}
+                                                                                <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+                                                                            {% else %}
+                                                                                <div class="col-md-4 p-2">
+                                                                                    <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+                                                                                </div>
+                                                                            {% endif %}
+                                                                            {% empty %}
                                                                         {% endfor %}
                                                                     </div>
 
                                                                     <!-- TODO: make a text foldable-->
 
-                                                                    <p class="mt-4">Description: '{{p.description}}'</p>
+<!--                                                                    <p class="mt-4">Description: '{{post.description}}'</p>-->
 
-                                                                    <a href="{{p.url}}" target="_blank">Original post (for debug)</a>
+                                                                    <a href="{{post.url}}" target="_blank">Original post (for debug)</a>
                                                                     <!-- TODO: figure out and add other useful information -->
                                                                 </form>
                                                             </div>
@@ -248,11 +254,13 @@
                                         <div class="col-md-12">
                                             <ul class="list-group">
                                                 {% for compilation in my_compilations %}
-                                                <li class="list-group-item ml-3">
-                                                    {{ compilation.name }} (from {{ compilation.resource }}) {% if selected_compilation != compilation.id %}
-                                                    <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_compilation={{compilation.id}}">Show</a>
+                                                    {% if compilation.resource != Compilation.calendarFormCreated %}
+                                                        <li class="list-group-item ml-3">
+                                                            {{ compilation.name }} (from {{ compilation.resource }}) {% if selected_compilation != compilation.id %}
+                                                            <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_compilation={{compilation.id}}">Show</a>
+                                                            {% endif %}
+                                                        </li>
                                                     {% endif %}
-                                                </li>
                                                 {% endfor %}
                                             </ul>
                                             <hr />
