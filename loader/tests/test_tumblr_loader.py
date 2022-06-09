@@ -20,7 +20,7 @@ from loader.tumblr_loader import TumblrLoader
 # import sys
 # sys.path.append("../")
 
-# from postCalendar.models import Calendar
+# from workspace_editor.models import Calendar
 # from account.models import Account
 # import loader.models
 

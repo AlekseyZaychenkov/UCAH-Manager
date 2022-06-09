@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     # "ecomapp",
 
     'account',
-    'postCalendar',
+    'workspace_editor',
     'loader',
 
     'widget_tweaks',

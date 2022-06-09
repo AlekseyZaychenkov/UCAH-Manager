@@ -171,21 +171,7 @@ fieldset .fieldBox {
 
 /* WIDGETS */
 
-.calendarnav-previous {
-    top: 0;
-    left: auto;
-    right: 10px;
-}
 
-.calendarnav-next {
-    top: 0;
-    right: auto;
-    left: 10px;
-}
-
-.calendar caption, .calendarbox h2 {
-    text-align: center;
-}
 
 .selector {
     float: right;
