@@ -26,7 +26,12 @@ import requests
 def getPostsForCalender(selected_calendar):
     posts = list()
     calendar = Calendar.objects.get(calendar_id=selected_calendar)
+    # TODO: (hard) investigate, why compilation.id from cassandra could be saved to saved to calendar.compilation_id with different encoding
+    if not calendar.compilation_id:
+        comp_id = createCompilation().id
+        calendar.compilation_id = comp_id
     compilation = Compilation.objects.get(id=calendar.compilation_id)
+
     if compilation:
         post_ids = compilation.post_ids
         for id in post_ids:
@@ -49,18 +54,11 @@ def homeView(request):
         firstCalendar = Calendar.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
         if firstCalendar:
             selected_calendar = firstCalendar.calendar_id
+            firstCalendar.compilation_id = createCompilation().id
+            # TODO: (hard) investigate, why compilation.id from cassandra could be saved to saved to calendar.compilation_id with different encoding
 
-    # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
-    #  only current user compilations
-    if "selected_compilation_id" in request.GET:
-        selected_compilation_id = request.GET["selected_compilation_id"]
-        firstCompilation = True
-    else:
-        print("Getting firstCompilation")
-        firstCompilation = Compilation.objects.limit(0)[0]
-        print(f"firstCompilation: '{firstCompilation}'")
-        if firstCompilation:
-            selected_compilation_id = firstCompilation.id
+
+
 
 
     if request.POST:
