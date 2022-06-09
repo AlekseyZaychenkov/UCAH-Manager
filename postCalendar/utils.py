@@ -10,6 +10,7 @@ def copy_post_to_compilation(recipient_compilation_id, post_id, copy_files=False
     # savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
     path = generate_storage_patch(PATH_TO_STORE, others="createdForSchedule")
     saved_file_addresses = save_files(path, old_post.file_urls)
+    print(f"copy_post_to_compilation old_post.text: {old_post.text}")
 
     post = PostEntry.create(
         # information about original post
@@ -35,6 +36,10 @@ def copy_post_to_compilation(recipient_compilation_id, post_id, copy_files=False
     )
     post.update()
     compilation = Compilation.objects.get(id=recipient_compilation_id)
+
+
+    print(f"copy_post_to_compilation post.text: {post.text}")
+    print(f"copy_post_to_compilation post: {post}")
 
     # TODO: redouble this fragment of code
     if compilation.post_ids is None:

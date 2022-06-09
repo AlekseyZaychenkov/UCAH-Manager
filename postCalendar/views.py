@@ -25,23 +25,12 @@ import requests
 
 def getPostsForCalender(selected_calendar):
     posts = list()
-
-    print(f"getPostsForCalender selected_calendar: {selected_calendar}")
     calendar = Calendar.objects.get(calendar_id=selected_calendar)
-    print(f"getPostsForCalender calendar: {calendar}")
-
-    id = calendar.compilation_id
-    print(f"getPostsForCalender calendar.compilation_id: {id}")
-
-
     compilation = Compilation.objects.get(id=calendar.compilation_id)
-    print(f"getPostsForCalender compilation: {compilation}")
     if compilation:
         post_ids = compilation.post_ids
-        print(f"getPostsForCalender post_ids: {str(post_ids)}")
-
         for id in post_ids:
-            posts.append(PostEntry.objects(id=id))
+            posts.append(PostEntry.objects.get(id=id))
 
     return posts
 
