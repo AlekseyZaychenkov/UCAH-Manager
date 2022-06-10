@@ -176,32 +176,32 @@
 
                             <ul class="nav nav-tabs" id="myTab" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link active" id="editcalendar-tab" data-toggle="tab" href="#editcalendar" role="tab" aria-controls="editcalendar" aria-selected="true">Edit</a>
+                                    <a class="nav-link active" id="editschedule-tab" data-toggle="tab" href="#editschedule" role="tab" aria-controls="editschedule" aria-selected="true">Edit</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link" id="mycalendars-tab" data-toggle="tab" href="#mycalendars" role="tab" aria-controls="mycalendars" aria-selected="false">Schedules</a>
+                                    <a class="nav-link" id="myschedules-tab" data-toggle="tab" href="#myschedules" role="tab" aria-controls="myschedules" aria-selected="false">Schedules</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <a class="nav-link" id="compilations-tab" data-toggle="tab" href="#compilations" role="tab" aria-controls="compilations" aria-selected="false">Compilations</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link" id="settingscalendar-tab" data-toggle="tab" href="#settingscalendar" role="tab" aria-controls="settingscalendar" aria-selected="false">Settings</a>
+                                    <a class="nav-link" id="settingsschedule-tab" data-toggle="tab" href="#settingsschedule" role="tab" aria-controls="settingsschedule" aria-selected="false">Settings</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <a class="nav-link" id="createcalendar-tab" data-toggle="tab" href="#createcalendar" role="tab" aria-controls="createcalendar" aria-selected="false">Create</a>
+                                    <a class="nav-link" id="createschedule-tab" data-toggle="tab" href="#createschedule" role="tab" aria-controls="createschedule" aria-selected="false">Create</a>
                                 </li>
                             </ul>
 
                             <div class="tab-content" id="myTabContent">
 
 
-                                <div class="tab-pane fade show active" id="editcalendar" role="tabpanel" aria-labelledby="editcalendar-tab">
+                                <div class="tab-pane fade show active" id="editschedule" role="tabpanel" aria-labelledby="editschedule-tab">
                                     <form method="post" class="mt-3">
-                                        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.calendar_id.as_hidden }}
+                                        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.schedule_id.as_hidden }}
                                         <div class="form-label-group">
-                                            {% render_field settingsform.calendars class="form-control" onchange="calendarChanged()" %} {{ settingsform.calendars.errors }}
+                                            {% render_field settingsform.schedules class="form-control" onchange="scheduleChanged()" %} {{ settingsform.schedules.errors }}
                                         </div>
-                                        {% if calendars|length > 0 %}
+                                        {% if schedules|length > 0 %}
 
                                         <h4>Add to the schedule</h4>
 
@@ -306,20 +306,20 @@
 
 
 
-                                <div class="tab-pane fade" id="mycalendars" role="tabpanel" aria-labelledby="mycalendars-tab">
+                                <div class="tab-pane fade" id="myschedules" role="tabpanel" aria-labelledby="myschedules-tab">
                                     <div class="row mt-3">
                                         <div class="col-md-12">
                                             <ul class="list-group">
-                                                {% for calendar in my_calendars %}
+                                                {% for schedule in my_schedules %}
                                                 <li class="list-group-item ml-3">
-                                                    {{ calendar.name }} {% if selected_calendar != calendar.calendar_id %}
-                                                    <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_calendar={{calendar.calendar_id}}">Show</a>
+                                                    {{ schedule.name }} {% if selected_schedule != schedule.schedule_id %}
+                                                    <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_schedule={{schedule.schedule_id}}">Show</a>
                                                     {% endif %}
                                                 </li>
                                                 {% endfor %}
                                             </ul>
                                             <hr />
-                                            {% if calendars|length > 0 %}
+                                            {% if schedules|length > 0 %}
                                             <h4>Create new post</h4>
                                             <form method="post" class="mt-3">
                                                 {% csrf_token %}
@@ -342,7 +342,7 @@
                                         <div class="col-md-12">
                                             <ul class="list-group">
                                                 {% for compilation in my_compilations %}
-                                                    {% if compilation.resource != Compilation.calendarFormCreated %}
+                                                    {% if compilation.resource != Compilation.scheduleFormCreated %}
                                                         <li class="list-group-item ml-3">
                                                             {{ compilation.name }} (from {{ compilation.resource }}) {% if selected_compilation_id != compilation.id %}
                                                             <a type="button" class="btn btn-sm btn-outline-secondary float-right" href="{% url 'home' %}?selected_compilation_id={{compilation.id}}">Show</a>
@@ -359,11 +359,11 @@
 
 
 
-                                <div class="tab-pane fade" id="settingscalendar" role="tabpanel" aria-labelledby="settingscalendar-tab">
+                                <div class="tab-pane fade" id="settingsschedule" role="tabpanel" aria-labelledby="settingsschedule-tab">
                                     <form method="post" class="mt-3">
-                                        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.calendar_id.as_hidden }}
+                                        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.schedule_id.as_hidden }}
                                         <div class="form-label-group">
-                                            {% render_field settingsform.calendars class="form-control" onchange="calendarChanged()" %} {{ settingsform.calendars.errors }}
+                                            {% render_field settingsform.schedules class="form-control" onchange="scheduleChanged()" %} {{ settingsform.schedules.errors }}
                                         </div>
                                         <div class="form-label-group">
                                             {% render_field settingsform.name class="form-control" %}
@@ -407,7 +407,7 @@
 
 
 
-                                <div class="tab-pane fade" id="createcalendar" role="tabpanel" aria-labelledby="createcalendar-tab">
+                                <div class="tab-pane fade" id="createschedule" role="tabpanel" aria-labelledby="createschedule-tab">
                                     <form method="post" class="mt-3">
                                         {% csrf_token %}
                                         <div class="form-label-group">

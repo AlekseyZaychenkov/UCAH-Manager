@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django import forms
-from workspace_editor.models import Calendar, Event
+from workspace_editor.models import Schedule, Event
 from account.models import Account
 from django.db.models import Q
 from loader.models import Compilation
@@ -15,84 +15,84 @@ from loader.utils import create_compilation
 from workspace_editor.utils import copy_post_to_compilation
 
 
-class CalendarForm(forms.ModelForm):
+class ScheduleForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
 
     class Meta:
-        model = Calendar
+        model = Schedule
         exclude = ("owner", "visible_for", "editable_by")
 
     def set_owner(self, user):
-        calendar = self.instance
-        calendar.owner_id = user.pk
-        self.instance = calendar
+        schedule = self.instance
+        schedule.owner_id = user.pk
+        self.instance = schedule
 
     def save(self, commit=True):
-        calendar = self.instance
-        calendar.compilation_id = createCompilation().id
-        calendar.save()
+        schedule = self.instance
+        schedule.compilation_id = createCompilation().id
+        schedule.save()
 
         for email in self.cleaned_data["visible_for"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                calendar.visible_for.add(user.pk)
+                schedule.visible_for.add(user.pk)
         for email in self.cleaned_data["editable_by"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                calendar.editable_by.add(user.pk)
+                schedule.editable_by.add(user.pk)
 
         if commit:
-            calendar.save()
+            schedule.save()
 
-        return calendar
+        return schedule
 
 
-def get_calendars(user_id):
-    calendars = Calendar.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
+def get_schedules(user_id):
+    schedules = Schedule.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
     choices = []
 
-    for calendar in calendars:
-        choices.append((calendar.pk, calendar.name))
+    for schedule in schedules:
+        choices.append((schedule.pk, schedule.name))
 
     return choices
 
 
-class CalendarSettingsForm(CalendarForm):
+class ScheduleSettingsForm(ScheduleForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
-    calendar_id = forms.CharField(required=True)
+    schedule_id = forms.CharField(required=True)
 
     class Meta:
-        model = Calendar
+        model = Schedule
         exclude = ("visible_for", "editable_by",)
 
     def __init__(self, *args, **kwargs):
-        super(CalendarSettingsForm, self).__init__(*args, **kwargs)
+        super(ScheduleSettingsForm, self).__init__(*args, **kwargs)
         if self.initial:
-            self.fields["calendars"] = forms.ChoiceField(choices=get_calendars(self.initial["user_id"]), required=True)
+            self.fields["schedules"] = forms.ChoiceField(choices=get_schedules(self.initial["user_id"]), required=True)
 
     def save(self, commit=True):
-        calendar = Calendar.objects.get(calendar_id=self.cleaned_data["calendar_id"])
-        calendar.compilation_id = createCompilation().id
-        calendar.name = self.cleaned_data["name"]
-        calendar.editable_by.clear()
-        calendar.visible_for.clear()
+        schedule = Schedule.objects.get(schedule_id=self.cleaned_data["schedule_id"])
+        schedule.compilation_id = createCompilation().id
+        schedule.name = self.cleaned_data["name"]
+        schedule.editable_by.clear()
+        schedule.visible_for.clear()
 
         for email in self.cleaned_data["visible_for"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                calendar.visible_for.add(user.pk)
+                schedule.visible_for.add(user.pk)
 
         for email in self.cleaned_data["editable_by"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                calendar.editable_by.add(user.pk)
+                schedule.editable_by.add(user.pk)
 
         if commit:
-            calendar.save()
+            schedule.save()
 
-        return calendar
+        return schedule
 
 
 class EventCreateForm(forms.ModelForm):
@@ -103,19 +103,19 @@ class EventCreateForm(forms.ModelForm):
     print(f"EventCreateForm: start_date {start_date}")
 
 
-    def set_calendar(self, calendar_id):
+    def set_schedule(self, schedule_id):
         event = self.instance
-        event.calendar_id = calendar_id
+        event.schedule_id = schedule_id
         self.instance = event
 
-    def add_to_compilation(self, calendar_id):
-        calendar = Calendar.objects.get(calendar_id=calendar_id)
+    def add_to_compilation(self, schedule_id):
+        schedule = Schedule.objects.get(schedule_id=schedule_id)
         post_id = self.instance.post_id
-        copy_post_to_compilation(calendar.compilation_id, post_id, True)
+        copy_post_to_compilation(schedule.compilation_id, post_id, True)
 
     class Meta:
         model = Event
-        exclude = ('calendar', 'end_date', 'event_type')
+        exclude = ('schedule', 'end_date', 'event_type')
 
 
 class EventEditForm(forms.ModelForm):
@@ -137,7 +137,7 @@ class EventEditForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ("calendar",)
+        exclude = ("schedule",)
 
 
         # compilation = Compilation.create(
