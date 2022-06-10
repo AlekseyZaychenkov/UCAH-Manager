@@ -23,6 +23,26 @@ Migrate db (from /UCAH-Manager/loader):
     python3 ./manage.py sync_cassandra
 
 
+Create and prepare virtual environment (from /UCAH-Manager):
+
+    python3.10 -m venv venv
+    source venv/bin/activate
+    pip3 install -r requirements.txt
+    python3.10 -m pip install --upgrade pip
 
 
 
+Run script for start container with cassandra (from /UCAH-Manager/.ci) 
+    
+    cassandra_start.sh
+
+Sync db:
+
+    python3.10 manage.py makemigrations
+    python3.10 manage.py syncdb
+    python3.10 manage.py migrate --run-syncdb
+
+
+Run app:
+    
+    python manage.py runserver

@@ -4,10 +4,9 @@
 /.idea/workspace.xml
 /credentials.py
 /media/photo_and_video_storage/
-/credentials.py
 /db.sqlite3
 /account/migrations
-/postCalendar/migrations
+/workspace_editor/migrations
 /.idea/shelf/Changes.xml
 /.idea/shelf/Changes1.xml
 /.idea/shelf/Changes1/favicon.ico

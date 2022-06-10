@@ -7,7 +7,7 @@ from cassandra.cqlengine.management import drop_table
 from utils import Utils
 
 import sys
-sys.path.append("../postCalendar")
+sys.path.append("../workspace_editor")
 from models import ExampleModel
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'

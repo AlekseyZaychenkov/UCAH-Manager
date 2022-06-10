@@ -7,10 +7,10 @@
       <sourceFolder url="file://$MODULE_DIR$/account" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/loader" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/photo_and_video_storage" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/postCalendar" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/static_cdn" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/templates" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/media" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/workspace_editor" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -519,9 +519,7 @@
 .fa-plane:before {
   content: "\f072";
 }
-.fa-calendar:before {
-  content: "\f073";
-}
+
 .fa-random:before {
   content: "\f074";
 }
@@ -1039,9 +1037,7 @@
 .fa-shield:before {
   content: "\f132";
 }
-.fa-calendar-o:before {
-  content: "\f133";
-}
+
 .fa-fire-extinguisher:before {
   content: "\f134";
 }

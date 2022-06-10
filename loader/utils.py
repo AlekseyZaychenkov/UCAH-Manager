@@ -150,7 +150,7 @@ def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
 def save_files(storagePath, file_urls):
     if storagePath is not None:
         print(f"Trying to create directory '{storagePath}'")
-        os.makedirs(storagePath)
+        os.makedirs(storagePath, exist_ok=True)
 
     # TODO: implement realization for cloud (google-drive) storing
     savedFileAddresses = list()
