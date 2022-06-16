@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from cassandra.cqlengine.management import sync_table
 from loader.models import PostEntry, Compilation
-from loader.utils import Utils, save_files
+from loader.utils import Utils, save_files, create_tumblr_client
 
 import pathlib
 
@@ -12,7 +12,7 @@ import pathlib
 class TumblrLoader:
 
     def __init__(self):
-        self.client = Utils.createTumblrClient()
+        self.client = create_tumblr_client()
         sync_table(PostEntry)
         sync_table(Compilation)
 

@@ -46,3 +46,16 @@ Sync db:
 Run app:
     
     python manage.py runserver
+
+
+
+
+
+Getting VK oath token:
+
+    https://oauth.vk.com/authorize?client_id=client_id&display=page&redirect_uri=https://example&scope=offline,wall,manage,groups&response_type=token&v=5.131&state=123456
+    
+    where client_id - id of standalone APP
+    https://example - page of redirection
+    
+    then copy token for access to API methods
