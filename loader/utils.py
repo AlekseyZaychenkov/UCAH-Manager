@@ -5,10 +5,14 @@ from cassandra.cqlengine import connection
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 import pytumblr as pytumblr
+import vk_api as vk_api
+# import vk
 import urllib
 
+
 from loader.models import Compilation, PostEntry, ExampleModel
-from credentials import OATH_SECRET, CONSUMER_SECRET, CONSUMER_KEY, OATH_TOKEN
+from credentials import TUMBLR_OATH_SECRET, TUMBLR_CONSUMER_SECRET, TUMBLR_CONSUMER_KEY, TUMBLR_OATH_TOKEN, VK_APP_ID, \
+    VK_USER_LOGIN, VK_USER_PASSWORD, VK_UCA_GROUP_TOKEN, VK_AUTHORIZATION_CODE
 
 # import sys
 # sys.path.append("../../loader")
@@ -44,13 +48,28 @@ class Utils:
 
 
     @staticmethod
-    def createTumblrClient():
+    def create_tumblr_client():
         return pytumblr.TumblrRestClient(
-            CONSUMER_KEY,
-            CONSUMER_SECRET,
-            OATH_TOKEN,
-            OATH_SECRET
+            TUMBLR_CONSUMER_KEY,
+            TUMBLR_CONSUMER_SECRET,
+            TUMBLR_OATH_TOKEN,
+            TUMBLR_OATH_SECRET
         )
+
+    @staticmethod
+    def create_vk_client():
+        # session = vk_api.VkApi(VK_APP_ID, VK_USER_LOGIN, VK_USER_PASSWORD)
+        session = vk_api.VkApi(VK_USER_LOGIN, VK_USER_PASSWORD)
+        session.auth()
+        return session
+
+
+
+    # @staticmethod
+    # def create_vk_session():
+    #     session = vk.VkApi(VK_APP_ID, VK_USER_LOGIN, VK_USER_PASSWORD)
+    #     session.auth()
+    #     return session
 
 
 # TODO: rename storage to storage_path
@@ -79,14 +98,49 @@ def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
     return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
 
 
-    @staticmethod
-    def createTumblrClient():
-        return pytumblr.TumblrRestClient(
-            CONSUMER_KEY,
-            CONSUMER_SECRET,
-            OATH_TOKEN,
-            OATH_SECRET
-        )
+
+def create_tumblr_client():
+    return pytumblr.TumblrRestClient(
+        TUMBLR_CONSUMER_KEY,
+        TUMBLR_CONSUMER_SECRET,
+        TUMBLR_OATH_TOKEN,
+        TUMBLR_OATH_SECRET
+    )
+
+    # @staticmethod
+    # def create_vk_client():
+    #     pass
+    #     # return pytumblr.TumblrRestClient(
+    #     #     CONSUMER_KEY,
+    #     #     CONSUMER_SECRET,
+    #     #     OATH_TOKEN,
+    #     #     OATH_SECRET
+    #     # )
+
+def two_factor():
+    code = input('Enter Two-factor Auth code: ')
+    remember_device = True
+    return code, remember_device
+
+
+
+def create_vk_session():
+    # session = vk_api.VkApi(app_id=VK_APP_ID ,
+    #                        login=VK_USER_LOGIN,
+    #                        password=VK_USER_PASSWORD,
+    #                        token=VK_AUTHORIZATION_CODE
+    #                        )
+    PERMISSIONS = 'friends,photos,messages,wall,offline,docs,groups,stats'
+
+    session = vk_api.VkApi(VK_USER_LOGIN, VK_USER_PASSWORD,
+                 auth_handler=two_factor,
+                 app_id=VK_APP_ID,
+                 scope=PERMISSIONS,
+                 config_filename='vk_config.v2.json')
+    session.auth()
+    print(f"session: {session}")
+    # session.auth()
+    return session
 
 
 # TODO: rename storage to storage_path
@@ -111,16 +165,6 @@ def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
     if tags == None:
         t = ''
     return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
-
-
-    @staticmethod
-    def createTumblrClient():
-        return pytumblr.TumblrRestClient(
-            CONSUMER_KEY,
-            CONSUMER_SECRET,
-            OATH_TOKEN,
-            OATH_SECRET
-        )
 
 
 # TODO: rename storage to storage_path

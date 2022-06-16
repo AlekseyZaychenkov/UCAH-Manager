@@ -4,6 +4,9 @@ django-cassandra-engine==1.7.0
 pytest==7.1.1
 
 PyTumblr==0.1.0
+vk-api==11.9.8
+vk==2.0.2
+
 beautifulsoup4==4.8.1
 Pillow==9.1.0
 setuptools==44.0.0
