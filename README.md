@@ -53,7 +53,7 @@ Run app:
 
 Getting VK oath token:
 
-    https://oauth.vk.com/authorize?client_id=client_id&display=page&redirect_uri=https://example&scope=offline,wall,manage,groups&response_type=token&v=5.131&state=123456
+    https://oauth.vk.com/authorize?client_id=8194798&display=page&redirect_uri=https://vk.com/luciole7&scope=offline,wall,manage,photos,wall,offline,docs,groups&response_type=token&v=5.131&state=123456
     
     where client_id - id of standalone APP
     https://example - page of redirection

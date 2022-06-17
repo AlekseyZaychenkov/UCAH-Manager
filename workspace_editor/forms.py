@@ -162,8 +162,8 @@ class CompilationCreateForm(forms.Form):
     print(f"search_tag: '{search_tag}'")
     search_tag  = 'paleontology'
 
-
-    storage                      = generate_storage_patch(PATH_TO_STORE, tags=search_tag)
+    # TODO: check if its works
+    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
     post_ids                     = list()
 
 
@@ -201,8 +201,8 @@ class CompilationCreateForm(forms.Form):
     # TODO: remove hardcode
     search_tag  = 'paleontology'
 
-
-    storage                      = generate_storage_patch(PATH_TO_STORE, tags=search_tag)
+    # TODO: check if its works
+    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
     post_ids                     = list()
 
 
@@ -238,8 +238,8 @@ class CompilationCreateForm(forms.Form):
     print(f"search_tag: '{search_tag}'")
     search_tag  = 'paleontology'
 
-
-    storage                      = generate_storage_patch(PATH_TO_STORE, tags=search_tag)
+    # TODO: check if its works
+    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
     post_ids                     = list()
 
 

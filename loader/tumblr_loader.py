@@ -71,7 +71,9 @@ class TumblrLoader:
             # TODO: implement method for saving images from urls to local or cloud storage
             # TODO: use enam for choising type of storage
             # TODO: figure is possible use mock for tests calling self.save_files() or not
-            savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
+
+            post_storage_path = os.path.join(storagePath, str(postId))
+            savedFileAddresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
 
             postEntry = PostEntry.create(
                 # information about original post

@@ -14,7 +14,9 @@ wheel==0.37.1
 asgiref==3.5.0
 django-widget-tweaks==1.4.8
 djangorestframework==3.12.4
+
 image==1.5.33
+
 
 pytz==2021.1
 six==1.15.0

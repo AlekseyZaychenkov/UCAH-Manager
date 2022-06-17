@@ -38,6 +38,7 @@ class PostEntry(Model):
     compilation_id        = columns.UUID(required=False, primary_key=True, clustering_order="ASC")
 
     # information for posting
+    # TODO: rename to stored_file_paths
     stored_file_urls      = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download
     # TODO: rename to external_links
     external_link_urls    = columns.List(value_type=columns.Text, required=False)

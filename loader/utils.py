@@ -5,8 +5,7 @@ from cassandra.cqlengine import connection
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 import pytumblr as pytumblr
-import vk_api as vk_api
-# import vk
+import vk
 import urllib
 
 
@@ -85,17 +84,13 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
-    if isinstance(tags, str):
-        t = tags
-    if isinstance(tags, list):
-        t = '_'.join(tags)
-    if tags == None:
-        t = ''
-
-    # TODO: set instead of datatime name of compilation
-    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+def generate_storage_patch(root_path, comp_id=None, others=None):
+    path = root_path
+    if comp_id:
+        path = os.path.join(path, str(comp_id))
+    if others:
+        path = os.path.join(path, others)
+    return path
 
 
 
@@ -156,15 +151,13 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
-    if isinstance(tags, str):
-        t = tags
-    if isinstance(tags, list):
-        t = '_'.join(tags)
-    if tags == None:
-        t = ''
-    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+def generate_storage_patch(root_path, comp_id=None, others=None):
+    path = root_path
+    if comp_id:
+        path = os.path.join(path, str(comp_id))
+    if others:
+        path = os.path.join(path, others)
+    return path
 
 
 # TODO: rename storage to storage_path
@@ -180,15 +173,13 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
-    if isinstance(tags, str):
-        t = tags
-    if isinstance(tags, list):
-        t = '_'.join(tags)
-    if tags == None:
-        t = ''
-    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+def generate_storage_patch(root_path, comp_id=None, others=None):
+    path = root_path
+    if comp_id:
+        path = os.path.join(path, str(comp_id))
+    if others:
+        path = os.path.join(path, others)
+    return path
 
 
 def save_files(storagePath, file_urls):

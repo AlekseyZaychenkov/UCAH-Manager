@@ -38,7 +38,7 @@ class Test_TumblrLoader(SimpleTestCase):
         sync_table(Compilation)
 
         drop_table(PostEntry)
-        drop_table(Compilation)
+        # drop_table(Compilation)
 
     # TODO: make the function fixture
     def create_parser(self):
@@ -76,8 +76,6 @@ class Test_TumblrLoader(SimpleTestCase):
 
         tag = 'paleontology'
         number = 20
-        path = generate_storage_patch(PATH_TO_STORE, tags=tag)
-
 
         # tmblr.download(number, tag=tag)
 
@@ -87,9 +85,13 @@ class Test_TumblrLoader(SimpleTestCase):
             resource='Tumbler',
             name='Test',
             tag=tag,
-            blogs=blogs,
-            storage=path
+            blogs=blogs
         )
+
+        path = generate_storage_patch(PATH_TO_STORE, comp_id=compilation.id)
+        compilation.storage = path
+
+
         tmblr.download(compilation, number, storagePath=path, blogs=blogs)
 
 
@@ -106,12 +108,12 @@ class Test_TumblrLoader(SimpleTestCase):
             # print(f"instance.id_in_social_network: {instance.id_in_social_network}")
             print(f"instance.url: {instance.url}")
             # print(f"instance.posted_date: {instance.posted_date}")
-            # print(f"instance.post_tags: {instance.post_tags}")
+
             # print(f"instance.text: {instance.text}")
             print(f"instance.file_urls: {instance.file_urls}")
             print(f"instance.external_link_urls: {instance.external_link_urls}")
 
-            # print(f"instance.tags: {instance.tags}")
+            print(f"instance.tags: {instance.tags}")
 
             print(f"instance.file_urls: {instance.stored_file_urls}")
             # print(f"instance.external_link_urls: {instance.external_link_urls}")

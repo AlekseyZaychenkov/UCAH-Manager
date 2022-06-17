@@ -37,8 +37,8 @@ class Test_VKLoader(SimpleTestCase):
         sync_table(PostEntry)
         sync_table(Compilation)
 
-        drop_table(PostEntry)
-        drop_table(Compilation)
+        # drop_table(PostEntry)
+        # drop_table(Compilation)
 
     # TODO: make the function fixture
     def create_loader(self):
@@ -61,15 +61,37 @@ class Test_VKLoader(SimpleTestCase):
 
 
     def test_upload(self):
-
         self.prepare_db()
 
         vk = self.create_loader()
 
-        vk.upload()
+        posts = PostEntry.objects.all()
+        posts = sorted(posts, key=lambda post: post['posted_timestamp'], reverse=True)
+
+        print("PostEntryes:")
+        for post in posts:
+            # print(f"post: {post}")
+
+            # print(f"<===== ===== ===== post.id: {post.id} ===== ===== =====>")
+            #
+            # print(f"post.blog_name: {post.blog_name}")
+            # print(f"post.url: {post.url}")
+            #
+            # print(f"post.tags: {post.tags}")
+            # print(f"post.text: {post.text}")
+            #
+            # print(f"post.external_link_urls: {post.external_link_urls}")
+            # print(f"post.file_urls: {post.stored_file_urls}")
+            #
+            # print(f"<===== ===== =====  * * * * *  ===== ===== =====>\n")
+            # print("\n")
+
+            if len(post.stored_file_urls) > 0:
+                vk.upload(post)
+                break
 
 
-        # self.print_user_info(vk.client)
+
 
 
 
