@@ -33,6 +33,7 @@ class Test_TumblrLoader(SimpleTestCase):
         # settings.configure()
 
         Utils.start_session()
+        drop_table(PostEntry)
 
         sync_table(PostEntry)
         sync_table(Compilation)
@@ -74,25 +75,25 @@ class Test_TumblrLoader(SimpleTestCase):
 
 
 
-        tag = 'paleontology'
-        number = 20
+        tag = 'art timelapse'
+        number = 25
 
         # tmblr.download(number, tag=tag)
 
-        blogs = ['netmassimo', 'kinogane']
+        # blogs = ['netmassimo', 'kinogane']
 
         compilation = create_compilation(
             resource='Tumbler',
             name='Test',
             tag=tag,
-            blogs=blogs
+            # blogs=blogs
         )
 
         path = generate_storage_patch(PATH_TO_STORE, comp_id=compilation.id)
         compilation.storage = path
 
 
-        tmblr.download(compilation, number, storagePath=path, blogs=blogs)
+        tmblr.download(compilation, number, tag=tag, storagePath=path)
 
 
         pe = PostEntry.objects.all()
@@ -110,12 +111,12 @@ class Test_TumblrLoader(SimpleTestCase):
             # print(f"instance.posted_date: {instance.posted_date}")
 
             # print(f"instance.text: {instance.text}")
-            print(f"instance.file_urls: {instance.file_urls}")
-            print(f"instance.external_link_urls: {instance.external_link_urls}")
+            # print(f"instance.file_urls: {instance.file_urls}")
+            # print(f"instance.external_link_urls: {instance.external_link_urls}")
 
             print(f"instance.tags: {instance.tags}")
 
-            print(f"instance.file_urls: {instance.stored_file_urls}")
+            # print(f"instance.file_urls: {instance.stored_file_urls}")
             # print(f"instance.external_link_urls: {instance.external_link_urls}")
             #
             # print(f"instance.description: {instance.description}")

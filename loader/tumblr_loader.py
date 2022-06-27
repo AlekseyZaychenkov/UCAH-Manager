@@ -106,7 +106,7 @@ class TumblrLoader:
             compilation.update()
 
 
-
+    # TODO: add time limit
     def download(self, compilation, number, storagePath=None, tag=None, blogs=None):
         print(f"Getting '{number}' posts from Tambler by tag: '{tag}' and blogs '{blogs}'")
 
@@ -126,6 +126,9 @@ class TumblrLoader:
 
                 print(f"Downloaded '{len(response)}' posts with tag '{tag}' from Tumblr")
                 self.save(response, compilation, storagePath=storagePath, tag=tag)
+
+                if len(response) == 0:
+                    break
 
                 look_before = response[-1]['timestamp']
                 number -= len(response)

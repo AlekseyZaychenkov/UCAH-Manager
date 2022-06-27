@@ -36,11 +36,11 @@ class VKLoader:
         vk.logger.setLevel('DEBUG')
 
 
-        session = vk.Session(access_token=VK_APP_TOKEN)
-        print(f"session: {str(session)}")
+        # session = vk.Session(access_token=VK_APP_TOKEN)
+        # print(f"session: {str(session)}")
 
-        api_vk = vk.API(session)
-        print(f"api_vk: {str(api_vk)}")
+        # api_vk = vk.API(session)
+        # print(f"api_vk: {str(api_vk)}")
 
         # get = api_vk.wall.get(owner_id=f"-{VK_UCA_GROUP_NUMBER}", v=VK_API_VERSION)
         # print(f"get: {str(get)}")
@@ -67,14 +67,14 @@ class VKLoader:
 
             print("Flag 01")
 
-            method_url = api_vk.photos\
-                .getWallUploadServer(group_id=VK_UCA_GROUP_NUMBER,
-                                     access_token=VK_APP_TOKEN,
-                                     v=VK_API_VERSION
-                                     )
+            # method_url = api_vk.photos\
+            #     .getWallUploadServer(group_id=VK_UCA_GROUP_NUMBER,
+            #                          access_token=VK_APP_TOKEN,
+            #                          v=VK_API_VERSION
+            #                          )
             print("Flag 02")
-            print(f"method_url: {method_url}")
-            print(f"method_url['upload_url']: {method_url['upload_url']}")
+            # print(f"method_url: {method_url}")
+            # print(f"method_url['upload_url']: {method_url['upload_url']}")
 
 
             print("Flag 03")
@@ -84,40 +84,99 @@ class VKLoader:
             # print(f"path: {path}")
 
 
-            response = requests.post(method_url['upload_url'],
-                                     files={
-                                         'file': ( 'image.jpg', open(path, 'rb'))
-                                     })
 
 
+
+
+            # путь к вашему изображению
+            img = {'photo': ('img.jpg', open(r'img.jpg', 'rb'))}
+
+            # Получаем ссылку для загрузки изображений
+            method_url = 'https://api.vk.com/method/photos.getWallUploadServer?'
+            data = dict(access_token=VK_APP_TOKEN, gid=VK_UCA_GROUP_NUMBER,
+                        v=VK_API_VERSION)
+            response = requests.post(method_url, data)
+            result = json.loads(response.text)
+            print(f"result 1: {result}")
+            upload_url = result['response']['upload_url']
+
+            # Загружаем изображение на url
+            response = requests.post(upload_url, files=img)
+            result = json.loads(response.text)
+            print(f"result 2: {result}")
+
+            # Сохраняем фото на сервере и получаем id
+            method_url = 'https://api.vk.com/method/photos.saveWallPhoto?'
+            data = dict(access_token=VK_APP_TOKEN, gid=VK_UCA_GROUP_NUMBER, photo=result['photo'], hash=result['hash'], server=result['server'],
+                        v=VK_API_VERSION)
+            response = requests.post(method_url, data)
+            result = json.loads(response.text)['response'][0]['id']
+            print(f"result 3: {result}")
+
+            # Теперь этот id остается лишь прикрепить в attachments метода wall.post
+            method_url = 'https://api.vk.com/method/wall.post?'
+            data = dict(access_token=VK_APP_TOKEN,
+                        owner_id=f"-{VK_UCA_GROUP_NUMBER}",
+                        attachments=f"photo{VK_USER_ID}_{result}",
+                        message='Hello, world',
+                        v=VK_API_VERSION)
+            response = requests.post(method_url, data)
+            result = json.loads(response.text)
+            print(f"result 4: {result}")
+            print("Flag 00000000")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            img_name = os.path.basename(path)
+            # response = requests.post(method_url['upload_url'],
+            #                          files={
+            #                              'photo': ('img.jpg', open(r'img.jpg', 'rb'))
+            #                          })
+            # response = requests.post(method_url['upload_url'],
+            #                          files={
+            #                              'photo': (img_name, open(path, 'rb'))
+            #                          })
 
             print("Flag 03")
 
-            result = json.loads(response.text)
-            print(f"response.text: {response.text}")
-            print(f"result 0: {result}")
+            # result = json.loads(response.text)
+            # print(f"response.text: {response.text}")
+            # print(f"result 0: {result}")
 
-            response_text = response.text
+            # response_text = response.text
+            #
+            # str1 = response_text.split(',"photo":')
+            # str2 = str1[1].split(',"hash":')
+            #
+            # server=result['server'],
+            # photo=str2[0],
+            # hash=result['hash']
 
-            str1 = response_text.split(',"photo":')
-            str2 = str1[1].split(',"hash":')
-
-            server=result['server'],
-            photo=str2[0],
-            hash=result['hash']
-
-            server2=result['server'],
-            photo2=result['photo'],
-            hash2=result['hash']
+            # server2=result['server'],
+            # photo2=result['photo'],
+            # hash2=result['hash']
 
 
             # Сохраняем фото на сервере и получаем id
 
-            response = api_vk.photos.saveWallPhoto(server=int(result['server']),
-                                                   photo=photo,
-                                                   hash=result['hash'],
-                                                   v=VK_API_VERSION
-                                                   )
+            # response = api_vk.photos.saveWallPhoto(server=int(result['server']),
+            #                                        photo=photo,
+            #                                        hash=result['hash'],
+            #                                        v=VK_API_VERSION
+            #                                        )
 
 
 
@@ -132,7 +191,7 @@ class VKLoader:
             #                          )
             # result = json.loads(response.text)['response'][0]['id']
             result = json.loads(response.text)
-            print(f"result 2: {result}")
+            # print(f"result 2: {result}")
 
 
 
