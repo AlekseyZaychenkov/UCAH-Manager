@@ -36,10 +36,10 @@ class VKLoader:
         vk.logger.setLevel('DEBUG')
 
 
-        # session = vk.Session(access_token=VK_APP_TOKEN)
+        session = vk.Session(access_token=VK_APP_TOKEN)
         # print(f"session: {str(session)}")
 
-        # api_vk = vk.API(session)
+        api_vk = vk.API(session)
         # print(f"api_vk: {str(api_vk)}")
 
         # get = api_vk.wall.get(owner_id=f"-{VK_UCA_GROUP_NUMBER}", v=VK_API_VERSION)
@@ -84,46 +84,67 @@ class VKLoader:
             # print(f"path: {path}")
 
 
+            # response = requests.post(method_url['upload_url'],
+            #                          files={
+            #                              'photo': (os.path.basename(path), open(path, 'rb'))
+            #                          })
 
 
-
-
-            # путь к вашему изображению
-            img = {'photo': ('img.jpg', open(r'img.jpg', 'rb'))}
 
             # Получаем ссылку для загрузки изображений
             method_url = 'https://api.vk.com/method/photos.getWallUploadServer?'
-            data = dict(access_token=VK_APP_TOKEN, gid=VK_UCA_GROUP_NUMBER,
-                        v=VK_API_VERSION)
-            response = requests.post(method_url, data)
+            response = requests.post(method_url,
+                                     dict(access_token=VK_APP_TOKEN,
+                                          gid=VK_UCA_GROUP_NUMBER,
+                                          v=VK_API_VERSION)
+                                     )
+
+            # response = api_vk.photos\
+            #     .getWallUploadServer(group_id=VK_UCA_GROUP_NUMBER,
+            #                          access_token=VK_APP_TOKEN,
+            #                          v=VK_API_VERSION
+            #                          )
+
             result = json.loads(response.text)
-            print(f"result 1: {result}")
             upload_url = result['response']['upload_url']
 
-            # Загружаем изображение на url
-            response = requests.post(upload_url, files=img)
-            result = json.loads(response.text)
-            print(f"result 2: {result}")
 
-            # Сохраняем фото на сервере и получаем id
-            method_url = 'https://api.vk.com/method/photos.saveWallPhoto?'
-            data = dict(access_token=VK_APP_TOKEN, gid=VK_UCA_GROUP_NUMBER, photo=result['photo'], hash=result['hash'], server=result['server'],
-                        v=VK_API_VERSION)
-            response = requests.post(method_url, data)
-            result = json.loads(response.text)['response'][0]['id']
-            print(f"result 3: {result}")
+            photo_data = []
+            imgs = ['img.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img7.jpg']
+            attachments = []
+
+
+
+            for img in imgs:
+                # путь к вашему изображению
+                img_f = {'photo': (img, open(img, 'rb'))}
+                n = imgs.index(img)
+
+                # Загружаем изображение на url
+                response = requests.post(upload_url, files=img_f )
+                result = json.loads(response.text)
+                print(f"result 2: {result}")
+
+                # Сохраняем фото на сервере и получаем id
+                photo_data.insert(n, api_vk.photos.saveWallPhoto(server=int(result['server']),
+                                                       photo=result['photo'],
+                                                       hash=result['hash'],
+                                                       v=VK_API_VERSION
+                                                       )
+                                  )
+                attachments.append(f"photo{VK_USER_ID}_{photo_data[n][0]['id']}")
+
 
             # Теперь этот id остается лишь прикрепить в attachments метода wall.post
-            method_url = 'https://api.vk.com/method/wall.post?'
-            data = dict(access_token=VK_APP_TOKEN,
-                        owner_id=f"-{VK_UCA_GROUP_NUMBER}",
-                        attachments=f"photo{VK_USER_ID}_{result}",
-                        message='Hello, world',
-                        v=VK_API_VERSION)
-            response = requests.post(method_url, data)
-            result = json.loads(response.text)
+            result = api_vk.wall.post(
+                        access_token=VK_APP_TOKEN,
+                        owner_id=-VK_UCA_GROUP_NUMBER,
+                        message='Hello world!',
+                        attachments=attachments,
+                        v=VK_API_VERSION
+                        )
+
             print(f"result 4: {result}")
-            print("Flag 00000000")
 
 
 
@@ -137,18 +158,16 @@ class VKLoader:
 
 
 
+            # response = api_vk.photos\
+            #     .getWallUploadServer(group_id=VK_UCA_GROUP_NUMBER,
+            #                          access_token=VK_APP_TOKEN,
+            #                          v=VK_API_VERSION
+            #                          )
 
 
 
-            img_name = os.path.basename(path)
-            # response = requests.post(method_url['upload_url'],
-            #                          files={
-            #                              'photo': ('img.jpg', open(r'img.jpg', 'rb'))
-            #                          })
-            # response = requests.post(method_url['upload_url'],
-            #                          files={
-            #                              'photo': (img_name, open(path, 'rb'))
-            #                          })
+
+
 
             print("Flag 03")
 
@@ -165,18 +184,12 @@ class VKLoader:
             # photo=str2[0],
             # hash=result['hash']
 
-            # server2=result['server'],
-            # photo2=result['photo'],
-            # hash2=result['hash']
+
 
 
             # Сохраняем фото на сервере и получаем id
 
-            # response = api_vk.photos.saveWallPhoto(server=int(result['server']),
-            #                                        photo=photo,
-            #                                        hash=result['hash'],
-            #                                        v=VK_API_VERSION
-            #                                        )
+
 
 
 
@@ -195,13 +208,7 @@ class VKLoader:
 
 
 
-            # Теперь этот id остается лишь прикрепить в attachments метода wall.post
 
-            # vk.wall.post(owner_id=-VK_UCA_GROUP_NUMBER,
-            #              message='Hello world!',
-            #              attachments= "photo" + {owner_id} + "_" + {photo_id}
-            #              v=VK_API_VERSION
-            #              )
 
             method_url = 'https://api.vk.com/method/wall.post?'
             # response = requests.post(method_url,
