@@ -59,3 +59,7 @@ Getting VK oath token:
     https://example - page of redirection
     
     then copy token for access to API methods
+
+
+
+https://oauth.vk.com/authorize?client_id=8194798&display=page&redirect_uri=https://vk.com/luciole7&scope=manage,photos,messages,wall,offline,docs,groups,stats&response_type=token&v=5.131&state=123456
