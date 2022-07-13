@@ -26,7 +26,7 @@ class PostEntry(Model):
     blog_url              = columns.Text(max_length=2048, required=True)
     # TODO: rename to id_in_resource
     id_in_social_network  = columns.BigInt(required=False, index=True)
-    url                   = columns.Text(max_length=2048, required=True)
+    original_post_url     = columns.Text(max_length=2048, required=True)
     posted_date           = columns.Text(max_length=30)
     posted_timestamp      = columns.Integer(required=False, index=True)
     tags                  = columns.List(value_type=columns.Text, required=True)
@@ -45,6 +45,7 @@ class PostEntry(Model):
 
     # information for administration notes and file storing
     description           = columns.Text(required=False)
+    url                   = columns.Text(max_length=2048, required=False)
 
     # information about posting
     # # TODO: implement special map-like structure for storing published posts with statistic about them (postUrl1, likes, comments, likes under comments)

@@ -1,28 +1,15 @@
 import os
 
-from loader.utils import generate_storage_patch
-from loader.utils import create_compilation
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UCA_Manager.settings")
 import django
 django.setup()
 
 from django.test import SimpleTestCase
 from cassandra.cqlengine.management import sync_table
-from cassandra.cqlengine.management import drop_table
-from django.conf import settings
 from loader.utils import Utils
 from loader.models import PostEntry, Compilation
 
-
 from loader.vk_loader import VKLoader
-
-# import sys
-# sys.path.append("../")
-
-# from workspace_editor.models import Schedule
-# from account.models import Account
-# import loader.models
 
 
 class Test_VKLoader(SimpleTestCase):
@@ -70,25 +57,8 @@ class Test_VKLoader(SimpleTestCase):
 
         print("PostEntryes:")
         for post in posts:
-            # print(f"post: {post}")
-
-            # print(f"<===== ===== ===== post.id: {post.id} ===== ===== =====>")
-            #
-            # print(f"post.blog_name: {post.blog_name}")
-            # print(f"post.url: {post.url}")
-            #
-            # print(f"post.tags: {post.tags}")
-            # print(f"post.text: {post.text}")
-            #
-            # print(f"post.external_link_urls: {post.external_link_urls}")
-            # print(f"post.file_urls: {post.stored_file_urls}")
-            #
-            # print(f"<===== ===== =====  * * * * *  ===== ===== =====>\n")
-            # print("\n")
-
-            if len(post.stored_file_urls) > 0:
-                vk.upload(post)
-                break
+            print(f"Started uploading post {post.id}")
+            vk.upload(post)
 
 
 

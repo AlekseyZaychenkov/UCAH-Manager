@@ -10,11 +10,8 @@ import urllib
 
 
 from loader.models import Compilation, PostEntry, ExampleModel
-from credentials import TUMBLR_OATH_SECRET, TUMBLR_CONSUMER_SECRET, TUMBLR_CONSUMER_KEY, TUMBLR_OATH_TOKEN, VK_APP_ID, \
-    VK_USER_LOGIN, VK_USER_PASSWORD, VK_UCA_GROUP_TOKEN, VK_AUTHORIZATION_CODE
+from credentials import TUMBLR_OATH_SECRET, TUMBLR_CONSUMER_SECRET, TUMBLR_CONSUMER_KEY, TUMBLR_OATH_TOKEN
 
-# import sys
-# sys.path.append("../../loader")
 from account.settings import IS_TEST, CASSANDRA_DB_ADRESSES, TEST_CASSANDRA_KEYSPACE_NAME, CASSANDRA_KEYSPACE_NAME
 
 
@@ -55,21 +52,6 @@ class Utils:
             TUMBLR_OATH_SECRET
         )
 
-    @staticmethod
-    def create_vk_client():
-        # session = vk_api.VkApi(VK_APP_ID, VK_USER_LOGIN, VK_USER_PASSWORD)
-        session = vk_api.VkApi(VK_USER_LOGIN, VK_USER_PASSWORD)
-        session.auth()
-        return session
-
-
-
-    # @staticmethod
-    # def create_vk_session():
-    #     session = vk.VkApi(VK_APP_ID, VK_USER_LOGIN, VK_USER_PASSWORD)
-    #     session.auth()
-    #     return session
-
 
 # TODO: rename storage to storage_path
 def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
@@ -102,40 +84,16 @@ def create_tumblr_client():
         TUMBLR_OATH_SECRET
     )
 
-    # @staticmethod
-    # def create_vk_client():
-    #     pass
-    #     # return pytumblr.TumblrRestClient(
-    #     #     CONSUMER_KEY,
-    #     #     CONSUMER_SECRET,
-    #     #     OATH_TOKEN,
-    #     #     OATH_SECRET
-    #     # )
+
+def create_vk_client(token):
+    session = vk.Session(access_token=token)
+    return vk.API(session)
+
 
 def two_factor():
     code = input('Enter Two-factor Auth code: ')
     remember_device = True
     return code, remember_device
-
-
-
-def create_vk_session():
-    # session = vk_api.VkApi(app_id=VK_APP_ID ,
-    #                        login=VK_USER_LOGIN,
-    #                        password=VK_USER_PASSWORD,
-    #                        token=VK_AUTHORIZATION_CODE
-    #                        )
-    PERMISSIONS = 'friends,photos,messages,wall,offline,docs,groups,stats'
-
-    session = vk_api.VkApi(VK_USER_LOGIN, VK_USER_PASSWORD,
-                 auth_handler=two_factor,
-                 app_id=VK_APP_ID,
-                 scope=PERMISSIONS,
-                 config_filename='vk_config.v2.json')
-    session.auth()
-    print(f"session: {session}")
-    # session.auth()
-    return session
 
 
 # TODO: rename storage to storage_path

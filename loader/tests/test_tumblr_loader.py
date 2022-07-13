@@ -75,7 +75,7 @@ class Test_TumblrLoader(SimpleTestCase):
 
 
 
-        tag = 'art timelapse'
+        tag = 'art'
         number = 25
 
         # tmblr.download(number, tag=tag)

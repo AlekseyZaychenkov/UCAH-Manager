@@ -80,7 +80,7 @@ class TumblrLoader:
                 blog_name             = post['blog']['name'],
                 blog_url              = post['blog']['url'],
                 id_in_social_network  = postId,
-                url                   = post['post_url'],
+                original_post_url     = post['post_url'],
                 posted_date           = post['date'],
                 posted_timestamp      = post['timestamp'],
                 tags                  = post['tags'],
