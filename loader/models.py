@@ -24,23 +24,28 @@ class PostEntry(Model):
     # information about original post
     blog_name             = columns.Text(max_length=50, required=True)
     blog_url              = columns.Text(max_length=2048, required=True)
+    # TODO: rename to id_in_resource
     id_in_social_network  = columns.BigInt(required=False, index=True)
-    url                   = columns.Text(max_length=2048, required=True)
+    original_post_url     = columns.Text(max_length=2048, required=True)
     posted_date           = columns.Text(max_length=30)
     posted_timestamp      = columns.Integer(required=False, index=True)
     tags                  = columns.List(value_type=columns.Text, required=True)
     text                  = columns.Text(required=False)
-    file_urls             = columns.List(value_type=columns.Text, required=False)  # list of urls
+    file_urls             = columns.List(value_type=columns.Text, required=False)
 
     # information about search query parameters
+    # TODO: remove field and change places, where it used
     compilation_id        = columns.UUID(required=False, primary_key=True, clustering_order="ASC")
 
     # information for posting
+    # TODO: rename to stored_file_paths
     stored_file_urls      = columns.List(value_type=columns.Text, required=False)  # list of local paths or urls do download
+    # TODO: rename to external_links
     external_link_urls    = columns.List(value_type=columns.Text, required=False)
 
     # information for administration notes and file storing
     description           = columns.Text(required=False)
+    url                   = columns.Text(max_length=2048, required=False)
 
     # information about posting
     # # TODO: implement special map-like structure for storing published posts with statistic about them (postUrl1, likes, comments, likes under comments)
@@ -53,6 +58,7 @@ class Compilation(Model):
     name                  = columns.Text(max_length=512, required=False)
 
     resource              = columns.Text(max_length=64, required=False)
+    # TODO: search_tags = columns.List(value_type=columns.Text, required=False)
     search_tag            = columns.Text(max_length=512, required=False)
     search_blogs          = columns.List(value_type=columns.Text, required=False)
     update_date           = columns.Text(max_length=30, required=True, index=True)

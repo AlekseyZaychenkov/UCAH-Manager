@@ -5,13 +5,13 @@ from cassandra.cqlengine import connection
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 import pytumblr as pytumblr
+import vk
 import urllib
 
-from loader.models import Compilation, PostEntry, ExampleModel
-from credentials import OATH_SECRET, CONSUMER_SECRET, CONSUMER_KEY, OATH_TOKEN
 
-# import sys
-# sys.path.append("../../loader")
+from loader.models import Compilation, PostEntry, ExampleModel
+from credentials import TUMBLR_OATH_SECRET, TUMBLR_CONSUMER_SECRET, TUMBLR_CONSUMER_KEY, TUMBLR_OATH_TOKEN
+
 from account.settings import IS_TEST, CASSANDRA_DB_ADRESSES, TEST_CASSANDRA_KEYSPACE_NAME, CASSANDRA_KEYSPACE_NAME
 
 
@@ -44,12 +44,12 @@ class Utils:
 
 
     @staticmethod
-    def createTumblrClient():
+    def create_tumblr_client():
         return pytumblr.TumblrRestClient(
-            CONSUMER_KEY,
-            CONSUMER_SECRET,
-            OATH_TOKEN,
-            OATH_SECRET
+            TUMBLR_CONSUMER_KEY,
+            TUMBLR_CONSUMER_SECRET,
+            TUMBLR_OATH_TOKEN,
+            TUMBLR_OATH_SECRET
         )
 
 
@@ -66,27 +66,34 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
-    if isinstance(tags, str):
-        t = tags
-    if isinstance(tags, list):
-        t = '_'.join(tags)
-    if tags == None:
-        t = ''
-
-    # TODO: set instead of datatime name of compilation
-    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+def generate_storage_patch(root_path, comp_id=None, others=None):
+    path = root_path
+    if comp_id:
+        path = os.path.join(path, str(comp_id))
+    if others:
+        path = os.path.join(path, others)
+    return path
 
 
-    @staticmethod
-    def createTumblrClient():
-        return pytumblr.TumblrRestClient(
-            CONSUMER_KEY,
-            CONSUMER_SECRET,
-            OATH_TOKEN,
-            OATH_SECRET
-        )
+
+def create_tumblr_client():
+    return pytumblr.TumblrRestClient(
+        TUMBLR_CONSUMER_KEY,
+        TUMBLR_CONSUMER_SECRET,
+        TUMBLR_OATH_TOKEN,
+        TUMBLR_OATH_SECRET
+    )
+
+
+def create_vk_client(token):
+    session = vk.Session(access_token=token)
+    return vk.API(session)
+
+
+def two_factor():
+    code = input('Enter Two-factor Auth code: ')
+    remember_device = True
+    return code, remember_device
 
 
 # TODO: rename storage to storage_path
@@ -102,25 +109,13 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
-    if isinstance(tags, str):
-        t = tags
-    if isinstance(tags, list):
-        t = '_'.join(tags)
-    if tags == None:
-        t = ''
-    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
-
-
-    @staticmethod
-    def createTumblrClient():
-        return pytumblr.TumblrRestClient(
-            CONSUMER_KEY,
-            CONSUMER_SECRET,
-            OATH_TOKEN,
-            OATH_SECRET
-        )
+def generate_storage_patch(root_path, comp_id=None, others=None):
+    path = root_path
+    if comp_id:
+        path = os.path.join(path, str(comp_id))
+    if others:
+        path = os.path.join(path, others)
+    return path
 
 
 # TODO: rename storage to storage_path
@@ -136,15 +131,13 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-def generate_storage_patch(root_path, tags=None, blogs=None, others=None):
-    b = '_'.join(blogs) if blogs else ""
-    if isinstance(tags, str):
-        t = tags
-    if isinstance(tags, list):
-        t = '_'.join(tags)
-    if tags == None:
-        t = ''
-    return os.path.join(root_path, f"tags--{t}-blogs--{b}-others-{others}--datetime--{datetime.now()}")
+def generate_storage_patch(root_path, comp_id=None, others=None):
+    path = root_path
+    if comp_id:
+        path = os.path.join(path, str(comp_id))
+    if others:
+        path = os.path.join(path, others)
+    return path
 
 
 def save_files(storagePath, file_urls):

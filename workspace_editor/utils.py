@@ -8,7 +8,7 @@ def copy_post_to_compilation(recipient_compilation_id, post_id, copy_files=False
 
     # TODO: create storage path  user/workspace/schedule
     # savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
-    path = generate_storage_patch(PATH_TO_STORE, others="createdForSchedule")
+    path = generate_storage_patch(PATH_TO_STORE, comp_id=recipient_compilation_id, others="createdForSchedule")
     saved_file_addresses = save_files(path, old_post.file_urls)
     print(f"copy_post_to_compilation old_post.text: {old_post.text}")
 

@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from cassandra.cqlengine.management import sync_table
 from loader.models import PostEntry, Compilation
-from loader.utils import Utils, save_files
+from loader.utils import Utils, save_files, create_tumblr_client
 
 import pathlib
 
@@ -12,7 +12,7 @@ import pathlib
 class TumblrLoader:
 
     def __init__(self):
-        self.client = Utils.createTumblrClient()
+        self.client = create_tumblr_client()
         sync_table(PostEntry)
         sync_table(Compilation)
 
@@ -71,14 +71,16 @@ class TumblrLoader:
             # TODO: implement method for saving images from urls to local or cloud storage
             # TODO: use enam for choising type of storage
             # TODO: figure is possible use mock for tests calling self.save_files() or not
-            savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
+
+            post_storage_path = os.path.join(storagePath, str(postId))
+            savedFileAddresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
 
             postEntry = PostEntry.create(
                 # information about original post
                 blog_name             = post['blog']['name'],
                 blog_url              = post['blog']['url'],
                 id_in_social_network  = postId,
-                url                   = post['post_url'],
+                original_post_url     = post['post_url'],
                 posted_date           = post['date'],
                 posted_timestamp      = post['timestamp'],
                 tags                  = post['tags'],
@@ -104,7 +106,7 @@ class TumblrLoader:
             compilation.update()
 
 
-
+    # TODO: add time limit
     def download(self, compilation, number, storagePath=None, tag=None, blogs=None):
         print(f"Getting '{number}' posts from Tambler by tag: '{tag}' and blogs '{blogs}'")
 
@@ -124,6 +126,9 @@ class TumblrLoader:
 
                 print(f"Downloaded '{len(response)}' posts with tag '{tag}' from Tumblr")
                 self.save(response, compilation, storagePath=storagePath, tag=tag)
+
+                if len(response) == 0:
+                    break
 
                 look_before = response[-1]['timestamp']
                 number -= len(response)
