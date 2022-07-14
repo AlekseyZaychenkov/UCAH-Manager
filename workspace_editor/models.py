@@ -3,19 +3,24 @@ from account.models import Account
 
 
 class Schedule(models.Model):
-    schedule_id     = models.AutoField(primary_key=True)
-    compilation_id  = models.CharField(max_length=128, null=True, blank=True)
-    post_id         = models.CharField(max_length=128, null=True, blank=True)
-    name            = models.CharField(max_length=255)
-    owner           = models.ForeignKey(Account, on_delete=models.CASCADE)
-    visible_for     = models.ManyToManyField(Account, related_name="visible_for")
-    editable_by     = models.ManyToManyField(Account, related_name="editable_by")
+    schedule_id                 = models.AutoField(primary_key=True)
+    name                        = models.CharField(max_length=255)
+    owner                       = models.ForeignKey(Account, on_delete=models.CASCADE)
+    visible_for                 = models.ManyToManyField(Account, related_name="visible_for")
+    editable_by                 = models.ManyToManyField(Account, related_name="editable_by")
+
+    # workspace
+    scheduled_compilation_id    = models.CharField(max_length=128)
+    main_compilation_id         = models.CharField(max_length=128)
+    main_compilation_archive_id = models.CharField(max_length=128)
+
 
     def __str__(self):
         return self.name
 
 
 class Event(models.Model):
+    # TODO: remove
     TYPE_CHOICES = [
         ("AR", 'Arbeit'),
         ("FR", 'Freizeit'),

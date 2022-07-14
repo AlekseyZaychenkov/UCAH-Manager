@@ -1,27 +1,29 @@
 # -*- coding: utf-8 -*-
 from django import forms
+
+from workspace_editor.utils import copy_post_to
 from workspace_editor.models import Schedule, Event
 from account.models import Account
 from django.db.models import Q
-from loader.models import Compilation
-from loader import tumblr_loader
-from loader.tests.test_tumblr_loader import Test_TumblrLoader
 from UCA_Manager.settings import PATH_TO_STORE
 
 from datetime import datetime
 
-from loader.utils import generate_storage_patch
-from loader.utils import create_compilation
-from workspace_editor.utils import copy_post_to_compilation
+from loader.utils import generate_storage_patch, create_empty_compilation
+
 
 
 class ScheduleForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
+    scheduled_compilation_id = create_empty_compilation().id
+    main_compilation_id = create_empty_compilation().id
+    main_compilation_archive_id = create_empty_compilation().id
 
     class Meta:
         model = Schedule
-        exclude = ("owner", "visible_for", "editable_by")
+        exclude = ("owner", "visible_for", "editable_by",
+                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id")
 
     def set_owner(self, user):
         schedule = self.instance
@@ -30,7 +32,9 @@ class ScheduleForm(forms.ModelForm):
 
     def save(self, commit=True):
         schedule = self.instance
-        schedule.compilation_id = createCompilation().id
+        schedule.scheduled_compilation_id = create_empty_compilation().id
+        schedule.main_compilation_id = create_empty_compilation().id
+        schedule.main_compilation_archive_id = create_empty_compilation().id
         schedule.save()
 
         for email in self.cleaned_data["visible_for"].split(";"):
@@ -46,16 +50,6 @@ class ScheduleForm(forms.ModelForm):
             schedule.save()
 
         return schedule
-
-
-def get_schedules(user_id):
-    schedules = Schedule.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
-    choices = []
-
-    for schedule in schedules:
-        choices.append((schedule.pk, schedule.name))
-
-    return choices
 
 
 class ScheduleSettingsForm(ScheduleForm):
@@ -74,7 +68,6 @@ class ScheduleSettingsForm(ScheduleForm):
 
     def save(self, commit=True):
         schedule = Schedule.objects.get(schedule_id=self.cleaned_data["schedule_id"])
-        schedule.compilation_id = createCompilation().id
         schedule.name = self.cleaned_data["name"]
         schedule.editable_by.clear()
         schedule.visible_for.clear()
@@ -96,22 +89,29 @@ class ScheduleSettingsForm(ScheduleForm):
 
 
 class EventCreateForm(forms.ModelForm):
-
     name = 'EventCreateForm test'
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
     post_id = forms.CharField(required=True)
     print(f"EventCreateForm: start_date {start_date}")
 
-
-    def set_schedule(self, schedule_id):
-        event = self.instance
-        event.schedule_id = schedule_id
-        self.instance = event
-
-    def add_to_compilation(self, schedule_id):
-        schedule = Schedule.objects.get(schedule_id=schedule_id)
+    def safe_copied_post(self, recipient_compilation_id):
         post_id = self.instance.post_id
-        copy_post_to_compilation(schedule.compilation_id, post_id, True)
+        print(f"post_id: {post_id}")
+        new_post_id = copy_post_to(post_id, recipient_compilation_id)
+        self.instance.post_id = new_post_id
+
+    def set_schedule(self, schedule):
+        event = self.instance
+        print(f"schedule: {schedule}")
+        event.schedule = schedule
+        self.instance = event
+        # schedule = Schedule.objects.get(schedule_id=schedule_id)
+        # event_id = event.event_id
+        # print(f"schedule: {schedule}")
+        # print(f"event_id: {event_id}")
+        # print(f"event.event_id: {event.event_id}")
+        # print(f"schedule.event_id: {schedule.event_id}")
+        # schedule.event_id = event_id
 
     class Meta:
         model = Event
@@ -151,6 +151,7 @@ class EventEditForm(forms.ModelForm):
         #     post_ids                     = list()
         # )
 
+
 class CompilationCreateForm(forms.Form):
 
     name                         = forms.CharField(required=True)
@@ -187,6 +188,7 @@ class CompilationCreateForm(forms.Form):
         #
         #     post_ids                     = list()
         # )
+
 
 class CompilationCreateForm(forms.Form):
 
@@ -227,6 +229,7 @@ class CompilationCreateForm(forms.Form):
         #     post_ids                     = list()
         # )
 
+
 class CompilationCreateForm(forms.Form):
 
     name                         = forms.CharField(required=True)
@@ -253,6 +256,11 @@ class CompilationCreateForm(forms.Form):
     #     exclude = ('resource',)
 
 
-def createCompilation():
-    path = generate_storage_patch(PATH_TO_STORE, others='autocreated')
-    return create_compilation(resource='Created bu user', tag=None, blogs=None, storage=path)
+def get_schedules(user_id):
+    schedules = Schedule.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
+    choices = []
+
+    for schedule in schedules:
+        choices.append((schedule.pk, schedule.name))
+
+    return choices

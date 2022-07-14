@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from workspace_editor.models import Schedule
-from loader.models import PostEntry
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
