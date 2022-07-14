@@ -115,21 +115,19 @@ class EventCreateForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ('schedule', 'end_date', 'event_type')
+        exclude = ('schedule_id', 'end_date', 'event_type')
 
 
 class EventEditForm(forms.ModelForm):
-
+    name = 'EventEditForm test'
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
-    end_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=False)
-    event_id = forms.CharField(required=True)
+    print(f"EventCreateForm: start_date {str(start_date)}")
+
+    # TODO: check and fix
 
     def save(self, commit=True):
-        event = Event.objects.get(event_id=self.cleaned_data["event_id"])
-        event.name = self.cleaned_data["name"]
+        event = self.instance
         event.start_date = self.cleaned_data["start_date"]
-        event.end_date = self.cleaned_data["end_date"]
-        event.event_type = self.cleaned_data["event_type"]
         if commit:
             event.save()
 
@@ -137,7 +135,7 @@ class EventEditForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ("schedule",)
+        exclude = ('post_id', 'schedule_id', 'end_date', 'event_type')
 
 
         # compilation = Compilation.create(
