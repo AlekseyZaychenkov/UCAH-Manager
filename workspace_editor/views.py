@@ -24,62 +24,27 @@ import requests
 
 
 def get_events_for_schedule(selected_schedule_id):
-    events_to_posts = dict()
-    schedule = Schedule.objects.get(schedule_id=selected_schedule_id)
-    # TODO: (hard) investigate, why compilation.id from cassandra could be saved to saved to schedule.compilation_id with different encoding
-
-    events = Event.objects.filter(schedule_id=selected_schedule_id).order_by('start_date')
-    last_event = events.last()
-
-
-
-    print(f"last_event.start_date: {last_event.start_date}")
-    print(f"last_event.start_date.date(): {last_event.start_date.date()}")
-
-
     dates_to_events = dict()
     count = 0
     date = datetime.date.today()
-    print(f"datetime.date.today(): {date}")
+
     while (True):
-        print(f"date: {date}")
         if Event.objects.filter(schedule_id=selected_schedule_id, start_date__year=date.year,
                                 start_date__month=date.month, start_date__day=date.day).exists():
-
-
             events = Event.objects.filter(schedule_id=selected_schedule_id,start_date__year=date.year,
-                                                         start_date__month=date.month, start_date__day=date.day) \
+                                          start_date__month=date.month, start_date__day=date.day) \
                                                             .order_by('start_date')
             events_to_posts = dict()
             for event in events:
-                print(f"event.event_id: {str(event.event_id)} event.start_date: {str(event.start_date)}")
                 events_to_posts[event] = PostEntry.objects.get(id=event.post_id)
-
             dates_to_events[date] = events_to_posts
-
-
+        else:
+            dates_to_events[date] = []
 
         date += datetime.timedelta(days=1)
         count += 1
-
-        print(f"count: {count} exists() {Event.objects.filter(start_date__range=[date, date + datetime.timedelta(days=365)]).exists()}")
         if count >= 6 and not Event.objects.filter(start_date__range=[date, date + datetime.timedelta(days=365)]).exists():
             break
-
-    # print(f"dates_to_events: {dates_to_events}")
-
-
-    # NextDay_Date = datetime.datetime.today() + datetime.timedelta(days=1)
-
-
-    for event in events:
-        print(f"event.event_id: {str(event.event_id)} event.start_date: {str(event.start_date)}")
-
-
-        events_to_posts[event] = PostEntry.objects.get(id=event.post_id)
-        # print(f"PostEntry.objects.get(id=event.post_id): {PostEntry.objects.get(id=event.post_id)}")
-
-
 
     return dates_to_events
 
