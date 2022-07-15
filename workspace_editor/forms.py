@@ -2,7 +2,7 @@
 from django import forms
 
 from workspace_editor.utils import copy_post_to
-from workspace_editor.models import Schedule, Event
+from workspace_editor.models import Workspace, Event, Schedule, ScheduleArchive
 from account.models import Account
 from django.db.models import Q
 from UCA_Manager.settings import PATH_TO_STORE
@@ -13,75 +13,88 @@ from loader.utils import generate_storage_patch, create_empty_compilation
 
 
 
-class ScheduleForm(forms.ModelForm):
+class WorkspaceForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
-    scheduled_compilation_id = create_empty_compilation().id
-    main_compilation_id = create_empty_compilation().id
-    main_compilation_archive_id = create_empty_compilation().id
 
     class Meta:
-        model = Schedule
-        exclude = ("owner", "visible_for", "editable_by",
+        model = Workspace
+        exclude = ("owner", "visible_for", "editable_by", "schedule_id", "schedulearchive_id",
                    "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id")
 
     def set_owner(self, user):
-        schedule = self.instance
-        schedule.owner_id = user.pk
-        self.instance = schedule
+        workspace = self.instance
+        workspace.owner_id = user.pk
+        self.instance = workspace
 
     def save(self, commit=True):
-        schedule = self.instance
-        schedule.scheduled_compilation_id = create_empty_compilation().id
-        schedule.main_compilation_id = create_empty_compilation().id
-        schedule.main_compilation_archive_id = create_empty_compilation().id
-        schedule.save()
+        workspace = self.instance
+
+        workspace.scheduled_compilation_id = create_empty_compilation().id
+        workspace.main_compilation_id = create_empty_compilation().id
+        workspace.main_compilation_archive_id = create_empty_compilation().id
+
 
         for email in self.cleaned_data["visible_for"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                schedule.visible_for.add(user.pk)
+                workspace.visible_for.add(user.pk)
         for email in self.cleaned_data["editable_by"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                schedule.editable_by.add(user.pk)
+                workspace.editable_by.add(user.pk)
 
         if commit:
-            schedule.save()
+            workspace.save()
 
-        return schedule
+        return workspace
 
 
-class ScheduleSettingsForm(ScheduleForm):
+class WorkspaceSettingsForm(WorkspaceForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
     schedule_id = forms.CharField(required=True)
 
     class Meta:
-        model = Schedule
+        model = Workspace
         exclude = ("visible_for", "editable_by",)
 
     def __init__(self, *args, **kwargs):
-        super(ScheduleSettingsForm, self).__init__(*args, **kwargs)
+        super(WorkspaceSettingsForm, self).__init__(*args, **kwargs)
         if self.initial:
-            self.fields["schedules"] = forms.ChoiceField(choices=get_schedules(self.initial["user_id"]), required=True)
+            self.fields["workspaces"] = forms.ChoiceField(choices=get_workspaces(self.initial["user_id"]), required=True)
 
     def save(self, commit=True):
-        schedule = Schedule.objects.get(schedule_id=self.cleaned_data["schedule_id"])
-        schedule.name = self.cleaned_data["name"]
-        schedule.editable_by.clear()
-        schedule.visible_for.clear()
+        workspace = Workspace.objects.get(workspace_id=self.cleaned_data["workspace_id"])
+        workspace.name = self.cleaned_data["name"]
+        workspace.editable_by.clear()
+        workspace.visible_for.clear()
 
         for email in self.cleaned_data["visible_for"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                schedule.visible_for.add(user.pk)
+                workspace.visible_for.add(user.pk)
 
         for email in self.cleaned_data["editable_by"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                schedule.editable_by.add(user.pk)
+                workspace.editable_by.add(user.pk)
 
+        if commit:
+            workspace.save()
+
+        return workspace
+
+
+class ScheduleForm(forms.ModelForm):
+    workspace = forms.CharField(required=False)
+
+    class Meta:
+        model = Schedule
+        fields = '__all__'
+
+    def save(self, commit=True):
+        schedule = self.instance
         if commit:
             schedule.save()
 
@@ -102,20 +115,12 @@ class EventCreateForm(forms.ModelForm):
 
     def set_schedule(self, schedule):
         event = self.instance
-        print(f"schedule: {schedule}")
         event.schedule = schedule
         self.instance = event
-        # schedule = Schedule.objects.get(schedule_id=schedule_id)
-        # event_id = event.event_id
-        # print(f"schedule: {schedule}")
-        # print(f"event_id: {event_id}")
-        # print(f"event.event_id: {event.event_id}")
-        # print(f"schedule.event_id: {schedule.event_id}")
-        # schedule.event_id = event_id
 
     class Meta:
         model = Event
-        exclude = ('schedule_id', 'end_date', 'event_type')
+        exclude = ('schedule', 'end_date', 'event_type')
 
 
 class EventEditForm(forms.ModelForm):
@@ -138,18 +143,6 @@ class EventEditForm(forms.ModelForm):
         exclude = ('post_id', 'schedule_id', 'end_date', 'event_type')
 
 
-        # compilation = Compilation.create(
-        #     name                         = 'Test',
-        #     resource                     = 'Tumbler',
-        #     search_tag                   = tag,
-        #     search_blogs                 = blogs,
-        #     downloaded_date              = str(datetime.now()),
-        #     storage                      = storagePath,
-        #
-        #     post_ids                     = list()
-        # )
-
-
 class CompilationCreateForm(forms.Form):
 
     name                         = forms.CharField(required=True)
@@ -254,11 +247,11 @@ class CompilationCreateForm(forms.Form):
     #     exclude = ('resource',)
 
 
-def get_schedules(user_id):
-    schedules = Schedule.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
+def get_workspaces(user_id):
+    workspaces = Workspace.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
     choices = []
 
-    for schedule in schedules:
-        choices.append((schedule.pk, schedule.name))
+    for workspace in workspaces:
+        choices.append((workspace.pk, workspace.name))
 
     return choices

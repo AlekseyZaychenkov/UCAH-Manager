@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from workspace_editor.models import Schedule
+from workspace_editor.models import Workspace
 
 
-class ScheduleSerializer(serializers.ModelSerializer):
+class WorkspaceSerializer(serializers.ModelSerializer):
     visible_for = serializers.SerializerMethodField("get_visible_for")
     editable_by = serializers.SerializerMethodField("get_editable_by")
 
@@ -13,7 +13,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         return "; ".join(obj.editable_by.all().values_list('email', flat=True))
 
     class Meta:
-        model = Schedule
+        model = Workspace
         exclude = ("owner",)
 
 # class PostSerializer(serializers.ModelSerializer):

@@ -39,7 +39,7 @@ class Test_TumblrLoader(SimpleTestCase):
         sync_table(Compilation)
 
         drop_table(PostEntry)
-        # drop_table(Compilation)
+        drop_table(Compilation)
 
     # TODO: make the function fixture
     def create_parser(self):
