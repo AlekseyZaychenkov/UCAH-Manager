@@ -72,7 +72,7 @@ def home(request):
 
                 workspace.save()
             else:
-                print(form.errors.as_data())
+                log.error(form.errors.as_data())
 
 
         elif workspace and request.POST['action'] == 'edit':
@@ -80,7 +80,7 @@ def home(request):
             if form.is_valid():
                 form.save(commit=True)
             else:
-                print(form.errors.as_data())
+                log.error(form.errors.as_data())
 
 
         elif workspace and request.POST['action'] == 'delete':
@@ -100,7 +100,7 @@ def home(request):
                 form.save()
                 create_event_form = EventCreateForm()
             else:
-                print(form.errors.as_data())
+                log.error(form.errors.as_data())
                 create_event_form = form
 
 
@@ -110,7 +110,7 @@ def home(request):
                 form.save()
                 edit_event_form = EventEditForm()
             else:
-                print(form.errors.as_data())
+                log.error(form.errors.as_data())
                 edit_event_form = form
 
 
@@ -119,7 +119,7 @@ def home(request):
             if form.is_valid():
                  form.save()
             else:
-                print(form.errors.as_data())
+                log.error(form.errors.as_data())
 
         # if request.POST['action'] == 'edit_compilation':
         #     form = CompilationForm(request.POST)
