@@ -1,4 +1,4 @@
-from loader.models import PostEntry, Compilation
+from loader.models import Post, Compilation
 from UCA_Manager.settings import PATH_TO_STORE
 from loader.utils import generate_storage_patch, save_files
 
@@ -6,7 +6,7 @@ from loader.utils import generate_storage_patch, save_files
 def copy_post_to(post_id, recipient_compilation_id, copy_files=False):
     compilation = Compilation.objects.get(id=recipient_compilation_id)
 
-    old_post = PostEntry.objects.get(id=post_id)
+    old_post = Post.objects.get(id=post_id)
 
     # TODO: create storage path  user/workspace/schedule
     # savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
@@ -14,7 +14,7 @@ def copy_post_to(post_id, recipient_compilation_id, copy_files=False):
     saved_file_addresses = save_files(path, old_post.file_urls)
     print(f"copy_post_to() - old_post.text: {old_post.text}")
 
-    new_post = PostEntry.create(
+    new_post = Post.create(
         # information about original post
         blog_name             = old_post.blog_name,
         blog_url              = old_post.blog_url,

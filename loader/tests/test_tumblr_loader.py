@@ -12,7 +12,7 @@ from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 from django.conf import settings
 from loader.utils import Utils
-from loader.models import PostEntry, Compilation
+from loader.models import Post, Compilation
 from UCA_Manager.settings import PATH_TO_STORE
 
 from loader.tumblr_loader import TumblrLoader
@@ -33,13 +33,13 @@ class Test_TumblrLoader(SimpleTestCase):
         # settings.configure()
 
         Utils.start_session()
-        drop_table(PostEntry)
+        drop_table(Post)
 
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
 
-        drop_table(PostEntry)
-        drop_table(Compilation)
+        # drop_table(Post)
+        # drop_table(Compilation)
 
     # TODO: make the function fixture
     def create_parser(self):
@@ -96,11 +96,11 @@ class Test_TumblrLoader(SimpleTestCase):
         tmblr.download(compilation, number, tag=tag, storagePath=path)
 
 
-        pe = PostEntry.objects.all()
+        pe = Post.objects.all()
         pe = sorted(pe, key=lambda post: post['posted_timestamp'], reverse=True)
 
 
-        print("PostEntryes:")
+        print("Posts:")
         for instance in pe:
             print(f"<===== ===== ===== instance.id: {instance.id} ===== ===== =====>")
 
@@ -141,8 +141,8 @@ class Test_TumblrLoader(SimpleTestCase):
 
 
 
-        # pe = PostEntry.objects.values()
-        # print("PostEntryes:")
+        # pe = Post.objects.values()
+        # print("Posts:")
         # for instance in pe:
         #     print(str(pe))
         #

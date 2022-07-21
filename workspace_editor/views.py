@@ -31,18 +31,20 @@ def home(request):
     schedule = None
     create_event_form = None
     edit_event_form = None
-    first_workspace = False
-    workspace_id = int(request.GET['workspace_id'])
+    first_workspace = None
+    workspace_id = None
+    if 'workspace_id' in request.GET:
+        workspace_id = int(request.GET['workspace_id'])
 
 
     # Events stuff
     if workspace_id and Workspace.objects.filter(workspace_id=workspace_id) \
             .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
         workspace = Workspace.objects.get(workspace_id=workspace_id)
-    elif workspace_id is None:
-        log.info(f"You don't have available workspaces")
-    else:
+    elif workspace_id is not None:
         log.warning(f"Workspace with id workspace_id={workspace_id} doesn't exists or you don't have access to it")
+    else:
+        log.info(f"You don't have available workspaces")
         first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
         if first_workspace:
             workspace_id = first_workspace.workspace_id
@@ -71,6 +73,7 @@ def home(request):
                 workspace.save()
             else:
                 print(form.errors.as_data())
+
 
         elif workspace and request.POST['action'] == 'edit':
             form = WorkspaceSettingsForm(request.POST)
@@ -136,8 +139,6 @@ def home(request):
 
     context = prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id)
 
-    # return HttpResponseRedirect(reverse('workspace', args=(id,)), context)
-    # return HttpResponseRedirect("workspace.html")
 
     return render(request, "workspace.html", context)
 
@@ -168,7 +169,7 @@ def prepare_context(request, schedule, create_event_form, edit_event_form, works
         if create_event_form:
             context["edit_event_form"] = edit_event_form
 
-        all_post_entries = PostEntry.objects.all()
+        all_post_entries = Post.objects.all()
         # TODO: change number of items and make slider
         paginator = Paginator(all_post_entries, 8)
 
@@ -195,7 +196,7 @@ def get_events_for_schedule(selected_schedule_id):
                 .order_by('start_date')
             events_to_posts = dict()
             for event in events:
-                events_to_posts[event] = PostEntry.objects.get(id=event.post_id)
+                events_to_posts[event] = Post.objects.get(id=event.post_id)
 
             dates_to_events[(date, day_of_week)] = events_to_posts
         else:

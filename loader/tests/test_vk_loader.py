@@ -7,7 +7,7 @@ django.setup()
 from django.test import SimpleTestCase
 from cassandra.cqlengine.management import sync_table
 from loader.utils import Utils
-from loader.models import PostEntry, Compilation
+from loader.models import Post, Compilation
 
 from loader.vk_loader import VKLoader
 
@@ -21,10 +21,10 @@ class Test_VKLoader(SimpleTestCase):
 
         Utils.start_session()
 
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
 
-        # drop_table(PostEntry)
+        # drop_table(Post)
         # drop_table(Compilation)
 
     # TODO: make the function fixture
@@ -52,10 +52,10 @@ class Test_VKLoader(SimpleTestCase):
 
         vk = self.create_loader()
 
-        posts = PostEntry.objects.all()
+        posts = Post.objects.all()
         posts = sorted(posts, key=lambda post: post['posted_timestamp'], reverse=True)
 
-        print("PostEntryes:")
+        print("Postes:")
         for post in posts:
             print(f"Started uploading post {post.id}")
             vk.upload(post)

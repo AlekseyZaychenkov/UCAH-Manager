@@ -9,7 +9,7 @@ import vk
 from cassandra.cqlengine.management import sync_table
 
 from credentials import VK_UCA_GROUP_NUMBER, VK_USER_ID, VK_APP_TOKEN,  VK_API_VERSION
-from loader.models import PostEntry, Compilation
+from loader.models import Post, Compilation
 from utils import create_vk_client
 
 
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 class VKLoader:
 
     def __init__(self):
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
         self.vk_client = create_vk_client(VK_APP_TOKEN)
         vk.logger.setLevel('DEBUG')

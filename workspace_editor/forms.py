@@ -102,14 +102,11 @@ class ScheduleForm(forms.ModelForm):
 
 
 class EventCreateForm(forms.ModelForm):
-    name = 'EventCreateForm test'
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
     post_id = forms.CharField(required=True)
-    print(f"EventCreateForm: start_date {start_date}")
 
     def safe_copied_post(self, recipient_compilation_id):
         post_id = self.instance.post_id
-        print(f"post_id: {post_id}")
         new_post_id = copy_post_to(post_id, recipient_compilation_id)
         self.instance.post_id = new_post_id
 
@@ -120,11 +117,10 @@ class EventCreateForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ('schedule', 'end_date', 'event_type')
+        exclude = ('schedule', )
 
 
 class EventEditForm(forms.ModelForm):
-    name = 'EventEditForm test'
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
     print(f"EventCreateForm: start_date {str(start_date)}")
 
@@ -139,7 +135,7 @@ class EventEditForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ('post_id', 'schedule_id', 'end_date', 'event_type')
+        exclude = ('post_id', 'schedule_id', )
 
 
 class CompilationCreateForm(forms.Form):

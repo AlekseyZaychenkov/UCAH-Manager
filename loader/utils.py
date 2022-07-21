@@ -9,7 +9,7 @@ import vk
 import urllib
 
 
-from loader.models import Compilation, PostEntry, ExampleModel
+from loader.models import Compilation, Post
 from credentials import TUMBLR_OATH_SECRET, TUMBLR_CONSUMER_SECRET, TUMBLR_CONSUMER_KEY, TUMBLR_OATH_TOKEN
 
 from account.settings import IS_TEST, CASSANDRA_DB_ADRESSES, TEST_CASSANDRA_KEYSPACE_NAME, CASSANDRA_KEYSPACE_NAME, \
@@ -31,15 +31,13 @@ class Utils:
 
     @staticmethod
     def sync_models():
-        sync_table(ExampleModel)
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
 
 
     @staticmethod
     def drop_models():
-        drop_table(ExampleModel)
-        drop_table(PostEntry)
+        drop_table(Post)
         drop_table(Compilation)
 
 

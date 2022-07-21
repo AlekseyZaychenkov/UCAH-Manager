@@ -10,15 +10,7 @@ import sys
 sys.path.append("../../loader")
 
 
-#  TODO: to figure out, what object type to use for translating search queries from user to backand application
-class ExampleModel(Model):
-    example_id            = columns.UUID(primary_key=True, default=uuid.uuid4)
-    example_type          = columns.Integer(index=True)
-    created_at            = columns.DateTime()
-    description           = columns.Text(required=False)
-
-
-class PostEntry(Model):
+class Post(Model):
     id                    = columns.UUID(primary_key=True, default=uuid.uuid4)
 
     # information about original post
@@ -34,7 +26,6 @@ class PostEntry(Model):
     file_urls             = columns.List(value_type=columns.Text, required=False)
 
     # information about search query parameters
-    # TODO: remove field and change places, where it used
     compilation_id        = columns.UUID(required=False, primary_key=True, clustering_order="ASC")
 
     # information for posting
@@ -50,8 +41,6 @@ class PostEntry(Model):
 
     # information after posted
     url                   = columns.Text(max_length=2048, required=False)
-    # # TODO: implement special map-like structure for storing published posts with statistic about them (postUrl1, likes, comments, likes under comments)
-    # where_posted        = columns.Map(key_type=columns.Text, value_type=columns.Text, required=False)  # list of dicts "blogName: {'dateTime1 - postUrl1', 'dateTime2 - postUrl2', ...}"
 
 
 class Compilation(Model):
