@@ -15,22 +15,3 @@ class WorkspaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workspace
         exclude = ("owner",)
-
-# class PostSerializer(serializers.ModelSerializer):
-#
-#     title  = serializers.SerializerMethodField("get_title")
-#     start = serializers.SerializerMethodField("get_start")
-#     end = serializers.SerializerMethodField("get_end")
-#
-#     def get_title(self, obj):
-#         return obj.name
-#
-#     def get_start(self,obj):
-#         return obj.start_date
-#
-#     def get_end(self,obj):
-#         return obj.end_date
-#
-#     class Meta:
-#         model = PostEntry
-#         fields = ("title","start","end","icon","event_id","event_type")

@@ -129,7 +129,6 @@ class EventEditForm(forms.ModelForm):
     print(f"EventCreateForm: start_date {str(start_date)}")
 
     # TODO: check and fix
-
     def save(self, commit=True):
         event = self.instance
         event.start_date = self.cleaned_data["start_date"]

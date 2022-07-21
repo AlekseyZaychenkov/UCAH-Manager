@@ -89,7 +89,6 @@ class ArchiveEvent(models.Model):
         return self.name
 
 
-
 class Blog(models.Model):
     blog_id         = models.AutoField(primary_key=True)
     workspace       = models.ForeignKey(Workspace, on_delete=models.CASCADE)

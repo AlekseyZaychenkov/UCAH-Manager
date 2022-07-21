@@ -13,7 +13,7 @@ from loader.models import PostEntry, Compilation
 from utils import create_vk_client
 
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class VKLoader:
@@ -39,10 +39,10 @@ class VKLoader:
         while (delay):
             delay = False
             try:
-                logger.debug(f"[{self.__make_time()}] Uploading files to server vk...")
+                log.debug(f"[{self.__make_time()}] Uploading files to server vk...")
                 attachments = self.__prepare_attachments(post.stored_file_urls)
 
-                logger.debug(f"[{self.__make_time()}] Posting...'.")
+                log.debug(f"[{self.__make_time()}] Posting...'.")
                 self.vk_client.wall.post(access_token=VK_APP_TOKEN,
                                          owner_id=-VK_UCA_GROUP_NUMBER,
                                          message=message,
@@ -51,17 +51,17 @@ class VKLoader:
                                          v=VK_API_VERSION
                                          )
 
-                logger.info(f"[{self.__make_time()}] post {post.id} successfully uploaded.")
+                log.info(f"[{self.__make_time()}] post {post.id} successfully uploaded.")
 
             except vk.exceptions.VkAPIError as err:
-                logger.warning(f"[{self.__make_time()}] - Error {err}")
+                log.warning(f"[{self.__make_time()}] - Error {err}")
                 if int(err.code) == 6:
                     delay = True
                     sleep(retry_after)
-                    logger.debug(f"[{self.__make_time()}] sleep {retry_after} sec")
+                    log.debug(f"[{self.__make_time()}] sleep {retry_after} sec")
 
             except Exception as err:
-                logger.error(f"[{self.__make_time()}] - Error {err}")
+                log.error(f"[{self.__make_time()}] - Error {err}")
 
 
     def __make_time(self):
@@ -77,7 +77,7 @@ class VKLoader:
             paths.append(str(os.path.join('..', path)))
 
         if len(paths) > 10:
-            logger.warning('Created post has more then 10 attachments! VK only allows 10 attachments per 1 post!')
+            log.warning('Created post has more then 10 attachments! VK only allows 10 attachments per 1 post!')
             paths = paths[:10]
 
         attachments = []
