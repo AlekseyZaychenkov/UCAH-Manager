@@ -1,115 +1,125 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+import logging
 
-from workspace_editor.forms import ScheduleForm, ScheduleSettingsForm, EventCreateForm, EventEditForm, CompilationCreateForm
-from workspace_editor.models import Schedule
-from workspace_editor.serializers import ScheduleSerializer\
-    # , PostSerializer
+from workspace_editor.forms import ScheduleForm, EventCreateForm, EventEditForm, CompilationCreateForm
+from workspace_editor.models import Workspace
+from workspace_editor.serializers import WorkspaceSerializer
 from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect, HttpResponse
+
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.http import JsonResponse
-from django.conf import settings
-from django.db.models import Q
 from .models import *
+import calendar
 from .forms import *
+import datetime
 
 from loader.models import *
 
-import requests
+log = logging.getLogger(__name__)
 
-
-
-def getPostsForCalender(selected_schedule):
-    posts = list()
-    schedule = Schedule.objects.get(schedule_id=selected_schedule)
-    # TODO: (hard) investigate, why compilation.id from cassandra could be saved to saved to schedule.compilation_id with different encoding
-    if not schedule.compilation_id:
-        comp_id = createCompilation().id
-        schedule.compilation_id = comp_id
-    compilation = Compilation.objects.get(id=schedule.compilation_id)
-
-    if compilation:
-        post_ids = compilation.post_ids
-        for id in post_ids:
-            posts.append(PostEntry.objects.get(id=id))
-
-    return posts
 
 
 @login_required
-def homeView(request):
-    context = {}
-    createEventForm = EventCreateForm()
-    editEventForm = EventEditForm()
+def home(request):
+
+    workspace = None
+    schedule = None
+    create_event_form = None
+    edit_event_form = None
+    first_workspace = None
+    workspace_id = None
+    if 'workspace_id' in request.GET:
+        workspace_id = int(request.GET['workspace_id'])
+
 
     # Events stuff
-    if "selected_schedule" in request.GET:
-        selected_schedule = request.GET["selected_schedule"]
-        firstSchedule = True
+    if workspace_id and Workspace.objects.filter(workspace_id=workspace_id) \
+            .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
+        workspace = Workspace.objects.get(workspace_id=workspace_id)
+    elif workspace_id is not None:
+        log.warning(f"Workspace with id workspace_id={workspace_id} doesn't exists or you don't have access to it")
     else:
-        firstSchedule = Schedule.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
-        if firstSchedule:
-            selected_schedule = firstSchedule.schedule_id
-            firstSchedule.compilation_id = createCompilation().id
-            # TODO: (hard) investigate, why compilation.id from cassandra could be saved to saved to schedule.compilation_id with different encoding
+        log.info(f"You don't have available workspaces")
+        first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
+        if first_workspace:
+            workspace_id = first_workspace.workspace_id
+            workspace = Workspace.objects.get(workspace_id=workspace_id)
 
-
-
+    if workspace:
+        schedule = Schedule.objects.get(schedule_id=workspace.schedule_id)
 
 
     if request.POST:
         if request.POST['action'] == 'create':
-            form = ScheduleForm(request.POST)
+            form = WorkspaceForm(request.POST)
+
             if form.is_valid():
                 form.set_owner(request.user)
-                form.save()
+                workspace = form.save()
+
+                schedule = Schedule(workspace = workspace)
+                schedule.save()
+                workspace.schedule_id = schedule.schedule_id
+
+                schedule_archive = ScheduleArchive(workspace = workspace)
+                schedule_archive.save()
+                workspace.schedulearchive_id = schedule_archive.schedule_id
+
+                workspace.save()
+            else:
+                print(form.errors.as_data())
 
 
-
-
-        if request.POST['action'] == 'edit':
-            form = ScheduleSettingsForm(request.POST)
+        elif workspace and request.POST['action'] == 'edit':
+            form = WorkspaceSettingsForm(request.POST)
             if form.is_valid():
                 form.save(commit=True)
+            else:
+                print(form.errors.as_data())
 
-        if request.POST['action'] == 'delete':
-            schedule = Schedule.objects.get(schedule_id=request.POST["schedule_id"])
-            if schedule.owner == request.user:
-                schedule.delete()
-                firstschedule = Schedule.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
-                if firstSchedule:
-                    selected_schedule = firstSchedule.schedule_id
 
-        if request.POST['action'] == "create_event":
+        elif workspace and request.POST['action'] == 'delete':
+            workspace = Workspace.objects.get(workspace_id=request.POST["workspace_id"])
+            if workspace.owner == request.user:
+                workspace.delete()
+                first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
+                if first_workspace:
+                    workspace_id = first_workspace.workspace_id
+
+
+        elif workspace and request.POST['action'] == "create_event":
             form = EventCreateForm(request.POST)
             if form.is_valid():
-                print("create_event form.is_valid()")
-                form.set_schedule(selected_schedule)
-                form.add_to_compilation(selected_schedule)
+                form.safe_copied_post(workspace.scheduled_compilation_id)
+                form.set_schedule(schedule)
                 form.save()
-                createEventForm = EventCreateForm()
+                create_event_form = EventCreateForm()
             else:
-                createEventForm = form
-                print("create_event form.is NOT valid()")
+                print(form.errors.as_data())
+                create_event_form = form
 
-        if request.POST['action'] == "edit_event":
+
+        elif workspace and request.POST['action'] == "edit_event":
             form = EventEditForm(request.POST)
             if form.is_valid():
                 form.save()
-                editEventForm = EventEditForm()
+                edit_event_form = EventEditForm()
             else:
-                editEventForm = form
+                print(form.errors.as_data())
+                edit_event_form = form
 
 
-
-        if request.POST['action'] == 'create_compilation':
+        elif workspace and request.POST['action'] == 'create_compilation':
             form = CompilationCreateForm(request.POST)
             if form.is_valid():
                  form.save()
+            else:
+                print(form.errors.as_data())
 
         # if request.POST['action'] == 'edit_compilation':
         #     form = CompilationForm(request.POST)
@@ -127,39 +137,75 @@ def homeView(request):
         #             selected_compilation_id = firstCompilation.id
 
 
+    context = prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id)
 
 
-
-    # schedule stuff
-    queryset_visible = Schedule.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
-    queryset_editable = Schedule.objects.filter(Q(owner=request.user.pk) | Q(editable_by=request.user))
-    context["schedules"] = ScheduleSerializer(queryset_editable, many=True).data
-
-    context["createform"] = ScheduleForm()
-    context["settingsform"] = ScheduleSettingsForm(initial={"user_id": request.user.pk, "owner": request.user})
-    context["my_schedules"] = queryset_visible
-
-    # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
-    #  only current user compilations
-    context["my_compilations"] = Compilation.objects.all()
-
-    if firstSchedule:
-        context["schedule_posts"] = getPostsForCalender(selected_schedule)
-        context["selected_schedule"] = int(selected_schedule)
-    context["event_createform"] = createEventForm
-    context["event_editform"] = editEventForm
+    return render(request, "workspace.html", context)
 
 
-    all_post_entries = PostEntry.objects.all()
-    # TODO: change number of items and make slider
-    paginator = Paginator(all_post_entries, 8)
+def prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id):
+    context = {}
 
-    page_number = request.GET.get('page')
-    post_list = paginator.get_page(page_number)
-    context['post_list'] = post_list
+    queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
+    context["my_workspaces"] = queryset_visible
+
+    queryset_editable = Workspace.objects.filter(Q(owner=request.user.pk) | Q(editable_by=request.user))
+    context["workspaces"] = WorkspaceSerializer(queryset_editable, many=True).data
+
+    context["createform"] = WorkspaceForm()
+
+    context["selected_workspace_id"] = workspace_id
+
+    if schedule:
+        context["settingsform"] = WorkspaceSettingsForm(initial={"user_id": request.user.pk, "owner": request.user})
+
+        # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
+        #  only current user compilations
+        context["my_compilations"] = Compilation.objects.all()
+        context["schedule_events"] = get_events_for_schedule(schedule.schedule_id)
+        context["selected_schedule_id"] = int(schedule.schedule_id)
+        if create_event_form:
+            context["event_createform"] = create_event_form
+        if create_event_form:
+            context["edit_event_form"] = edit_event_form
+
+        all_post_entries = Post.objects.all()
+        # TODO: change number of items and make slider
+        paginator = Paginator(all_post_entries, 8)
+
+        page_number = request.GET.get('page')
+        post_list = paginator.get_page(page_number)
+        context['post_list'] = post_list
+
+    return context
 
 
+def get_events_for_schedule(selected_schedule_id):
+    dates_to_events = dict()
+    count = 0
+    date = datetime.date.today()
+    days_to_show = 7
 
+    while (True):
+        day_of_week = calendar.day_name[date.weekday()]
 
+        if Event.objects.filter(schedule_id=selected_schedule_id, start_date__year=date.year,
+                                start_date__month=date.month, start_date__day=date.day).exists():
+            events = Event.objects.filter(schedule_id=selected_schedule_id, start_date__year=date.year,
+                                          start_date__month=date.month, start_date__day=date.day) \
+                .order_by('start_date')
+            events_to_posts = dict()
+            for event in events:
+                events_to_posts[event] = Post.objects.get(id=event.post_id)
 
-    return render(request, "home.html", context)
+            dates_to_events[(date, day_of_week)] = events_to_posts
+        else:
+            dates_to_events[(date, day_of_week)] = []
+
+        date += datetime.timedelta(days=1)
+        count += 1
+        if count >= days_to_show \
+                and not Event.objects.filter(start_date__range=[date, date + datetime.timedelta(days=365)]).exists():
+            break
+
+    return dates_to_events

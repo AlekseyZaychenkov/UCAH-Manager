@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 
 from cassandra.cqlengine.management import sync_table
-from loader.models import PostEntry, Compilation
+from loader.models import Post, Compilation
 from loader.utils import Utils, save_files, create_tumblr_client
 
 import pathlib
@@ -13,7 +13,7 @@ class TumblrLoader:
 
     def __init__(self):
         self.client = create_tumblr_client()
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
 
 
@@ -75,7 +75,7 @@ class TumblrLoader:
             post_storage_path = os.path.join(storagePath, str(postId))
             savedFileAddresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
 
-            postEntry = PostEntry.create(
+            post = Post.create(
                 # information about original post
                 blog_name             = post['blog']['name'],
                 blog_url              = post['blog']['url'],
@@ -99,9 +99,9 @@ class TumblrLoader:
             )
 
             if compilation.post_ids is None:
-                compilation.post_ids = [postEntry.id]
+                compilation.post_ids = [post.id]
             else:
-                compilation.post_ids.append(postEntry.id)
+                compilation.post_ids.append(post.id)
 
             compilation.update()
 

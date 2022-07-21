@@ -14,8 +14,7 @@ def loginView(request):
 
             user = authenticate(email=email, password=password)
             login(request, user)
-            return redirect('home')
-            # return redirect('home2')
+            return redirect('workspace')
     else:
         form = AccountAuthenticationForm()
     context['form'] = form
@@ -32,7 +31,7 @@ def registerView(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('home')
+            return redirect('workspace')
             # return redirect('home2')
     else:
         form = RegistrationForm()

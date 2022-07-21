@@ -9,11 +9,11 @@ import vk
 import urllib
 
 
-from loader.models import Compilation, PostEntry, ExampleModel
+from loader.models import Compilation, Post
 from credentials import TUMBLR_OATH_SECRET, TUMBLR_CONSUMER_SECRET, TUMBLR_CONSUMER_KEY, TUMBLR_OATH_TOKEN
 
-from account.settings import IS_TEST, CASSANDRA_DB_ADRESSES, TEST_CASSANDRA_KEYSPACE_NAME, CASSANDRA_KEYSPACE_NAME
-
+from account.settings import IS_TEST, CASSANDRA_DB_ADRESSES, TEST_CASSANDRA_KEYSPACE_NAME, CASSANDRA_KEYSPACE_NAME, \
+    PATH_TO_STORE
 
 # TODO: delete Utils and make all methods with import from loader.utils import method_name
 from UCA_Manager.settings import ROOT_DIR
@@ -31,15 +31,13 @@ class Utils:
 
     @staticmethod
     def sync_models():
-        sync_table(ExampleModel)
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
 
 
     @staticmethod
     def drop_models():
-        drop_table(ExampleModel)
-        drop_table(PostEntry)
+        drop_table(Post)
         drop_table(Compilation)
 
 
@@ -64,6 +62,11 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
         storage         = storage,
         post_ids        = list()
     )
+
+
+def create_empty_compilation():
+    path = generate_storage_patch(PATH_TO_STORE, others='autocreated')
+    return create_compilation(resource='Created by utils', tag=None, blogs=None, storage=path)
 
 
 def generate_storage_patch(root_path, comp_id=None, others=None):
