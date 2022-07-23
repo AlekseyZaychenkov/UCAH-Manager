@@ -1,5 +1,41 @@
 {% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
 
+<style>
+  .center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+
+ .workspace_button {
+    width: 145px;
+  }
+
+  .post_counter {
+    width: 50px;
+    margin: auto;
+    margin-left: 25px;
+    margin-right: 5px;
+    border: 3px solid #73AD21;
+  }
+
+  .post_counter_text {
+    width: 100px;
+    margin: auto;
+    margin-left: 5px;
+    border: 3px solid #73AD21;
+  }
+
+  .form_group {
+        margin-bottom: 15px;
+  }
+
+</style>
+
+</style>
 
   <ul class="nav nav-tabs" id="myTab" role="tablist">
     <li class="nav-item" role="presentation">
@@ -21,26 +57,85 @@
 
 
     <div class="tab-pane fade show active" id="editworkspace" role="tabpanel" aria-labelledby="editworkspace-tab">
-      <form method="post">
+      <form method="post"> {% csrf_token %}
 
-        {% csrf_token %}
-        <div class="btn-group">
-          <div class="container">
-            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              Workspaces
-            </button>
-            <div class="dropdown-menu">
-              {% for ws in my_workspaces %}
-              <li class="list-group-item">
-                {{ ws.name }}
-                {% if selected_workspace_id != ws.workspace_id %}
-                <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
-                {% endif %}
-              </li>
-              {% endfor %}
+        <div class="container">
+            <div class="row form_group">
+
+              <div class="col-md-6 col-lg-6">
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-dark workspace_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    Workspaces
+                  </button>
+                  <div class="dropdown-menu">
+                    <li class="list-group-item">
+                      {% for ws in my_workspaces %}
+                        {{ ws.name }}
+                        {% if selected_workspace_id != ws.workspace_id %}
+                        <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
+                        {% endif %}
+                      {% endfor %}
+                      <a type="button" class="btn btn-sm btn-primary float-right" href="#">Create new</a>
+                    </li>
+                  </div>
+
+                  <button type="button" class="btn btn-outline-dark">
+                    <a href="#">Edit</a>
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-md-5 col-lg-5">
+                <div class="btn-group row" role="group">
+                  <button type="button" class="btn btn-outline-dark">
+                    <a href="#">Rules</a>
+                  </button>
+                  <button class="btn btn-primary" type="submit" name="action" value="add_all_posts">Add all >></button>
+                </div>
+              </div>
+
             </div>
-            {% if workspace != 0 %}
-            <button class="btn btn-primary" type="submit" name="action" value="create_post_menu">New post</button>
+        </div>
+
+        <div class="container">
+          <div class="row form_group">
+
+            <div class="col-md-6 col-lg-6">
+              <div class="btn-group" role="group">
+                <div class="btn-group-vertical">
+                  <a type="button" class="btn btn-sm btn-primary float-right">Sheduling</a>
+                  <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Downloading</a>
+                  <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
+                </div>
+              </div>
+
+              {% if workspace != 0 %}
+                <button class="btn btn-outline-dark" type="submit" name="action" value="create_post_menu">New post</button>
+              {% endif %}
+
+            </div>
+
+
+
+                <button type="button" class="btn btn-outline-dark">
+                  <a href="#">Filters</a>
+                </button>
+
+
+                  <div class="row">
+
+                  <container class="border post_counter border-dark">
+                    5/20
+                  </container>
+
+                <container class="border post_counter_text border-dark">
+                  post(-s) in compilation (shown/total)
+                </container>
+
+
+
+            </div>
+
           </div>
         </div>
 
@@ -48,101 +143,100 @@
 
 
 
-
-        <h1>Adding to the schedule</h1>
-
+<!--        main compillation area-->
         <div class="container">
           <hr>
-          <div class="row">
-            {% for post in post_list %}
-            <div class="col-md-6 card">
-              <div class="m-2">
+          {% if workspace != 0 %}
+            <div class="row">
+              {% for post in post_list %}
+              <div class="col-md-6 card">
+                <div class="m-2">
 
-                  <form method="post">
-                    {% csrf_token %}
+                    <form method="post"> {% csrf_token %}
 
-                    <div class="btn-group row" role="group">
-                      {% render_field event_createform.start_date class="form-control-sm" type="datetime-local" %}
-                      {{ event_createform.start_date.errors }}
-
+                      <div class="btn-group row" role="group">
+                        {% render_field event_createform.start_date class="form-control-sm" type="datetime-local" %}
+                        {{ event_createform.start_date.errors }}
 
 
-                      <div class="d-none">
-                        {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
+
+                        <div class="d-none">
+                          {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
+                        </div>
+
+                        <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
                       </div>
 
-                      <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
-                    </div>
 
 
+                      <!-- TODO: add proposed time field and showing -->
+                      <!-- TODO: add opportunity to change the time -->
 
-                    <!-- TODO: add proposed time field and showing -->
-                    <!-- TODO: add opportunity to change the time -->
+                      <!-- TODO: place picture more compact -->
 
-                    <!-- TODO: place picture more compact -->
-
-                    <p class="mt-3">{{post.text}}</p>
-                    <div class="row">
-                      {% for pi in post.stored_file_urls %}
-                      {% if forloop.counter == 1 %}
-                      <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
-                      {% else %}
-                      <div class="col-md-4 col-lg-4 p-2">
-                        <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+                      <p class="mt-3">{{post.text}}</p>
+                      <div class="row">
+                        {% for pi in post.stored_file_urls %}
+                        {% if forloop.counter == 1 %}
+                        <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+                        {% else %}
+                        <div class="col-md-4 col-lg-4 p-2">
+                          <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+                        </div>
+                        {% endif %}
+                        {% empty %}
+                        {% endfor %}
                       </div>
-                      {% endif %}
-                      {% empty %}
-                      {% endfor %}
-                    </div>
-                  </form>
+                    </form>
 
-                  <!-- TODO: make a text foldable-->
-                  <!--                                                                <p class="mt-4">Description: '{{post.text}}'</p>-->
+                    <!-- TODO: make a text foldable-->
+                    <!--                                                                <p class="mt-4">Description: '{{post.text}}'</p>-->
 
-                  <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
-                  <!-- TODO: figure out and add other useful information -->
+                    <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
+                    <!-- TODO: figure out and add other useful information -->
 
 
+                </div>
               </div>
-            </div>
-            {% endfor %}
-          </div>
-          <nav aria-label="...">
-            <ul class="pagination">
-              {% if post_list.has_previous %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ post_list.previous_page_number }}">Previous</a>
-              </li>
-              {% else %}
-              <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-              </li>
-              {% endif %}
-
-              {% for i in post_list.paginator.page_range %}
-              {% if i == post_list.number %}
-              <li class="page-item active"><a class="page-link">{{i}}</a></li>
-              {% else %}
-              <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
-              {% endif %}
               {% endfor %}
+            </div>
+            <nav aria-label="...">
+              <ul class="pagination">
+                {% if post_list.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ post_list.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                </li>
+                {% endif %}
 
-              {% if post_list.has_next %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ post_list.next_page_number }}">Next</a>
-              </li>
-              {% else %}
-              <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
-              </li>
-              {% endif %}
-            </ul>
-          </nav>
+                {% for i in post_list.paginator.page_range %}
+                {% if i == post_list.number %}
+                <li class="page-item active"><a class="page-link">{{i}}</a></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+                {% endif %}
+                {% endfor %}
+
+                {% if post_list.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ post_list.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
         </div>
 
 
       </form>
-      {% endif %}
+
       </form>
     </div>
 
