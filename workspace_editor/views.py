@@ -152,7 +152,7 @@ def prepare_context(request, schedule, create_event_form, edit_event_form, works
     queryset_editable = Workspace.objects.filter(Q(owner=request.user.pk) | Q(editable_by=request.user))
     context["workspaces"] = WorkspaceSerializer(queryset_editable, many=True).data
 
-    context["createform"] = WorkspaceForm()
+    # context["createform"] = WorkspaceForm()
 
     context["selected_workspace_id"] = workspace_id
 
@@ -164,10 +164,9 @@ def prepare_context(request, schedule, create_event_form, edit_event_form, works
         context["my_compilations"] = Compilation.objects.all()
         context["schedule_events"] = get_events_for_schedule(schedule.schedule_id)
         context["selected_schedule_id"] = int(schedule.schedule_id)
-        if create_event_form:
-            context["event_createform"] = create_event_form
-        if create_event_form:
-            context["edit_event_form"] = edit_event_form
+
+        context["event_createform"] = create_event_form
+        context["edit_event_form"] = edit_event_form
 
         all_post_entries = Post.objects.all()
         # TODO: change number of items and make slider

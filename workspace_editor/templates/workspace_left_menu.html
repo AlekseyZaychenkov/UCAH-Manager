@@ -1,5 +1,5 @@
 {% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
-<div class="container">
+
 
   <ul class="nav nav-tabs" id="myTab" role="tablist">
     <li class="nav-item" role="presentation">
@@ -39,40 +39,39 @@
               </li>
               {% endfor %}
             </div>
-
-
             {% if workspace != 0 %}
             <button class="btn btn-primary" type="submit" name="action" value="create_post_menu">New post</button>
           </div>
         </div>
 
 
-        <h4>Adding to the schedule</h4>
+
+
+
+
+        <h1>Adding to the schedule</h1>
 
         <div class="container">
           <hr>
-          <div class="row mt-6 ">
+          <div class="row">
             {% for post in post_list %}
             <div class="col-md-6 card">
-              <div class="m-2 ">
-                <div class="col mt-6" >
+              <div class="m-2">
+
                   <form method="post">
                     {% csrf_token %}
-                    <div class="btn-group-md-6" role="group">
 
-                      {% if event_createform != None %}
-                      {% render_field event_createform.start_date class="form-control-sm row mt-6" type="datetime-local" %}
+                    <div class="btn-group row" role="group">
+                      {% render_field event_createform.start_date class="form-control-sm" type="datetime-local" %}
                       {{ event_createform.start_date.errors }}
 
 
-                      {% endif %}
+
                       <div class="d-none">
                         {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
                       </div>
+
                       <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
-
-
-
                     </div>
 
 
@@ -102,7 +101,7 @@
 
                   <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
                   <!-- TODO: figure out and add other useful information -->
-                </div>
+
 
               </div>
             </div>
@@ -245,5 +244,5 @@
   </div>
 
 
-</div>
+
 {% endblock content %}
