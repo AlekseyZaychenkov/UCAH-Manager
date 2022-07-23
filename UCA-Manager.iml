@@ -11,6 +11,8 @@
       <sourceFolder url="file://$MODULE_DIR$/templates" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/media" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/workspace_editor" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/static_cdn/admin" />
+      <excludeFolder url="file://$MODULE_DIR$/static_cdn/rest_framework" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

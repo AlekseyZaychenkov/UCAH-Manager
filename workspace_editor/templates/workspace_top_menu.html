@@ -1,21 +1,42 @@
 {% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
-<div class="row">
+{% load static %}
+
+<style>
+.logo {
+  padding: 10px;
+}
+
+.center {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+</style>
+
+
+<div class="row logo">
   <div class="col-md-9 col-lg-9">
-  </div>
-  <div class="col-md-3 col-lg-3">
-    <div class="col-lg-1 my-3" onclick="openNav()" style="cursor: pointer;">
-      Accounts
-    </div>
-
-    <div id="mySidenav" class="sidenav">
-      <h2>Accounts</h2>
-      <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-      <a href="#">Profile</a>
-      <a href="{% url 'logout' %}">Log out</a>
+    <div>
+      <img src="{% static 'GUI_images/LOGO.png' %}"   class="img-fluid" style="height: 40px; object-fit: contain;">
     </div>
   </div>
-
-
-
+  <div class="col-md-3 col-lg-3 ">
+    <div class="container center" >
+      <div class="btn-group btn-group-lg " role="group" aria-label="...">
+        <button type="button" class="btn-sm btn-outline-dark">
+          <a href="#">Accounts</a>
+        </button>
+        <button type="button" class="btn-sm btn-outline-dark">
+          <a href="#">Profile</a>
+        </button>
+        <button type="button" class="btn-sm btn-outline-dark">
+          <a href="{% url 'logout' %}">Log out</a>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock content %}
