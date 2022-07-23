@@ -4,6 +4,8 @@
 /.idea/workspace.xml
 /credentials.py
 /media/photo_and_video_storage/
+/static/admin/
+/static/rest_framework/
 /db.sqlite3
 /account/migrations
 /workspace_editor/migrations
