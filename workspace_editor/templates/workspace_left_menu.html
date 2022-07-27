@@ -34,6 +34,12 @@
     margin-bottom: 15px;
   }
 
+
+
+
+
+
+
 </style>
 
 </style>
@@ -54,6 +60,9 @@
   </ul>
 
 
+
+
+
   <div class="tab-content" id="myTabContent">
 
 
@@ -64,20 +73,29 @@
             <div class="row form_group">
 
               <div class="col-md-6 col-lg-6">
+                <div class="btn-group">
+
+
+
                 <div class="btn-group" role="group">
-                  <button type="button" class="btn btn-outline-dark workspace_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                    Workspaces
-                  </button>
-                  <div class="dropdown-menu">
-                    <li class="list-group-item">
-                      {% for ws in my_workspaces %}
-                        {{ ws.name }}
-                        {% if selected_workspace_id != ws.workspace_id %}
-                        <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
-                        {% endif %}
-                      {% endfor %}
-                      <a type="button" class="btn btn-sm btn-primary float-right" href="#">Create new</a>
-                    </li>
+                  <div class="dropdown">
+                    <button class="btn btn-outline-dark workspace_button dropdown-toggle" role="button" id="dropdownWorkspacesButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Workspaces
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownWorkspacesButton">
+
+                      <a class="dropdown-item">
+                        {% for ws in my_workspaces %}
+                          {{ ws.name }}
+                          {% if selected_workspace_id != ws.workspace_id %}
+                          <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
+                          {% endif %}
+                        {% endfor %}
+                        <a type="button" class="btn btn-sm btn-primary float-right" href="#">Create new</a>
+                      </a>
+
+                      <a class="dropdown-item" href="#">Something else here</a>
+                    </div>
                   </div>
 
                   <button type="button" class="btn btn-outline-dark">
@@ -85,6 +103,10 @@
                   </button>
                 </div>
               </div>
+
+
+
+
 
               <div class="col-md-5 col-lg-5">
                 <div class="btn-group row" role="group">
@@ -101,7 +123,7 @@
         <div class="container">
           <div class="row form_group">
             <div class="col-md-6 col-lg-6">
-              <div class="btn-group" role="group">
+              <div class="btn-group disabled" role="group">
                 <div class="btn-group-vertical">
                   <a type="button" class="btn btn-sm btn-primary float-right">Sheduling</a>
                   <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Downloading</a>
@@ -109,8 +131,10 @@
                 </div>
               </div>
 
-              {% if workspace != 0 %}
+              {% if workspace is not None %}
                 <button class="btn btn-outline-dark" type="submit" name="action" value="create_post_menu">New post</button>
+              {% else %}
+                <button class="btn btn-outline-dark disabled" type="submit" name="action" value="create_post_menu">New post</button>
               {% endif %}
 
             </div>

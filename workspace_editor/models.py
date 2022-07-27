@@ -29,17 +29,13 @@ class Workspace(models.Model):
     main_compilation_id         = models.CharField(max_length=128)
     main_compilation_archive_id = models.CharField(max_length=128)
 
-    # TODO: delete after creating Schedule and ScheduleArchive and foreign keys
-    schedule_id                 = models.CharField(max_length=255)
-    schedulearchive_id           = models.CharField(max_length=255)
-
     def __str__(self):
         return self.name
 
 
 class Schedule(models.Model):
     schedule_id                 = models.AutoField(primary_key=True)
-    workspace                   = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+    workspace                   = models.OneToOneField(Workspace, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -47,7 +43,7 @@ class Schedule(models.Model):
 
 class ScheduleArchive(models.Model):
     schedule_id                 = models.AutoField(primary_key=True)
-    workspace                   = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+    workspace                   = models.OneToOneField(Workspace, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name

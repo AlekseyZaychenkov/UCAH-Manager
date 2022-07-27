@@ -25,38 +25,46 @@ log = logging.getLogger(__name__)
 
 
 @login_required
-def home(request):
+def home(request, workspace_id=None):
 
     workspace = None
     schedule = None
     create_event_form = None
     edit_event_form = None
     first_workspace = None
-    workspace_id = None
+    # workspace_id = None
     if 'workspace_id' in request.GET:
         workspace_id = int(request.GET['workspace_id'])
+        workspace
 
 
     # Events stuff
     if workspace_id and Workspace.objects.filter(workspace_id=workspace_id) \
             .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
         workspace = Workspace.objects.get(workspace_id=workspace_id)
-    elif workspace_id is not None:
+    elif workspace_id is None and Workspace.objects \
+            .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
+        first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
+        workspace = first_workspace
+        log.warning(f"Redirect to first available workspace")
+
+        return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
+
+
+    elif workspace_id is not None and not Workspace.objects \
+            .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
         log.warning(f"Workspace with id workspace_id={workspace_id} doesn't exists or you don't have access to it")
     else:
         log.info(f"You don't have available workspaces")
-        first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
-        if first_workspace:
-            workspace_id = first_workspace.workspace_id
-            workspace = Workspace.objects.get(workspace_id=workspace_id)
+
 
     if workspace:
-        schedule = Schedule.objects.get(schedule_id=workspace.schedule_id)
+        schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
 
+    form = WorkspaceForm(request.POST)
 
     if request.POST:
         if request.POST['action'] == 'create':
-            form = WorkspaceForm(request.POST)
 
             if form.is_valid():
                 form.set_owner(request.user)
@@ -137,13 +145,12 @@ def home(request):
         #             selected_compilation_id = firstCompilation.id
 
 
-    context = prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id)
-
+    context = prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id, form)
 
     return render(request, "workspace.html", context)
 
 
-def prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id):
+def prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id, form=None):
     context = {}
 
     queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
@@ -152,7 +159,7 @@ def prepare_context(request, schedule, create_event_form, edit_event_form, works
     queryset_editable = Workspace.objects.filter(Q(owner=request.user.pk) | Q(editable_by=request.user))
     context["workspaces"] = WorkspaceSerializer(queryset_editable, many=True).data
 
-    # context["createform"] = WorkspaceForm()
+    context["createform"] = form
 
     context["selected_workspace_id"] = workspace_id
 
