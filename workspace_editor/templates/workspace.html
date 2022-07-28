@@ -16,18 +16,18 @@
 <body>
 <div class="container-fluid">
     {% block top_menu %}
-    {% include 'workspace_top_menu.html' %}
+    {% include 'workspace_top_panel.html' %}
     {% endblock %}
     <hr class="hr">
     <div class="row">
         <div class="col-5 col-lg-4" id="containerForSlideMenu">
             {% block left_menu %}
-            {% include 'workspace_left_menu.html' %}
+            {% include 'workspace_left_panel.html' %}
             {% endblock %}
         </div>
         <div class="col-7 col-lg-8">
             {% block schedules %}
-            {% include 'workspace_schedules.html' %}
+            {% include 'workspace_center_panel.html' %}
             {% endblock %}
         </div>
     </div>

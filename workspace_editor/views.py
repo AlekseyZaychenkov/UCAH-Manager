@@ -29,14 +29,22 @@ def home(request, workspace_id=None):
 
     workspace = None
     schedule = None
-    create_event_form = None
-    edit_event_form = None
     first_workspace = None
-    # workspace_id = None
+
     if 'workspace_id' in request.GET:
         workspace_id = int(request.GET['workspace_id'])
-        workspace
 
+
+    all = Workspace.objects.all()
+    f = all.first()
+
+    ttt = Workspace.objects \
+        .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists()
+    first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))\
+        .order_by('workspace_id').first()
+
+    lll = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
+    first_workspace = lll.first()
 
     # Events stuff
     if workspace_id and Workspace.objects.filter(workspace_id=workspace_id) \
@@ -61,24 +69,21 @@ def home(request, workspace_id=None):
     if workspace:
         schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
 
-    form = WorkspaceForm(request.POST)
 
     if request.POST:
         if request.POST['action'] == 'create':
-
+            form = WorkspaceForm(request.POST)
             if form.is_valid():
                 form.set_owner(request.user)
+
+                schedule = Schedule()
+                schedule.save()
+                schedule_archive = ScheduleArchive()
+                schedule_archive.save()
+                form.set_schedules(schedule, schedule_archive)
+
                 workspace = form.save()
 
-                schedule = Schedule(workspace = workspace)
-                schedule.save()
-                workspace.schedule_id = schedule.schedule_id
-
-                schedule_archive = ScheduleArchive(workspace = workspace)
-                schedule_archive.save()
-                workspace.schedulearchive_id = schedule_archive.schedule_id
-
-                workspace.save()
             else:
                 log.error(form.errors.as_data())
 
@@ -106,20 +111,16 @@ def home(request, workspace_id=None):
                 form.safe_copied_post(workspace.scheduled_compilation_id)
                 form.set_schedule(schedule)
                 form.save()
-                create_event_form = EventCreateForm()
             else:
                 log.error(form.errors.as_data())
-                create_event_form = form
 
 
         elif workspace and request.POST['action'] == "edit_event":
             form = EventEditForm(request.POST)
             if form.is_valid():
                 form.save()
-                edit_event_form = EventEditForm()
             else:
                 log.error(form.errors.as_data())
-                edit_event_form = form
 
 
         elif workspace and request.POST['action'] == 'create_compilation':
@@ -129,6 +130,7 @@ def home(request, workspace_id=None):
             else:
                 log.error(form.errors.as_data())
 
+        return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
         # if request.POST['action'] == 'edit_compilation':
         #     form = CompilationForm(request.POST)
         #     if form.is_valid():
@@ -145,22 +147,24 @@ def home(request, workspace_id=None):
         #             selected_compilation_id = firstCompilation.id
 
 
-    context = prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id, form)
+    context = prepare_context(request, schedule, workspace_id)
 
     return render(request, "workspace.html", context)
 
 
-def prepare_context(request, schedule, create_event_form, edit_event_form, workspace_id, form=None):
+# TODO: check how works adding events
+def prepare_context(request, schedule, workspace_id):
     context = {}
 
     queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
+    # TODO: rename to visible_workspaces
     context["my_workspaces"] = queryset_visible
 
     queryset_editable = Workspace.objects.filter(Q(owner=request.user.pk) | Q(editable_by=request.user))
+    # TODO: rename to visible_workspaces
     context["workspaces"] = WorkspaceSerializer(queryset_editable, many=True).data
 
-    context["createform"] = form
-
+    context["createform"] = WorkspaceForm()
     context["selected_workspace_id"] = workspace_id
 
     if schedule:
@@ -172,8 +176,8 @@ def prepare_context(request, schedule, create_event_form, edit_event_form, works
         context["schedule_events"] = get_events_for_schedule(schedule.schedule_id)
         context["selected_schedule_id"] = int(schedule.schedule_id)
 
-        context["event_createform"] = create_event_form
-        context["edit_event_form"] = edit_event_form
+        context["event_createform"] = EventCreateForm()
+        context["edit_event_form"] = EventEditForm()
 
         all_post_entries = Post.objects.all()
         # TODO: change number of items and make slider

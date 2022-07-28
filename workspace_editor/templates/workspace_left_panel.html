@@ -42,7 +42,6 @@
 
 </style>
 
-</style>
 
   <ul class="nav nav-tabs" id="myTab" role="tablist">
     <li class="nav-item" role="presentation">
@@ -60,9 +59,6 @@
   </ul>
 
 
-
-
-
   <div class="tab-content" id="myTabContent">
 
 
@@ -73,29 +69,24 @@
             <div class="row form_group">
 
               <div class="col-md-6 col-lg-6">
-                <div class="btn-group">
-
-
-
                 <div class="btn-group" role="group">
-                  <div class="dropdown">
-                    <button class="btn btn-outline-dark workspace_button dropdown-toggle" role="button" id="dropdownWorkspacesButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      Workspaces
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownWorkspacesButton">
+                  <button type="button" class="btn btn-outline-dark workspace_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    Workspaces
+                  </button>
+                  <div class="dropdown-menu">
 
-                      <a class="dropdown-item">
-                        {% for ws in my_workspaces %}
+                    {% for ws in my_workspaces %}
+                      <li class="dropdown-item">
                           {{ ws.name }}
                           {% if selected_workspace_id != ws.workspace_id %}
-                          <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
+                            <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
                           {% endif %}
-                        {% endfor %}
-                        <a type="button" class="btn btn-sm btn-primary float-right" href="#">Create new</a>
-                      </a>
+                      </li>
+                    {% endfor %}
 
-                      <a class="dropdown-item" href="#">Something else here</a>
-                    </div>
+                    <li class="dropdown-item">
+                      <a type="button" class="btn btn-primary" data-toggle="modal" data-target="#new_workspace_modal">Create new</a>
+                    </li>
                   </div>
 
                   <button type="button" class="btn btn-outline-dark">
@@ -123,7 +114,7 @@
         <div class="container">
           <div class="row form_group">
             <div class="col-md-6 col-lg-6">
-              <div class="btn-group disabled" role="group">
+              <div class="btn-group" role="group">
                 <div class="btn-group-vertical">
                   <a type="button" class="btn btn-sm btn-primary float-right">Sheduling</a>
                   <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Downloading</a>
@@ -131,10 +122,10 @@
                 </div>
               </div>
 
-              {% if workspace is not None %}
-                <button class="btn btn-outline-dark" type="submit" name="action" value="create_post_menu">New post</button>
+              {% if workspace is None %}
+                <button class="btn btn-outline-dark" disabled type="submit" name="action" value="create_post_menu">New post</button>
               {% else %}
-                <button class="btn btn-outline-dark disabled" type="submit" name="action" value="create_post_menu">New post</button>
+                <button class="btn btn-outline-dark" type="submit" name="action" value="create_post_menu">New post</button>
               {% endif %}
 
             </div>
@@ -157,100 +148,62 @@
 
 
 <!--        main compilation area-->
-        <div class="container">
-          <hr>
-          {% if workspace != 0 %}
-            <div class="row">
-              {% for post in post_list %}
-              <div class="col-md-6 card">
-                <div class="m-2">
-
-                    <form method="post"> {% csrf_token %}
-
-                      <div class="btn-group row" role="group">
-                        {% render_field event_createform.start_date class="form-control-sm" type="datetime-local" %}
-                        {{ event_createform.start_date.errors }}
+        {% block top_menu %}
+        {% include 'workspace_left_panel_main_compilation.html' %}
+        {% endblock %}
 
 
 
-                        <div class="d-none">
-                          {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
-                        </div>
+        <div class="modal fade" id="new_workspace_modal" tabindex="-1" role="dialog" aria-labelledby="new_workspace_modal_label" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
 
-                        <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
-                      </div>
-
-
-
-                      <!-- TODO: add proposed time field and showing -->
-                      <!-- TODO: add opportunity to change the time -->
-
-                      <!-- TODO: place picture more compact -->
-
-                      <p class="mt-3">{{post.text}}</p>
-                      <div class="row">
-                        {% for pi in post.stored_file_urls %}
-                        {% if forloop.counter == 1 %}
-                        <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
-                        {% else %}
-                        <div class="col-md-4 col-lg-4 p-2">
-                          <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
-                        </div>
-                        {% endif %}
-                        {% empty %}
-                        {% endfor %}
-                      </div>
-                    </form>
-
-                    <!-- TODO: make a text foldable-->
-                    <!--                                                                <p class="mt-4">Description: '{{post.text}}'</p>-->
-
-                    <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
-                    <!-- TODO: figure out and add other useful information -->
-
-
-                </div>
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Create new workspace</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
               </div>
-              {% endfor %}
+
+
+                <div class="modal-body">
+                  <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <div class="form-label-group">
+                      {% render_field createform.name class="form-control" %}
+                      <label for="id_owner">Name of the workspace</label>
+                      {{ createform.name.errors }}
+                    </div>
+                    <div class="form-label-group">
+                      {% render_field createform.visible_for class="form-control" %}
+                      <label for="id_visible_for">Visible for:</label>
+                      {{ createform.visible_for.errors }}
+                    </div>
+                    <div class="form-label-group">
+                      {% render_field createform.editable_by class="form-control" %}
+                      <label for="id_editable_by">Editable by:</label>
+                      {{ createform.editable_by.errors }}
+                    </div>
+                    <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create">Create</button>
+                  </form>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                  <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+
             </div>
-            <nav aria-label="...">
-              <ul class="pagination">
-                {% if post_list.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ post_list.previous_page_number }}">Previous</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                </li>
-                {% endif %}
-
-                {% for i in post_list.paginator.page_range %}
-                {% if i == post_list.number %}
-                <li class="page-item active"><a class="page-link">{{i}}</a></li>
-                {% else %}
-                <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
-                {% endif %}
-                {% endfor %}
-
-                {% if post_list.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ post_list.next_page_number }}">Next</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
-                </li>
-                {% endif %}
-              </ul>
-            </nav>
-          {% endif %}
+          </div>
         </div>
 
 
       </form>
 
       </form>
+
+
     </div>
 
 

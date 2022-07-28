@@ -2,7 +2,7 @@
 from django import forms
 
 from workspace_editor.utils import copy_post_to
-from workspace_editor.models import Workspace, Event, Schedule, ScheduleArchive
+from workspace_editor.models import Workspace, Event, Schedule
 from account.models import Account
 from django.db.models import Q
 from UCA_Manager.settings import PATH_TO_STORE
@@ -19,12 +19,18 @@ class WorkspaceForm(forms.ModelForm):
 
     class Meta:
         model = Workspace
-        exclude = ("owner", "visible_for", "editable_by", "schedule_id", "schedulearchive_id",
+        exclude = ("owner", "visible_for", "editable_by", "schedule", "schedule_archive",
                    "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id")
 
     def set_owner(self, user):
         workspace = self.instance
         workspace.owner_id = user.pk
+        self.instance = workspace
+
+    def set_schedules(self, schedule, schedule_archive):
+        workspace = self.instance
+        workspace.schedule_id = schedule.schedule_id
+        workspace.schedule_archive_id = schedule_archive.schedule_id
         self.instance = workspace
 
     def save(self, commit=True):
@@ -34,6 +40,8 @@ class WorkspaceForm(forms.ModelForm):
         workspace.main_compilation_id = create_empty_compilation().id
         workspace.main_compilation_archive_id = create_empty_compilation().id
 
+        if commit:
+            workspace.save()
 
         for email in self.cleaned_data["visible_for"].split(";"):
             if Account.objects.filter(email=email).exists():
@@ -44,8 +52,7 @@ class WorkspaceForm(forms.ModelForm):
                 user = Account.objects.filter(email=email).get()
                 workspace.editable_by.add(user.pk)
 
-        if commit:
-            workspace.save()
+
 
         return workspace
 
