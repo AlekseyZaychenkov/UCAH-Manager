@@ -50,12 +50,6 @@
     <li class="nav-item" role="presentation">
       <a class="nav-link" id="compilations-tab" data-toggle="tab" href="#compilations" role="tab" aria-controls="compilations" aria-selected="false">Compilations</a>
     </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link" id="settingsworkspace-tab" data-toggle="tab" href="#settingsworkspace" role="tab" aria-controls="settingsworkspace" aria-selected="false">Settings</a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link" id="createworkspace-tab" data-toggle="tab" href="#createworkspace" role="tab" aria-controls="createworkspace" aria-selected="false">Create</a>
-    </li>
   </ul>
 
 
@@ -89,7 +83,7 @@
                     </li>
                   </div>
 
-                  <button type="button" class="btn btn-outline-dark">
+                  <button type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#edit_workspace_modal">
                     <a href="#">Edit</a>
                   </button>
                 </div>
@@ -101,7 +95,7 @@
 
               <div class="col-md-5 col-lg-5">
                 <div class="btn-group row" role="group">
-                  <button type="button" class="btn btn-outline-dark">
+                  <button type="button" disabled class="btn btn-outline-dark">
                     <a href="#">Rules</a>
                   </button>
                   <button class="btn btn-primary" type="submit" name="action" value="add_all_posts">Add all >></button>
@@ -130,73 +124,34 @@
 
             </div>
 
-                <button type="button" class="btn btn-outline-dark">
+                <button type="button" disabled class="btn btn-outline-dark">
                   <a href="#">Filters</a>
                 </button>
 
                 <div class="row">
                   <container class="border post_counter border-dark">
-                    5/20
+                    {{ main_compilation|length }}
                   </container>
                   <container class="border post_counter_text border-dark">
-                    post(-s) in compilation (shown/total)
+                    post(-s) in compilation
                   </container>
                 </div>
           </div>
         </div>
 
 
+        {% block workspace_modals %}
+        {% include 'workspace_workspace_modals.html' %}
+        {% endblock %}
 
-<!--        main compilation area-->
-        {% block top_menu %}
+
+        <!--        main compilation area-->
+        {% block main_compilation %}
         {% include 'workspace_left_panel_main_compilation.html' %}
         {% endblock %}
 
 
 
-        <div class="modal fade" id="new_workspace_modal" tabindex="-1" role="dialog" aria-labelledby="new_workspace_modal_label" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-
-              <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Create new workspace</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-
-
-                <div class="modal-body">
-                  <form method="post" class="mt-3">
-                    {% csrf_token %}
-                    <div class="form-label-group">
-                      {% render_field createform.name class="form-control" %}
-                      <label for="id_owner">Name of the workspace</label>
-                      {{ createform.name.errors }}
-                    </div>
-                    <div class="form-label-group">
-                      {% render_field createform.visible_for class="form-control" %}
-                      <label for="id_visible_for">Visible for:</label>
-                      {{ createform.visible_for.errors }}
-                    </div>
-                    <div class="form-label-group">
-                      {% render_field createform.editable_by class="form-control" %}
-                      <label for="id_editable_by">Editable by:</label>
-                      {{ createform.editable_by.errors }}
-                    </div>
-                    <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create">Create</button>
-                  </form>
-                </div>
-
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-
-                  <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-
-            </div>
-          </div>
-        </div>
 
 
       </form>
@@ -205,7 +160,6 @@
 
 
     </div>
-
 
 
     <div class="tab-pane fade" id="compilations" role="tabpanel" aria-labelledby="compilations-tab">
@@ -227,79 +181,6 @@
         </div>
       </div>
     </div>
-
-
-
-    <div class="tab-pane fade" id="settingsworkspace" role="tabpanel" aria-labelledby="settingsworkspace-tab">
-      <form method="post" class="mt-3">
-        {% csrf_token %} {{ settingsform.owner.as_hidden }} {{ settingsform.workspace_id.as_hidden }}
-        <div class="form-label-group">
-          {% render_field settingsform.workspaces class="form-control" onchange="workspaceChanged()" %} {{ settingsform.workspaces.errors }}
-        </div>
-        <div class="form-label-group">
-          {% render_field settingsform.name class="form-control" %}
-          <label for="id_name">Name:</label>
-          {{ settingsform.name.errors }}
-        </div>
-        <div class="form-label-group">
-          {% render_field settingsform.visible_for class="form-control" %}
-          <label for="id_visible_for">Visible for:</label>
-          {{ settingsform.visible_for.errors }}
-        </div>
-        <div class="form-label-group">
-          {% render_field settingsform.editable_by class="form-control" %}
-          <label for="id_editable_by">Editable by:</label>
-          {{ settingsform.editable_by.errors }} {{ settingsform.errors }}
-        </div>
-        <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="edit">Save changes</button>
-        <button class="btn btn-lg btn-danger btn-block btn-login text-uppercase font-weight-bold mb-2" type="button" data-toggle="modal" data-target="#deleteModal">Delete workspace</button>
-        <div class="modal" tabindex="-1" role="dialog" id="deleteModal">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Delete a workspace</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p>Do you really want to delete the workspace?</p>
-                <small>All planned posts will also be irrevocably deleted.</small>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                <button class="btn btn-danger" type="submit" name="action" value="delete">Yes</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
-
-
-
-    <div class="tab-pane fade" id="createworkspace" role="tabpanel" aria-labelledby="createworkspace-tab">
-      <form method="post" class="mt-3">
-        {% csrf_token %}
-        <div class="form-label-group">
-          {% render_field createform.name class="form-control" %}
-          <label for="id_owner">Name of the workspace</label>
-          {{ createform.name.errors }}
-        </div>
-        <div class="form-label-group">
-          {% render_field createform.visible_for class="form-control" %}
-          <label for="id_visible_for">Visible for:</label>
-          {{ createform.visible_for.errors }}
-        </div>
-        <div class="form-label-group">
-          {% render_field createform.editable_by class="form-control" %}
-          <label for="id_editable_by">Editable by:</label>
-          {{ createform.editable_by.errors }}
-        </div>
-        <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="create">Create</button>
-      </form>
-    </div>
-
 
   </div>
 

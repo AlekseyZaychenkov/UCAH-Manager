@@ -17,6 +17,7 @@ from .models import *
 import calendar
 from .forms import *
 import datetime
+import uuid
 
 from loader.models import *
 
@@ -33,18 +34,6 @@ def home(request, workspace_id=None):
 
     if 'workspace_id' in request.GET:
         workspace_id = int(request.GET['workspace_id'])
-
-
-    all = Workspace.objects.all()
-    f = all.first()
-
-    ttt = Workspace.objects \
-        .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists()
-    first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))\
-        .order_by('workspace_id').first()
-
-    lll = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
-    first_workspace = lll.first()
 
     # Events stuff
     if workspace_id and Workspace.objects.filter(workspace_id=workspace_id) \
@@ -89,9 +78,10 @@ def home(request, workspace_id=None):
 
 
         elif workspace and request.POST['action'] == 'edit':
-            form = WorkspaceSettingsForm(request.POST)
+            form = WorkspaceEditForm(request.POST)
             if form.is_valid():
-                form.save(commit=True)
+                workspace = Workspace.objects.get(workspace_id=form.data['workspace_id'])
+                form.save(workspace)
             else:
                 log.error(form.errors.as_data())
 
@@ -100,9 +90,7 @@ def home(request, workspace_id=None):
             workspace = Workspace.objects.get(workspace_id=request.POST["workspace_id"])
             if workspace.owner == request.user:
                 workspace.delete()
-                first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
-                if first_workspace:
-                    workspace_id = first_workspace.workspace_id
+                workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
 
 
         elif workspace and request.POST['action'] == "create_event":
@@ -147,13 +135,13 @@ def home(request, workspace_id=None):
         #             selected_compilation_id = firstCompilation.id
 
 
-    context = prepare_context(request, schedule, workspace_id)
+    context = prepare_context(request, schedule, workspace)
 
     return render(request, "workspace.html", context)
 
 
 # TODO: check how works adding events
-def prepare_context(request, schedule, workspace_id):
+def prepare_context(request, schedule, workspace=None):
     context = {}
 
     queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
@@ -161,21 +149,33 @@ def prepare_context(request, schedule, workspace_id):
     context["my_workspaces"] = queryset_visible
 
     queryset_editable = Workspace.objects.filter(Q(owner=request.user.pk) | Q(editable_by=request.user))
-    # TODO: rename to visible_workspaces
+    # TODO: rename to editable_workspaces
     context["workspaces"] = WorkspaceSerializer(queryset_editable, many=True).data
 
+    # TODO: rename createform to create_form
     context["createform"] = WorkspaceForm()
-    context["selected_workspace_id"] = workspace_id
+    context["edit_form"] = WorkspaceEditForm(initial={"user_id": request.user.pk, "owner": request.user})
+
+    context["selected_workspace_id"] = workspace.workspace_id
+    context["workspace"] = workspace
+
+
+    main_compilation = Compilation.objects.get(id=uuid.UUID(workspace.main_compilation_id))
+    post_ids = main_compilation.post_ids
+    posts = list()
+    for id in post_ids:
+        posts += Post.objects.get(id=id)
+
+    context["main_compilation"] = posts
 
     if schedule:
-        context["settingsform"] = WorkspaceSettingsForm(initial={"user_id": request.user.pk, "owner": request.user})
-
         # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
         #  only current user compilations
         context["my_compilations"] = Compilation.objects.all()
         context["schedule_events"] = get_events_for_schedule(schedule.schedule_id)
         context["selected_schedule_id"] = int(schedule.schedule_id)
 
+        # TODO: rename event_createform to event_create_form
         context["event_createform"] = EventCreateForm()
         context["edit_event_form"] = EventEditForm()
 

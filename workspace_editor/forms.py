@@ -57,40 +57,51 @@ class WorkspaceForm(forms.ModelForm):
         return workspace
 
 
-class WorkspaceSettingsForm(WorkspaceForm):
-    visible_for = forms.CharField(required=False)
-    editable_by = forms.CharField(required=False)
-    schedule_id = forms.CharField(required=True)
+class WorkspaceEditForm(WorkspaceForm):
+    workspace_id = forms.CharField(required=True)
+    name         = forms.CharField(required=True)
+    visible_for  = forms.CharField(required=False)
+    editable_by  = forms.CharField(required=False)
+
 
     class Meta:
         model = Workspace
-        exclude = ("visible_for", "editable_by",)
+        exclude = ("owner", "schedule", "schedule_archive",
+                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id")
 
     def __init__(self, *args, **kwargs):
-        super(WorkspaceSettingsForm, self).__init__(*args, **kwargs)
+        super(WorkspaceEditForm, self).__init__(*args, **kwargs)
         if self.initial:
             self.fields["workspaces"] = forms.ChoiceField(choices=get_workspaces(self.initial["user_id"]), required=True)
 
-    def save(self, commit=True):
-        workspace = Workspace.objects.get(workspace_id=self.cleaned_data["workspace_id"])
-        workspace.name = self.cleaned_data["name"]
-        workspace.editable_by.clear()
-        workspace.visible_for.clear()
+    def save(self, workspace, commit=True):
+        edited_workspace = self.instance
+
+        edited_workspace.owner = workspace.owner
+        edited_workspace.workspace_id = workspace.workspace_id
+        edited_workspace.schedule = workspace.schedule
+        edited_workspace.schedule_archive = workspace.schedule_archive
+        edited_workspace.scheduled_compilation_id = workspace.scheduled_compilation_id
+        edited_workspace.main_compilation_id = workspace.main_compilation_id
+        edited_workspace.main_compilation_archive_id = workspace.main_compilation_archive_id
+
+        edited_workspace.editable_by.clear()
+        edited_workspace.visible_for.clear()
 
         for email in self.cleaned_data["visible_for"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                workspace.visible_for.add(user.pk)
+                edited_workspace.visible_for.add(user.pk)
 
         for email in self.cleaned_data["editable_by"].split(";"):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
-                workspace.editable_by.add(user.pk)
+                edited_workspace.editable_by.add(user.pk)
 
         if commit:
-            workspace.save()
+            edited_workspace.save()
 
-        return workspace
+        return edited_workspace
 
 
 class ScheduleForm(forms.ModelForm):
