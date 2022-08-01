@@ -143,17 +143,17 @@ def generate_storage_patch(root_path, comp_id=None, others=None):
     return path
 
 
-def save_files(storagePath, file_urls):
-    if storagePath is not None:
-        print(f"Trying to create directory '{storagePath}'")
-        os.makedirs(storagePath, exist_ok=True)
+def save_files(storage_path, file_urls):
+    if storage_path is not None:
+        print(f"Trying to create directory '{storage_path}'")
+        os.makedirs(storage_path, exist_ok=True)
 
     # TODO: implement realization for cloud (google-drive) storing
     savedFileAddresses = list()
 
-    print(f"Downloading and saving files (images and gifs) to '{storagePath}'")
+    print(f"Downloading and saving files to '{storage_path}'")
     for image_url in file_urls:
-        path_to_image = os.path.join(storagePath, os.path.basename(image_url))
+        path_to_image = os.path.join(storage_path, os.path.basename(image_url))
 
         opener = urllib.request.URLopener()
         opener.addheader('User-Agent', 'Mozilla/5.0')
@@ -163,3 +163,33 @@ def save_files(storagePath, file_urls):
         savedFileAddresses.append(relative_path)
 
     return savedFileAddresses
+
+
+def save_files_from_request(storage_path, uploaded_in_memory_files):
+    if storage_path is not None:
+        print(f"Trying to create directory '{storage_path}'")
+    os.makedirs(storage_path, exist_ok=True)
+
+    # TODO: implement realization for cloud (google-drive) storing
+    saved_file_addresses = list()
+
+    print(f"Downloading and saving files to '{storage_path}'")
+    for file in uploaded_in_memory_files:
+        path_to_image = os.path.join(storage_path, os.path.basename(file.name))
+        with open(path_to_image, 'wb') as destination:
+            b = file.file
+            destination.write(b.read())
+            saved_file_addresses.append(path_to_image)
+
+    return saved_file_addresses
+
+
+def delete_dir(dir_to_search):
+    success = True
+    for dirpath, dirnames, filenames in os.walk(dir_to_search):
+        try:
+            os.rmdir(dirpath)
+        except OSError as ex:
+            print(ex)
+            success = False
+    return success

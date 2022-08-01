@@ -32,7 +32,6 @@ def registerView(request):
             user = form.save()
             login(request, user)
             return redirect('workspace')
-            # return redirect('home2')
     else:
         form = RegistrationForm()
     context['form'] = form

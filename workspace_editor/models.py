@@ -4,15 +4,13 @@ from account.models import Account
 
 class Schedule(models.Model):
     schedule_id                 = models.AutoField(primary_key=True)
-    name                        = models.CharField(max_length=255)
-    owner                       = models.ForeignKey(Account, on_delete=models.CASCADE)
-    visible_for                 = models.ManyToManyField(Account, related_name="visible_for")
-    editable_by                 = models.ManyToManyField(Account, related_name="editable_by")
 
-    # workspace
-    scheduled_compilation_id    = models.CharField(max_length=128)
-    main_compilation_id         = models.CharField(max_length=128)
-    main_compilation_archive_id = models.CharField(max_length=128)
+    def __str__(self):
+        return self.name
+
+
+class ScheduleArchive(models.Model):
+    schedule_id                 = models.AutoField(primary_key=True)
 
     def __str__(self):
         return self.name
@@ -29,28 +27,14 @@ class Workspace(models.Model):
     main_compilation_id         = models.CharField(max_length=128)
     main_compilation_archive_id = models.CharField(max_length=128)
 
-    # TODO: delete after creating Schedule and ScheduleArchive and foreign keys
-    schedule_id                 = models.CharField(max_length=255)
-    schedulearchive_id           = models.CharField(max_length=255)
+    schedule                    = models.OneToOneField(Schedule, on_delete=models.CASCADE)
+    schedule_archive            = models.OneToOneField(ScheduleArchive, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
 
-class Schedule(models.Model):
-    schedule_id                 = models.AutoField(primary_key=True)
-    workspace                   = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.name
-
-
-class ScheduleArchive(models.Model):
-    schedule_id                 = models.AutoField(primary_key=True)
-    workspace                   = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
 
 
 class Event(models.Model):
