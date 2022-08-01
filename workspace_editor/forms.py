@@ -6,7 +6,7 @@ from workspace_editor.utils import copy_post_to
 from workspace_editor.models import Workspace, Event, Schedule
 from account.models import Account
 from UCA_Manager.settings import PATH_TO_STORE
-from loader.utils import generate_storage_patch, create_empty_compilation, temp_dir_for_workspace, \
+from loader.utils import generate_storage_patch, create_empty_compilation, \
     save_files_from_request
 
 from django.db.models import Q
