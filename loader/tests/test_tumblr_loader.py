@@ -92,13 +92,10 @@ class Test_TumblrLoader(SimpleTestCase):
         path = generate_storage_patch(PATH_TO_STORE, comp_id=compilation.id)
         compilation.storage = path
 
-
         tmblr.download(compilation, number, tag=tag, storagePath=path)
 
-
-        pe = Post.objects.all()
+        pe = Post.objects.filter(compilation_id=compilation.id)
         pe = sorted(pe, key=lambda post: post['posted_timestamp'], reverse=True)
-
 
         print("Posts:")
         for instance in pe:

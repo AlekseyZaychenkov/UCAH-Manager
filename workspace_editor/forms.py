@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 from django import forms
 
+from loader.models import Post
 from workspace_editor.utils import copy_post_to
 from workspace_editor.models import Workspace, Event, Schedule
 from account.models import Account
-from django.db.models import Q
 from UCA_Manager.settings import PATH_TO_STORE
+from loader.utils import generate_storage_patch, create_empty_compilation, temp_dir_for_workspace, \
+    save_files_from_request
 
+from django.db.models import Q
 from datetime import datetime
+import os
 
-from loader.utils import generate_storage_patch, create_empty_compilation
+
 
 
 
@@ -51,8 +55,6 @@ class WorkspaceForm(forms.ModelForm):
             if Account.objects.filter(email=email).exists():
                 user = Account.objects.filter(email=email).get()
                 workspace.editable_by.add(user.pk)
-
-
 
         return workspace
 
@@ -140,7 +142,6 @@ class EventCreateForm(forms.ModelForm):
 
 class EventEditForm(forms.ModelForm):
     start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
-    print(f"EventCreateForm: start_date {str(start_date)}")
 
     # TODO: check and fix
     def save(self, commit=True):
@@ -157,7 +158,6 @@ class EventEditForm(forms.ModelForm):
 
 
 class CompilationCreateForm(forms.Form):
-
     name                         = forms.CharField(required=True)
     resource                     = 'Tumbler'
     search_tag                   = forms.CharField(required=True)
@@ -172,92 +172,47 @@ class CompilationCreateForm(forms.Form):
     post_ids                     = list()
 
 
-    # def set_compilation(self, compilation_id):
-    #     compilation = self.instance
-    #     compilation.id = compilation_id
-    #     self.instance = event
-    #
-    # class Meta:
-    #     model = Compilation
-    #     exclude = ('resource',)
 
+class PostCreateForm(forms.Form):
+    tags            = forms.CharField(required=False)
+    text            = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    images          = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
+    description     = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
 
-        # compilation = Compilation.create(
-        #     name                         = 'Test',
-        #     resource                     = 'Tumbler',
-        #     search_tag                   = tag,
-        #     search_blogs                 = blogs,
-        #     downloaded_date              = str(datetime.now()),
-        #     storage                      = storagePath,
-        #
-        #     post_ids                     = list()
-        # )
+    def save(self, workspace, compilation, images=None, commit=True):
+        tags = list()
+        for tag in self.data["tags"].split():
+            tags.append(tag)
 
+        post = Post.create(
+            # information about original post
+            blog_name             = " ",
+            blog_url              = " ",
+            original_post_url     = " ",
+            posted_date           = str(datetime.now()),
+            posted_timestamp      = datetime.now().timestamp(),
+            tags                  = tags,
+            text                  = str(self.data["text"]),
+            compilation_id        = compilation.id,
+            description           = str(self.data["description"])
+        )
 
-class CompilationCreateForm(forms.Form):
+        if commit:
+            if images:
+                post_storage_path \
+                    = os.path.join(PATH_TO_STORE, str(workspace.workspace_id), str(compilation.id), str(post.id))
+                saved_file_addresses = save_files_from_request(post_storage_path, images)
+                post.stored_file_urls = saved_file_addresses
 
-    name                         = forms.CharField(required=True)
-    # TODO: remove hardcode
-    resource                     = 'Tumbler'
-    search_tag                   = forms.CharField(required=True)
-    search_blogs                 = forms.CharField(required=False)
-    downloaded_date              = str(datetime.now())
+            if compilation.post_ids is None:
+                compilation.post_ids = [post.id]
+            else:
+                compilation.post_ids.append(post.id)
+            compilation.update()
 
-    print(f"search_tag: '{search_tag}'")
-    # TODO: remove hardcode
-    search_tag  = 'paleontology'
+            post.save()
 
-    # TODO: check if its works
-    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
-    post_ids                     = list()
-
-
-    # def set_compilation(self, compilation_id):
-    #     compilation = self.instance
-    #     compilation.id = compilation_id
-    #     self.instance = event
-    #
-    # class Meta:
-    #     model = Compilation
-    #     exclude = ('resource',)
-
-
-        # compilation = Compilation.create(
-        #     name                         = 'Test',
-        #     resource                     = 'Tumbler',
-        #     search_tag                   = tag,
-        #     search_blogs                 = blogs,
-        #     downloaded_date              = str(datetime.now()),
-        #     storage                      = storagePath,
-        #
-        #     post_ids                     = list()
-        # )
-
-
-class CompilationCreateForm(forms.Form):
-
-    name                         = forms.CharField(required=True)
-    resource                     = 'Tumbler'
-    search_tag                   = forms.CharField(required=True)
-    search_blogs                 = forms.CharField(required=False)
-    downloaded_date              = str(datetime.now())
-
-    print(f"search_tag: '{search_tag}'")
-    search_tag  = 'paleontology'
-
-    # TODO: check if its works
-    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
-    post_ids                     = list()
-
-
-    # def set_compilation(self, compilation_id):
-    #     compilation = self.instance
-    #     compilation.id = compilation_id
-    #     self.instance = event
-    #
-    # class Meta:
-    #     model = Compilation
-    #     exclude = ('resource',)
+        return post
 
 
 def get_workspaces(user_id):
@@ -268,3 +223,5 @@ def get_workspaces(user_id):
         choices.append((workspace.pk, workspace.name))
 
     return choices
+
+

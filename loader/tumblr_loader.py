@@ -73,7 +73,7 @@ class TumblrLoader:
             # TODO: figure is possible use mock for tests calling self.save_files() or not
 
             post_storage_path = os.path.join(storagePath, str(postId))
-            savedFileAddresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
+            saved_file_addresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
 
             post = Post.create(
                 # information about original post
@@ -91,7 +91,7 @@ class TumblrLoader:
                 compilation_id        = compilation.id,
 
                 # information for posting
-                stored_file_urls      = savedFileAddresses,
+                stored_file_urls      = saved_file_addresses,
                 external_link_urls    = external_urls,
 
                 # information for administration notes and file storing

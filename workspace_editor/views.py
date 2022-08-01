@@ -17,7 +17,7 @@ from .models import *
 import calendar
 from .forms import *
 import datetime
-import uuid
+from loader.utils import delete_dir
 
 from loader.models import *
 
@@ -64,15 +64,12 @@ def home(request, workspace_id=None):
             form = WorkspaceForm(request.POST)
             if form.is_valid():
                 form.set_owner(request.user)
-
                 schedule = Schedule()
                 schedule.save()
                 schedule_archive = ScheduleArchive()
                 schedule_archive.save()
                 form.set_schedules(schedule, schedule_archive)
-
                 workspace = form.save()
-
             else:
                 log.error(form.errors.as_data())
 
@@ -110,15 +107,17 @@ def home(request, workspace_id=None):
             else:
                 log.error(form.errors.as_data())
 
-
-        elif workspace and request.POST['action'] == 'create_compilation':
-            form = CompilationCreateForm(request.POST)
+        elif workspace and request.POST['action'] == 'create_post':
+            form = PostCreateForm(request.POST)
             if form.is_valid():
-                 form.save()
+                compilation = Compilation.objects.get(id=workspace.main_compilation_id)
+                form.save(workspace=workspace, compilation=compilation, images=request.FILES.getlist('images'))
+                delete_dir(temp_dir_for_workspace(workspace_id))
             else:
                 log.error(form.errors.as_data())
 
         return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
+
         # if request.POST['action'] == 'edit_compilation':
         #     form = CompilationForm(request.POST)
         #     if form.is_valid():
@@ -177,7 +176,9 @@ def prepare_context(request, schedule, workspace=None):
 
         # TODO: rename event_createform to event_create_form
         context["event_createform"] = EventCreateForm()
+        # TODO: rename event_edit_form to event_create_form
         context["edit_event_form"] = EventEditForm()
+        context["post_create_form"] = PostCreateForm()
 
         all_post_entries = Post.objects.all()
         # TODO: change number of items and make slider
