@@ -55,7 +55,7 @@
                 <li class="dropdown-item">
                     {{ ws.name }}
                     {% if selected_workspace_id != ws.workspace_id %}
-                      <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace' %}?workspace_id={{ws.workspace_id}}">Show</a>
+                      <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace_by_id' workspace_id=ws.workspace_id %}">Show</a>
                     {% endif %}
                 </li>
               {% endfor %}
@@ -76,7 +76,7 @@
             <button type="button" disabled class="btn btn-outline-dark">
               <a href="#">Rules</a>
             </button>
-            <button class="btn btn-primary" type="submit" name="action" value="add_all_posts">Add all >></button>
+            <button class="btn btn-primary" type="submit" name="action" value="add_all_posts"><< Add all</button>
           </div>
         </div>
 
@@ -88,8 +88,8 @@
       <div class="col-md-6 col-lg-6">
         <div class="btn-group" role="group">
           <div class="btn-group-vertical">
-            <a type="button" class="btn btn-sm btn-primary float-right">Scheduling</a>
-            <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%} ">Downloading</a>
+            <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'workspace_by_id' workspace_id=workspace.workspace_id %}">Scheduling</a>
+            <a type="button" class="btn btn-sm btn-primary float-right">Downloading</a>
             <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
           </div>
         </div>

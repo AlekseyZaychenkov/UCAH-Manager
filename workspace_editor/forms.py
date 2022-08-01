@@ -14,9 +14,6 @@ from datetime import datetime
 import os
 
 
-
-
-
 class WorkspaceForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
@@ -170,7 +167,6 @@ class CompilationCreateForm(forms.Form):
     # TODO: check if its works
     storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
     post_ids                     = list()
-
 
 
 class PostCreateForm(forms.Form):

@@ -73,7 +73,6 @@ def home(request, workspace_id=None):
             else:
                 log.error(form.errors.as_data())
 
-
         elif workspace and request.POST['action'] == 'edit':
             form = WorkspaceEditForm(request.POST)
             if form.is_valid():
@@ -82,13 +81,11 @@ def home(request, workspace_id=None):
             else:
                 log.error(form.errors.as_data())
 
-
         elif workspace and request.POST['action'] == 'delete':
             workspace = Workspace.objects.get(workspace_id=request.POST["workspace_id"])
             if workspace.owner == request.user:
                 workspace.delete()
                 workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
-
 
         elif workspace and request.POST['action'] == "create_event":
             form = EventCreateForm(request.POST)
@@ -98,7 +95,6 @@ def home(request, workspace_id=None):
                 form.save()
             else:
                 log.error(form.errors.as_data())
-
 
         elif workspace and request.POST['action'] == "edit_event":
             form = EventEditForm(request.POST)
@@ -112,11 +108,103 @@ def home(request, workspace_id=None):
             if form.is_valid():
                 compilation = Compilation.objects.get(id=workspace.main_compilation_id)
                 form.save(workspace=workspace, compilation=compilation, images=request.FILES.getlist('images'))
-                delete_dir(temp_dir_for_workspace(workspace_id))
             else:
                 log.error(form.errors.as_data())
 
         return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
+
+
+    context = __prepare_workspace_context(request, schedule, workspace)
+
+    return render(request, "workspace.html", context)
+
+
+def downloading(request, workspace_id=None):
+
+    workspace = None
+    schedule = None
+    first_workspace = None
+
+    if 'workspace_id' in request.GET:
+        workspace_id = int(request.GET['workspace_id'])
+
+    # Events stuff
+    if workspace_id and Workspace.objects.filter(workspace_id=workspace_id) \
+            .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
+        workspace = Workspace.objects.get(workspace_id=workspace_id)
+    elif workspace_id is None and Workspace.objects \
+            .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
+        first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
+        workspace = first_workspace
+        log.warning(f"Redirect to first available workspace")
+
+        return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
+
+
+    elif workspace_id is not None and not Workspace.objects \
+            .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
+        log.warning(f"Workspace with id workspace_id={workspace_id} doesn't exists or you don't have access to it")
+    else:
+        log.info(f"You don't have available workspaces")
+
+
+    if workspace:
+        schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
+
+
+    if request.POST:
+        if request.POST['action'] == 'create':
+            form = WorkspaceForm(request.POST)
+            if form.is_valid():
+                form.set_owner(request.user)
+                schedule = Schedule()
+                schedule.save()
+                schedule_archive = ScheduleArchive()
+                schedule_archive.save()
+                form.set_schedules(schedule, schedule_archive)
+                workspace = form.save()
+            else:
+                log.error(form.errors.as_data())
+
+        elif workspace and request.POST['action'] == 'edit':
+            form = WorkspaceEditForm(request.POST)
+            if form.is_valid():
+                workspace = Workspace.objects.get(workspace_id=form.data['workspace_id'])
+                form.save(workspace)
+            else:
+                log.error(form.errors.as_data())
+
+        elif workspace and request.POST['action'] == 'delete':
+            workspace = Workspace.objects.get(workspace_id=request.POST["workspace_id"])
+            if workspace.owner == request.user:
+                workspace.delete()
+                workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
+
+        elif workspace and request.POST['action'] == "create_event":
+            form = EventCreateForm(request.POST)
+            if form.is_valid():
+                form.safe_copied_post(workspace.scheduled_compilation_id)
+                form.set_schedule(schedule)
+                form.save()
+            else:
+                log.error(form.errors.as_data())
+
+        elif workspace and request.POST['action'] == "edit_event":
+            form = EventEditForm(request.POST)
+            if form.is_valid():
+                form.save()
+            else:
+                log.error(form.errors.as_data())
+
+        elif workspace and request.POST['action'] == 'create_post':
+            form = PostCreateForm(request.POST)
+            if form.is_valid():
+                compilation = Compilation.objects.get(id=workspace.main_compilation_id)
+                form.save(workspace=workspace, compilation=compilation, images=request.FILES.getlist('images'))
+            else:
+                log.error(form.errors.as_data())
+
+        return redirect(f'downloading_workspace_by_id', workspace_id=workspace.workspace_id)
 
         # if request.POST['action'] == 'edit_compilation':
         #     form = CompilationForm(request.POST)
@@ -134,13 +222,12 @@ def home(request, workspace_id=None):
         #             selected_compilation_id = firstCompilation.id
 
 
-    context = prepare_context(request, schedule, workspace)
+    context = __prepare_workspace_context(request, schedule, workspace)
 
-    return render(request, "workspace.html", context)
+    return render(request, "downloading.html", context)
 
 
-# TODO: check how works adding events
-def prepare_context(request, schedule, workspace=None):
+def __prepare_workspace_context(request, schedule, workspace=None):
     context = {}
 
     queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
@@ -171,7 +258,7 @@ def prepare_context(request, schedule, workspace=None):
         # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
         #  only current user compilations
         context["my_compilations"] = Compilation.objects.all()
-        context["schedule_events"] = get_events_for_schedule(schedule.schedule_id)
+        context["schedule_events"] = __get_events_for_schedule(schedule.schedule_id)
         context["selected_schedule_id"] = int(schedule.schedule_id)
 
         # TODO: rename event_createform to event_create_form
@@ -191,7 +278,7 @@ def prepare_context(request, schedule, workspace=None):
     return context
 
 
-def get_events_for_schedule(selected_schedule_id):
+def __get_events_for_schedule(selected_schedule_id):
     dates_to_events = dict()
     count = 0
     date = datetime.date.today()
