@@ -1,7 +1,13 @@
+import logging
+import os
+
 from loader.models import Post, Compilation
 from UCA_Manager.settings import PATH_TO_STORE
 from loader.utils import generate_storage_patch, save_files
+import shutil
 
+
+log = logging.getLogger(__name__)
 
 def copy_post_to(post_id, recipient_compilation_id, copy_files=False):
     compilation = Compilation.objects.get(id=recipient_compilation_id)

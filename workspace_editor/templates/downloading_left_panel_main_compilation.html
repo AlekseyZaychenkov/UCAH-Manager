@@ -9,25 +9,19 @@
     {% for post in main_compilation %}
     <div class="col-md-6 card">
       <div class="m-2">
-        <form method="post"> {% csrf_token %}
 
-          <div class="btn-group row" role="group">
-            {% render_field event_createform.start_date class="form-control-sm" type="datetime-local" %}
-            {{ event_createform.start_date.errors }}
-            <div class="d-none">
-              {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
-            </div>
-          </div>
 
-          <div class="float-right">
-            <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
-          </div>
 
-        </form>
+
+
 
         {% block post_info %}
         {% include 'post_info.html' %}
         {% endblock %}
+
+
+
+
 
       </div>
     </div>
