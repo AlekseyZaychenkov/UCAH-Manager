@@ -14,8 +14,8 @@ class Post(Model):
     id                    = columns.UUID(primary_key=True, default=uuid.uuid4)
 
     # information about original post
-    blog_name             = columns.Text(max_length=50, required=True)
-    blog_url              = columns.Text(max_length=2048, required=True)
+    blog_name             = columns.Text(max_length=50, required=False)
+    blog_url              = columns.Text(max_length=2048, required=False)
     # TODO: rename to id_in_resource
     id_in_social_network  = columns.BigInt(required=False, index=True)
     original_post_url     = columns.Text(max_length=2048, required=False)

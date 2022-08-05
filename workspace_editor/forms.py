@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from django import forms
 
-from loader.models import Post
+from loader.models import Post, Compilation
 from workspace_editor.utils import copy_post_to
 from workspace_editor.models import Workspace, Event, Schedule
 from account.models import Account
@@ -12,7 +14,10 @@ from loader.utils import generate_storage_patch, create_empty_compilation, \
 from django.db.models import Q
 from datetime import datetime
 import os
+import shutil
 
+
+log = logging.getLogger(__name__)
 
 class WorkspaceForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
@@ -182,9 +187,6 @@ class PostCreateForm(forms.Form):
 
         post = Post.create(
             # information about original post
-            blog_name             = " ",
-            blog_url              = " ",
-            original_post_url     = " ",
             posted_date           = str(datetime.now()),
             posted_timestamp      = datetime.now().timestamp(),
             tags                  = tags,
@@ -209,6 +211,47 @@ class PostCreateForm(forms.Form):
             post.save()
 
         return post
+
+
+# class PostChoiceForm(forms.Form):
+#     post_id = forms.CharField(required=True)
+#
+#     def get_id(self):
+#         return self.data["post_id"]
+
+
+class PostDeleteForm(forms.Form):
+    post_id = forms.CharField(required=True)
+    def delete(self):
+        post_id = self.data["post_id"]
+        post = Post.objects.get(id=post_id)
+
+        if post:
+            compilation_id = post.compilation_id
+            compilation = Compilation.objects.get(id=compilation_id)
+
+            if compilation:
+                compilation.post_ids.remove(post.id)
+                compilation.update()
+            else:
+                log.error(f"No compilation with id='{compilation_id}' for post id='{post.id}' ")
+
+            if len(post.stored_file_urls) > 0:
+                folder = post.stored_file_urls[0].parent
+                for file in post.stored_file_urls:
+                    os.remove(file)
+                if len(os.listdir(folder)) == 0:
+                    shutil.rmtree(folder)
+
+            post.delete()
+
+        else:
+            log.error(f"No post with id='{post.id}' ")
+
+
+
+
+
 
 
 def get_workspaces(user_id):

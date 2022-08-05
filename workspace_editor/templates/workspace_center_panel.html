@@ -29,23 +29,11 @@
                         <!-- TODO: add proposed time field and showing -->
                         <!-- TODO: add opportunity to change the time -->
                         <!-- TODO: place picture more compact -->
-                        <p class="mt-3">{{post.text}}</p>
+                        {% block post_info %}
+                        {% include 'post_info.html' %}
+                        {% endblock %}
 
-                        <div class="row">
-                            {% for pi in post.stored_file_urls %}
-                            {% if forloop.counter == 1 %}
-                            <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
-                            {% else %}
-                            <div class="col-md-4 p-2">
-                                <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
-                            </div>
-                            {% endif %}
-                            {% empty %}
-                            {% endfor %}
-                        </div>
                     </div>
-                    <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
-                    <!-- TODO: figure out and add other useful information -->
                 </div>
                 {% endfor %}
                 <!-- TODO: make a text foldable-->

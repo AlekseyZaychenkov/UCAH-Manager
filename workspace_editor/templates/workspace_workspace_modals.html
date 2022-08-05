@@ -78,8 +78,9 @@
             {{ edit_form.editable_by.errors }} {{ edit_form.errors }}
           </div>
           <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit" name="action" value="edit">Save changes</button>
-          <button class="btn btn-lg btn-danger btn-block btn-login text-uppercase font-weight-bold mb-2" type="button" data-toggle="modal" data-target="#deleteModal">Delete workspace</button>
-          <div class="modal" tabindex="-1" role="dialog" id="deleteModal">
+          <button class="btn btn-lg btn-danger btn-block btn-login text-uppercase font-weight-bold mb-2" type="button" data-toggle="modal" data-target="#delete_modal">Delete workspace</button>
+
+          <div class="modal" tabindex="-1" role="dialog" id="delete_modal">
             <div class="modal-dialog" role="document">
               <div class="modal-content">
                 <div class="modal-header">
@@ -99,6 +100,7 @@
               </div>
             </div>
           </div>
+
         </form>
       </div>
     </div>
