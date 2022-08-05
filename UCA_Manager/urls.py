@@ -29,7 +29,7 @@ urlpatterns = [
     # path("", include("ecomapp.urls")),
 
     path('', include('account.urls')),
-    path('', include('postCalendar.urls')),
+    path('', include('workspace_editor.urls')),
     path('', include('loader.urls')),
 ]
 

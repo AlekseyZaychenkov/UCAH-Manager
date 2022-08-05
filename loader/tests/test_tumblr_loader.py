@@ -12,7 +12,7 @@ from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.management import drop_table
 from django.conf import settings
 from loader.utils import Utils
-from loader.models import PostEntry, Compilation
+from loader.models import Post, Compilation
 from UCA_Manager.settings import PATH_TO_STORE
 
 from loader.tumblr_loader import TumblrLoader
@@ -20,7 +20,7 @@ from loader.tumblr_loader import TumblrLoader
 # import sys
 # sys.path.append("../")
 
-# from postCalendar.models import Calendar
+# from workspace_editor.models import Schedule
 # from account.models import Account
 # import loader.models
 
@@ -33,12 +33,13 @@ class Test_TumblrLoader(SimpleTestCase):
         # settings.configure()
 
         Utils.start_session()
+        drop_table(Post)
 
-        sync_table(PostEntry)
+        sync_table(Post)
         sync_table(Compilation)
 
-        drop_table(PostEntry)
-        drop_table(Compilation)
+        # drop_table(Post)
+        # drop_table(Compilation)
 
     # TODO: make the function fixture
     def create_parser(self):
@@ -74,31 +75,29 @@ class Test_TumblrLoader(SimpleTestCase):
 
 
 
-        tag = 'paleontology'
-        number = 20
-        path = generate_storage_patch(PATH_TO_STORE, tags=tag)
-
+        tag = 'art'
+        number = 25
 
         # tmblr.download(number, tag=tag)
 
-        blogs = ['netmassimo', 'kinogane']
+        # blogs = ['netmassimo', 'kinogane']
 
         compilation = create_compilation(
             resource='Tumbler',
             name='Test',
             tag=tag,
-            blogs=blogs,
-            storage=path
+            # blogs=blogs
         )
 
-        tmblr.download(compilation, number, storagePath=path, blogs=blogs)
+        path = generate_storage_patch(PATH_TO_STORE, comp_id=compilation.id)
+        compilation.storage = path
 
+        tmblr.download(compilation, number, tag=tag, storagePath=path)
 
-        pe = PostEntry.objects.all()
+        pe = Post.objects.filter(compilation_id=compilation.id)
         pe = sorted(pe, key=lambda post: post['posted_timestamp'], reverse=True)
 
-
-        print("PostEntryes:")
+        print("Posts:")
         for instance in pe:
             print(f"<===== ===== ===== instance.id: {instance.id} ===== ===== =====>")
 
@@ -107,14 +106,14 @@ class Test_TumblrLoader(SimpleTestCase):
             # print(f"instance.id_in_social_network: {instance.id_in_social_network}")
             print(f"instance.url: {instance.url}")
             # print(f"instance.posted_date: {instance.posted_date}")
-            # print(f"instance.post_tags: {instance.post_tags}")
+
             # print(f"instance.text: {instance.text}")
-            print(f"instance.file_urls: {instance.file_urls}")
-            print(f"instance.external_link_urls: {instance.external_link_urls}")
+            # print(f"instance.file_urls: {instance.file_urls}")
+            # print(f"instance.external_link_urls: {instance.external_link_urls}")
 
-            # print(f"instance.tags: {instance.tags}")
+            print(f"instance.tags: {instance.tags}")
 
-            print(f"instance.file_urls: {instance.stored_file_urls}")
+            # print(f"instance.file_urls: {instance.stored_file_urls}")
             # print(f"instance.external_link_urls: {instance.external_link_urls}")
             #
             # print(f"instance.description: {instance.description}")
@@ -139,8 +138,8 @@ class Test_TumblrLoader(SimpleTestCase):
 
 
 
-        # pe = PostEntry.objects.values()
-        # print("PostEntryes:")
+        # pe = Post.objects.values()
+        # print("Posts:")
         # for instance in pe:
         #     print(str(pe))
         #

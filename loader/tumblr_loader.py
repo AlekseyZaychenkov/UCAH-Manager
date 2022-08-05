@@ -1,42 +1,26 @@
 import os
-import urllib.request
 from bs4 import BeautifulSoup
 
 
 from cassandra.cqlengine.management import sync_table
-from loader.models import PostEntry, Compilation
-from loader.utils import Utils
-from UCA_Manager.settings import ROOT_DIR
+from loader.models import Post, Compilation
+from loader.utils import Utils, save_files, create_tumblr_client
+
+import pathlib
 
 
 class TumblrLoader:
 
     def __init__(self):
-        self.client = Utils.createTumblrClient()
-        sync_table(PostEntry)
+        self.client = create_tumblr_client()
+        sync_table(Post)
         sync_table(Compilation)
 
 
-    def save_files(self, storagePach, file_urls):
-        # TODO: implement realization for cloud (google-drive) storing
-        savedFileAddresses = list()
 
-        print(f"Downloading and saving files (images and gifs) to '{storagePach}'")
-        for image_url in file_urls:
-            path_to_image = os.path.join(storagePach, os.path.basename(image_url))
-
-            opener = urllib.request.URLopener()
-            opener.addheader('User-Agent', 'Mozilla/5.0')
-            filename, headers = opener.retrieve(image_url, path_to_image)
-            relative_path = os.path.relpath(filename, ROOT_DIR)
-
-            savedFileAddresses.append(relative_path)
-
-
-        return savedFileAddresses
 
     # TODO: implement bool flag 'storeFilesLocal' (for downloading images and gifs or not)
-    def save(self, response, compilation, storagePath, tag=''):
+    def save(self, response, compilation, storagePath=None, tag=''):
         print(f"Start parsing response:")
         for post in response:
             postId = post['id']
@@ -87,14 +71,16 @@ class TumblrLoader:
             # TODO: implement method for saving images from urls to local or cloud storage
             # TODO: use enam for choising type of storage
             # TODO: figure is possible use mock for tests calling self.save_files() or not
-            savedFileAddresses = self.save_files(storagePath, file_urls) if storagePath is not None else None
 
-            postEntry = PostEntry.create(
+            post_storage_path = os.path.join(storagePath, str(postId))
+            saved_file_addresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
+
+            post = Post.create(
                 # information about original post
                 blog_name             = post['blog']['name'],
                 blog_url              = post['blog']['url'],
                 id_in_social_network  = postId,
-                url                   = post['post_url'],
+                original_post_url     = post['post_url'],
                 posted_date           = post['date'],
                 posted_timestamp      = post['timestamp'],
                 tags                  = post['tags'],
@@ -105,7 +91,7 @@ class TumblrLoader:
                 compilation_id        = compilation.id,
 
                 # information for posting
-                stored_file_urls      = savedFileAddresses,
+                stored_file_urls      = saved_file_addresses,
                 external_link_urls    = external_urls,
 
                 # information for administration notes and file storing
@@ -113,19 +99,16 @@ class TumblrLoader:
             )
 
             if compilation.post_ids is None:
-                compilation.post_ids = [postEntry.id]
+                compilation.post_ids = [post.id]
             else:
-                compilation.post_ids.append(postEntry.id)
+                compilation.post_ids.append(post.id)
 
             compilation.update()
 
 
-
+    # TODO: add time limit
     def download(self, compilation, number, storagePath=None, tag=None, blogs=None):
         print(f"Getting '{number}' posts from Tambler by tag: '{tag}' and blogs '{blogs}'")
-        if storagePath is not None:
-            print(f"Trying to create directory '{storagePath}'")
-            os.makedirs(storagePath)
 
         look_before = 0
         response = list()
@@ -143,6 +126,9 @@ class TumblrLoader:
 
                 print(f"Downloaded '{len(response)}' posts with tag '{tag}' from Tumblr")
                 self.save(response, compilation, storagePath=storagePath, tag=tag)
+
+                if len(response) == 0:
+                    break
 
                 look_before = response[-1]['timestamp']
                 number -= len(response)

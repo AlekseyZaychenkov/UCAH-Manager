@@ -27,6 +27,22 @@ SECRET_KEY = SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console_handler': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'level': 'INFO',
+            'handlers': ['console_handler'],
+        },
+    },
+
+}
 
 ALLOWED_HOSTS = []
 
@@ -46,7 +62,7 @@ INSTALLED_APPS = [
     # "ecomapp",
 
     'account',
-    'postCalendar',
+    'workspace_editor',
     'loader',
 
     'widget_tweaks',
