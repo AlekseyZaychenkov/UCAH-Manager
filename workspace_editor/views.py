@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 import logging
 
-from workspace_editor.forms import ScheduleForm, EventCreateForm, EventEditForm, CompilationCreateForm
+from workspace_editor.forms import ScheduleCreateForm, EventCreateForm, EventEditForm, CompilationCreateForm
 from workspace_editor.models import Workspace
 from workspace_editor.serializers import WorkspaceSerializer
 from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
@@ -58,7 +58,7 @@ def downloading(request, workspace_id=None, post_id=None):
 
         return redirect(f'downloading_workspace_by_id', workspace_id=workspace.workspace_id)
 
-    context = __prepare_workspace_context(request, workspace, post_id)
+    context = __prepare_downloading_context(request, workspace, post_id)
 
     return render(request, "downloading.html", context)
 
@@ -91,7 +91,7 @@ def __workspace_choice(request, workspace_id):
 
 def __workspace_request_handler(request, workspace=None):
     if request.POST['action'] == 'create':
-        form = WorkspaceForm(request.POST)
+        form = WorkspaceCreateForm(request.POST)
         if form.is_valid():
             form.set_owner(request.user)
             schedule = Schedule()
@@ -119,6 +119,17 @@ def __workspace_request_handler(request, workspace=None):
 
     return workspace
 
+
+def __compilation_request_handler(request, workspace):
+    if request.POST['action'] == 'create_compilation':
+        form = CompilationHolderCreateForm(request.POST)
+        if form.is_valid():
+            form.set_workspace(workspace)
+            form.save()
+        else:
+            log.error(form.errors.as_data())
+
+
 def __event_request_handler(request, workspace, schedule):
     if request.POST['action'] == "create_event":
         form = EventCreateForm(request.POST)
@@ -137,7 +148,6 @@ def __event_request_handler(request, workspace, schedule):
             log.error(form.errors.as_data())
 
 def __post_request_handler(request, workspace, post_id=None):
-
     if request.POST['action'] == 'create_post':
         form = PostCreateForm(request.POST)
         if form.is_valid():
@@ -155,6 +165,20 @@ def __post_request_handler(request, workspace, post_id=None):
 
 
 def __prepare_workspace_context(request, workspace=None, post_id=None):
+    context = __prepare_mutual_context(request, workspace, post_id)
+    return context
+
+
+def __prepare_downloading_context(request, workspace=None, post_id=None):
+    context = __prepare_mutual_context(request, workspace, post_id)
+    context['compilation_create_form'] = CompilationHolderCreateForm()
+
+
+    return context
+
+
+# TODO: investigate and move part of methods to __prepare_workspace_context()
+def __prepare_mutual_context(request, workspace=None, post_id=None):
     context = {}
 
     queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
@@ -165,8 +189,7 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
     # TODO: rename to editable_workspaces
     context["workspaces"] = WorkspaceSerializer(queryset_editable, many=True).data
 
-    # TODO: rename createform to create_form
-    context["createform"] = WorkspaceForm()
+    context["create_form"] = WorkspaceCreateForm()
     context["edit_form"] = WorkspaceEditForm(initial={"user_id": request.user.pk, "owner": request.user})
 
     context["selected_workspace_id"] = workspace.workspace_id
@@ -183,7 +206,7 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
         context["selected_schedule_id"] = int(schedule.schedule_id)
 
         # TODO: rename event_createform to event_create_form
-        context["event_createform"] = EventCreateForm()
+        context["event_create_form"] = EventCreateForm()
         # TODO: rename event_edit_form to event_create_form
         context["edit_event_form"] = EventEditForm()
         context["post_create_form"] = PostCreateForm()
@@ -205,6 +228,8 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
         context["main_compilation"] = main_compilation
 
         context["selected_post_id"] = post_id
+
+
 
     return context
 

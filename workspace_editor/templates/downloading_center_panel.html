@@ -1,62 +1,9 @@
 {% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
 <div class="col">
     {% for day, events_to_posts in schedule_events.items  %}
-    <div class="col m-4 card">
-        <form method="post" class="mt-3">
-            {% csrf_token %}
-
-            <h4>{{day.0}}, {{day.1}}</h4>
-
-            <div class="row">
-                {% for event, post in events_to_posts.items  %}
-
-                <div class="col-md-4 card">
-                    <div class="col">
-                        <!-- TODO: check and fix time edition -->
-                        <form method="post" class="mt-3">
-                            <div class="form-group mt-3" >
-                                <div class="row">
-                                    <label for="id_start_date">{{event.start_date}}</label>
-                                    {% if event_editform != None %}
-                                    {% render_field event_editform.start_date class="form-control" type="datetime-local" %}
-                                    {{ event_editform.start_date.errors }}
-                                    {% endif %}
-                                    <button class="btn btn-primary" type="submit" name="action" value="edit_event">Edit</button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <!-- TODO: add proposed time field and showing -->
-                        <!-- TODO: add opportunity to change the time -->
-                        <!-- TODO: place picture more compact -->
-                        <p class="mt-3">{{post.text}}</p>
-
-                        <div class="row">
-                            {% for pi in post.stored_file_urls %}
-                            {% if forloop.counter == 1 %}
-                            <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
-                            {% else %}
-                            <div class="col-md-4 p-2">
-                                <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
-                            </div>
-                            {% endif %}
-                            {% empty %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
-                    <!-- TODO: figure out and add other useful information -->
-                </div>
-                {% endfor %}
-                <!-- TODO: make a text foldable-->
-                <!-- <p class="mt-4">Description: '{{post.description}}'</p>-->
-
-            </div>
 
 
-        </form>
 
-    </div>
     {% endfor %}
 
     <nav aria-label="...">

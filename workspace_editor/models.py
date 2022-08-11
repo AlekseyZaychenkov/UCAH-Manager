@@ -3,89 +3,113 @@ from account.models import Account
 
 
 class Schedule(models.Model):
-    schedule_id                 = models.AutoField(primary_key=True)
+    schedule_id                  = models.AutoField(primary_key=True)
 
     def __str__(self):
         return self.name
 
 
 class ScheduleArchive(models.Model):
-    schedule_id                 = models.AutoField(primary_key=True)
+    schedule_id                  = models.AutoField(primary_key=True)
 
     def __str__(self):
         return self.name
 
 
 class Workspace(models.Model):
-    workspace_id                = models.AutoField(primary_key=True)
-    name                        = models.CharField(max_length=255)
-    owner                       = models.ForeignKey(Account, on_delete=models.CASCADE)
-    visible_for                 = models.ManyToManyField(Account, related_name="visible_for")
-    editable_by                 = models.ManyToManyField(Account, related_name="editable_by")
+    workspace_id                 = models.AutoField(primary_key=True)
+    name                         = models.CharField(max_length=255)
+    owner                        = models.ForeignKey(Account, on_delete=models.CASCADE)
+    visible_for                  = models.ManyToManyField(Account, related_name="visible_for")
+    editable_by                  = models.ManyToManyField(Account, related_name="editable_by")
 
-    scheduled_compilation_id    = models.CharField(max_length=128)
-    main_compilation_id         = models.CharField(max_length=128)
-    main_compilation_archive_id = models.CharField(max_length=128)
+    scheduled_compilation_id     = models.CharField(max_length=128)
+    main_compilation_id          = models.CharField(max_length=128)
+    main_compilation_archive_id  = models.CharField(max_length=128)
 
-    schedule                    = models.OneToOneField(Schedule, on_delete=models.CASCADE)
-    schedule_archive            = models.OneToOneField(ScheduleArchive, on_delete=models.CASCADE)
+    schedule                     = models.OneToOneField(Schedule, on_delete=models.CASCADE)
+    schedule_archive             = models.OneToOneField(ScheduleArchive, on_delete=models.CASCADE)
+
+    description                  = models.TextField()
 
     def __str__(self):
         return self.name
 
 
+class CompilationHolder(models.Model):
+    compilation_holder_id        = models.AutoField(primary_key=True)
 
+    workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    name                         = models.CharField(max_length=255)
+    number_on_list               = models.IntegerField()
+    compilation_id               = models.CharField(max_length=128)
+    whitelisted_tags             = models.TextField()
+    blacklisted_tags             = models.TextField()
+    resources                    = models.CharField(max_length=4095, null=True, blank=True)
+    description                  = models.TextField()
+
+
+class WhiteListedBlog(models.Model):
+    whitelisted_blog_id          = models.AutoField(primary_key=True)
+    compilation_holder_id        = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+
+
+class BlackListedBlog(models.Model):
+    blacklisted_blog_id          = models.AutoField(primary_key=True)
+    compilation_holder_id        = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
 
 
 class Event(models.Model):
-    event_id        = models.AutoField(primary_key=True)
-    schedule        = models.ForeignKey(Schedule, on_delete=models.CASCADE)
-    post_id         = models.CharField(max_length=128, null=True, blank=True)
-    start_date      = models.DateTimeField()
+    event_id                     = models.AutoField(primary_key=True)
+    schedule                     = models.ForeignKey(Schedule, on_delete=models.CASCADE)
+    post_id                      = models.CharField(max_length=128, null=True, blank=True)
+    start_date                   = models.DateTimeField()
 
     def __str__(self):
         return self.name
 
 
 class ArchiveEvent(models.Model):
-    event_id        = models.AutoField(primary_key=True)
-    schedule        = models.ForeignKey(Schedule, on_delete=models.CASCADE)
-    post_id         = models.CharField(max_length=128, null=True, blank=True)
-    start_date      = models.DateTimeField()
+    event_id                     = models.AutoField(primary_key=True)
+    schedule                     = models.ForeignKey(Schedule, on_delete=models.CASCADE)
+    post_id                      = models.CharField(max_length=128, null=True, blank=True)
+    start_date                   = models.DateTimeField()
 
     def __str__(self):
         return self.name
 
 
 class Blog(models.Model):
-    blog_id         = models.AutoField(primary_key=True)
-    workspace       = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-    event           = models.ForeignKey(Event, on_delete=models.CASCADE)
-    resource        = models.CharField(max_length=63, null=True, blank=True)
-    name            = models.CharField(max_length=255, null=True, blank=True)
-    url             = models.CharField(max_length=2048, null=True, blank=True)
-    owner_url       = models.CharField(max_length=255, null=True, blank=True)
-    owner_nickname  = models.CharField(max_length=255, null=True, blank=True)
+    blog_id                      = models.AutoField(primary_key=True)
+    workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+    event                        = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True)
+    whitelisted_blogs            = models.OneToOneField(WhiteListedBlog, on_delete=models.SET_NULL, null=True)
+    blacklisted_blogs            = models.OneToOneField(BlackListedBlog, on_delete=models.SET_NULL, null=True)
+    resource                     = models.CharField(max_length=63, null=True, blank=True)
+    name                         = models.CharField(max_length=255, null=True, blank=True)
+    url                          = models.CharField(max_length=2048, null=True, blank=True)
+    owner_url                    = models.CharField(max_length=255, null=True, blank=True)
+    owner_nickname               = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 
 class Credentials(models.Model):
-    credentials_id  = models.AutoField(primary_key=True)
-    owner           = models.ForeignKey(Account, on_delete=models.CASCADE)
-    name            = models.CharField(max_length=255, null=True, blank=True)
-    resource        = models.CharField(max_length=63, null=True, blank=True)
-    login           = models.CharField(max_length=255, null=True, blank=True)
-    password        = models.CharField(max_length=255, null=True, blank=True)
-    consumer_key    = models.CharField(max_length=255, null=True, blank=True)
-    consumer_secret = models.CharField(max_length=255, null=True, blank=True)
-    token           = models.CharField(max_length=255, null=True, blank=True)
-    secret          = models.CharField(max_length=255, null=True, blank=True)
+    credentials_id               = models.AutoField(primary_key=True)
+    owner                        = models.ForeignKey(Account, on_delete=models.CASCADE)
+    name                         = models.CharField(max_length=255, null=True, blank=True)
+    resource                     = models.CharField(max_length=63, null=True, blank=True)
+    login                        = models.CharField(max_length=255, null=True, blank=True)
+    password                     = models.CharField(max_length=255, null=True, blank=True)
+    consumer_key                 = models.CharField(max_length=255, null=True, blank=True)
+    consumer_secret              = models.CharField(max_length=255, null=True, blank=True)
+    token                        = models.CharField(max_length=255, null=True, blank=True)
+    secret                       = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.name
-
 
 
 # TODO: implement special structure for storing

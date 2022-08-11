@@ -5,7 +5,7 @@ from django import forms
 
 from loader.models import Post, Compilation
 from workspace_editor.utils import copy_post_to
-from workspace_editor.models import Workspace, Event, Schedule
+from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog
 from account.models import Account
 from UCA_Manager.settings import PATH_TO_STORE
 from loader.utils import generate_storage_patch, create_empty_compilation, \
@@ -19,7 +19,7 @@ import shutil
 
 log = logging.getLogger(__name__)
 
-class WorkspaceForm(forms.ModelForm):
+class WorkspaceCreateForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
 
@@ -61,7 +61,7 @@ class WorkspaceForm(forms.ModelForm):
         return workspace
 
 
-class WorkspaceEditForm(WorkspaceForm):
+class WorkspaceEditForm(WorkspaceCreateForm):
     workspace_id = forms.CharField(required=True)
     name         = forms.CharField(required=True)
     visible_for  = forms.CharField(required=False)
@@ -108,24 +108,68 @@ class WorkspaceEditForm(WorkspaceForm):
         return edited_workspace
 
 
-class ScheduleForm(forms.ModelForm):
-    workspace = forms.CharField(required=False)
+class CompilationHolderCreateForm(forms.ModelForm):
+    name                = forms.CharField(required=True)
+    whitelisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    blacklisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    whitelisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    blacklisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    resources           = forms.CharField(required=False)
+    description         = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
 
-    class Meta:
-        model = Schedule
-        fields = '__all__'
+    def set_workspace(self, workspace):
+        holder = self.instance
+        holder.workspace_id = workspace.workspace_id
+        self.instance = holder
 
     def save(self, commit=True):
-        schedule = self.instance
-        if commit:
-            schedule.save()
+        holder = self.instance
 
-        return schedule
+        for blog_name in self.cleaned_data["whitelisted_blogs"].split():
+            blog = Blog()
+            # TODO: checking for existing blog with this name in selected resource
+            blog.name = blog_name
+            blog.save()
+            holder.whitelisted_blogs.add(blog)
+
+        for blog_name in self.cleaned_data["blacklisted_blogs"].split():
+            blog = Blog()
+            # TODO: checking for existing blog with this name in selected resource
+            blog.name = blog_name
+            blog.save()
+            holder.blacklisted_blogs.add(blog)
+
+        for tag in self.cleaned_data["whitelisted_tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            holder.whitelisted_blogs.add(tag)
+
+        for tag in self.cleaned_data["blacklisted_tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            holder.blacklisted_tags.add(tag)
+
+        # workspace = Workspace.objects.get(workspace_id=holder.workspace_id)
+        holder.number_on_list = 1
+        other_holders = CompilationHolder.objects.filter(workspace=holder.workspace_id)
+        for holder in other_holders:
+            holder.number_on_list += 1
+            holder.save()
+
+        holder.compilation_id = create_empty_compilation().id
+
+        if commit:
+            holder.save()
+
+        return holder
+
+
+    class Meta:
+        model = CompilationHolder
+        exclude = ('workspace', 'number_on_list', 'compilation_id', )
 
 
 class EventCreateForm(forms.ModelForm):
-    start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
-    post_id = forms.CharField(required=True)
+    start_date  = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    post_id     = forms.CharField(required=True)
 
     def safe_copied_post(self, recipient_compilation_id):
         post_id = self.instance.post_id
@@ -159,6 +203,7 @@ class EventEditForm(forms.ModelForm):
         exclude = ('post_id', 'schedule_id', )
 
 
+    # TODO: delete after finishing CompilationHolderCreateForm
 class CompilationCreateForm(forms.Form):
     name                         = forms.CharField(required=True)
     resource                     = 'Tumbler'
@@ -213,13 +258,6 @@ class PostCreateForm(forms.Form):
         return post
 
 
-# class PostChoiceForm(forms.Form):
-#     post_id = forms.CharField(required=True)
-#
-#     def get_id(self):
-#         return self.data["post_id"]
-
-
 class PostDeleteForm(forms.Form):
     post_id = forms.CharField(required=True)
     def delete(self):
@@ -247,11 +285,6 @@ class PostDeleteForm(forms.Form):
 
         else:
             log.error(f"No post with id='{post.id}' ")
-
-
-
-
-
 
 
 def get_workspaces(user_id):
