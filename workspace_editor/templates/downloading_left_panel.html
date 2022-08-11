@@ -37,84 +37,80 @@
 </style>
 
 
+<div class="card">
+  <form method="post"> {% csrf_token %}
+  <div class="row form_group">
 
+    <div class="col-md-6 col-lg-6">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-dark workspace_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+          Workspaces
+        </button>
+        <div class="dropdown-menu">
 
-<form method="post"> {% csrf_token %}
+          {% for ws in my_workspaces %}
+            <li class="dropdown-item">
+                {{ ws.name }}
+                {% if selected_workspace_id != ws.workspace_id %}
+                  <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace_by_id' workspace_id=ws.workspace_id %}">Show</a>
+                {% endif %}
+            </li>
+          {% endfor %}
 
-  <div class="container">
-      <div class="row form_group">
-
-        <div class="col-md-6 col-lg-6">
-          <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-dark workspace_button dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              Workspaces
-            </button>
-            <div class="dropdown-menu">
-
-              {% for ws in my_workspaces %}
-                <li class="dropdown-item">
-                    {{ ws.name }}
-                    {% if selected_workspace_id != ws.workspace_id %}
-                      <a type="button" class="btn btn-sm btn-primary float-right" href="{% url 'workspace_by_id' workspace_id=ws.workspace_id %}">Show</a>
-                    {% endif %}
-                </li>
-              {% endfor %}
-
-              <li class="dropdown-item">
-                <a type="button" class="btn btn-primary" data-toggle="modal" data-target="#new_workspace_modal">Create new</a>
-              </li>
-            </div>
-
-            <button type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#edit_workspace_modal">
-              <a href="#">Edit</a>
-            </button>
-          </div>
+          <li class="dropdown-item">
+            <a type="button" class="btn btn-primary" data-toggle="modal" data-target="#new_workspace_modal">Create new</a>
+          </li>
         </div>
 
-        <div class="col-md-5 col-lg-5">
-          <div class="btn-group row" role="group">
-            <button type="button" disabled class="btn btn-outline-dark">
-              <a href="#">Rules</a>
-            </button>
-            <button class="btn btn-primary" type="submit" name="action" value="add_all_posts"><< Add all</button>
-          </div>
-        </div>
-
-      </div>
-  </div>
-
-  <div class="container">
-    <div class="row">
-      <div class="col-md-6 col-lg-6">
-        <div class="btn-group" role="group">
-          <div class="btn-group-vertical">
-            <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'workspace_by_id' workspace_id=workspace.workspace_id %}">Scheduling</a>
-            <a type="button" class="btn btn-sm btn-primary float-right">Downloading</a>
-            <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
-          </div>
-        </div>
-        {% if workspace is None %}
-          <a type="button" class="btn btn-outline-dark disabled" data-toggle="modal" data-target="#new_post_modal">New post</a>
-        {% else %}
-          <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_post_modal">New post</a>
-        {% endif %}
-      </div>
-
-      <button type="button" disabled class="btn btn-outline-dark">
-        <a href="#">Filters</a>
-      </button>
-
-      <div class="row">
-        <container class="border post_counter border-dark">
-          {{ main_compilation|length }}
-        </container>
-        <container class="border post_counter_text border-dark">
-          post(-s) in compilation
-        </container>
+        <button type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#edit_workspace_modal">
+          <a href="#">Edit</a>
+        </button>
       </div>
     </div>
+
+    <div class="col-md-5 col-lg-5">
+      <div class="btn-group row" role="group">
+        <button type="button" disabled class="btn btn-outline-dark">
+          <a href="#">Rules</a>
+        </button>
+        <button class="btn btn-primary" type="submit" name="action" value="add_all_posts"><< Add all</button>
+      </div>
+    </div>
+
   </div>
-</form>
+
+  <div class="row">
+    <div class="col-md-6 col-lg-6">
+      <div class="btn-group" role="group">
+        <div class="btn-group-vertical">
+          <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'workspace_by_id' workspace_id=workspace.workspace_id %}">Scheduling</a>
+          <a type="button" class="btn btn-sm btn-primary float-right">Downloading</a>
+          <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
+        </div>
+      </div>
+      {% if workspace is None %}
+        <a type="button" class="btn btn-outline-dark disabled" data-toggle="modal" data-target="#new_post_modal">New post</a>
+      {% else %}
+        <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_post_modal">New post</a>
+      {% endif %}
+    </div>
+
+    <button type="button" disabled class="btn btn-outline-dark">
+      <a href="#">Filters</a>
+    </button>
+
+    <div class="row">
+      <container class="border post_counter border-dark">
+        {{ main_compilation|length }}
+      </container>
+      <container class="border post_counter_text border-dark">
+        post(-s) in compilation
+      </container>
+    </div>
+  </div>
+  </form>
+</div>
+
 
 {% block main_compilation %}
 {% include 'downloading_left_panel_main_compilation.html' %}

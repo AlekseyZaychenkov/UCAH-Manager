@@ -187,6 +187,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn')
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
+RESOURCES = (
+    ("Tumbler", "Tumbler"),
+)
+
 # IMAGES AND VIDEO STORING
 # TODO: create set of storages for specific user
 PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../..", MEDIA_ROOT, "photo_and_video_storage")

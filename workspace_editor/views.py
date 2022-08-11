@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 import logging
 
-from workspace_editor.forms import ScheduleCreateForm, EventCreateForm, EventEditForm, CompilationCreateForm
+from workspace_editor.forms import EventCreateForm, EventEditForm, CompilationCreateForm
 from workspace_editor.models import Workspace
 from workspace_editor.serializers import WorkspaceSerializer
 from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
@@ -55,6 +55,7 @@ def downloading(request, workspace_id=None, post_id=None):
             schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
             __event_request_handler(request, workspace, schedule)
             __post_request_handler(request, workspace, post_id)
+            __compilation_request_handler(request, workspace)
 
         return redirect(f'downloading_workspace_by_id', workspace_id=workspace.workspace_id)
 
@@ -63,7 +64,7 @@ def downloading(request, workspace_id=None, post_id=None):
     return render(request, "downloading.html", context)
 
 
-def __workspace_choice(request, workspace_id):
+def __workspace_choice(request, workspace_id=None):
     workspace = None
 
     if 'workspace_id' in request.GET:
@@ -107,7 +108,7 @@ def __workspace_request_handler(request, workspace=None):
         form = WorkspaceEditForm(request.POST)
         if form.is_valid():
             workspace = Workspace.objects.get(workspace_id=form.data['workspace_id'])
-            form.save(workspace)
+            form.save_edited_workspace(workspace)
         else:
             log.error(form.errors.as_data())
 
@@ -115,7 +116,7 @@ def __workspace_request_handler(request, workspace=None):
         workspace = Workspace.objects.get(workspace_id=request.POST["workspace_id"])
         if workspace.owner == request.user:
             workspace.delete()
-            workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
+            workspace = __workspace_choice(request)
 
     return workspace
 
@@ -171,7 +172,29 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
 
 def __prepare_downloading_context(request, workspace=None, post_id=None):
     context = __prepare_mutual_context(request, workspace, post_id)
-    context['compilation_create_form'] = CompilationHolderCreateForm()
+
+    if workspace:
+        context['compilation_create_form'] = CompilationHolderCreateForm()
+        context['compilation_edit_form']   = CompilationHolderCreateForm()
+
+        holders = CompilationHolder.objects.filter(workspace=workspace.workspace_id).order_by('number_on_list')
+
+        holder_to_posts = dict()
+        for holder in holders:
+            compilation = Compilation.objects.get(id=holder.compilation_id)
+            post_ids = compilation.post_ids
+            posts = []
+            for id in post_ids:
+                posts.append(Post.objects.get(id=id))
+            holder_to_posts[holder] = posts
+        context['holder_to_posts'] = holder_to_posts
+
+        holder_indexes = []
+        count = 1
+        for holder in holders:
+            holder_indexes.append(count)
+            count += 1
+        context['holder_indexes'] = holder_indexes
 
 
     return context
@@ -180,6 +203,8 @@ def __prepare_downloading_context(request, workspace=None, post_id=None):
 # TODO: investigate and move part of methods to __prepare_workspace_context()
 def __prepare_mutual_context(request, workspace=None, post_id=None):
     context = {}
+
+    context["resources"] = RESOURCES
 
     queryset_visible = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user))
     # TODO: rename to visible_workspaces
@@ -242,7 +267,7 @@ def __get_events_for_schedule(selected_schedule_id):
 
     while (True):
         day_of_week = calendar.day_name[date.weekday()]
-
+        #  TODO: make more compact and remove db retry
         if Event.objects.filter(schedule_id=selected_schedule_id, start_date__year=date.year,
                                 start_date__month=date.month, start_date__day=date.day).exists():
             events = Event.objects.filter(schedule_id=selected_schedule_id, start_date__year=date.year,

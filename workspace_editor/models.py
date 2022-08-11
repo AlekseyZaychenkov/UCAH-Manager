@@ -30,7 +30,8 @@ class Workspace(models.Model):
     schedule                     = models.OneToOneField(Schedule, on_delete=models.CASCADE)
     schedule_archive             = models.OneToOneField(ScheduleArchive, on_delete=models.CASCADE)
 
-    description                  = models.TextField()
+    # TODO: uncomment after changing field
+    # description                  = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -44,20 +45,20 @@ class CompilationHolder(models.Model):
     name                         = models.CharField(max_length=255)
     number_on_list               = models.IntegerField()
     compilation_id               = models.CharField(max_length=128)
-    whitelisted_tags             = models.TextField()
-    blacklisted_tags             = models.TextField()
+    whitelisted_tags             = models.TextField(null=True, blank=True)
+    blacklisted_tags             = models.TextField(null=True, blank=True)
     resources                    = models.CharField(max_length=4095, null=True, blank=True)
-    description                  = models.TextField()
+    description                  = models.TextField(null=True, blank=True)
 
 
 class WhiteListedBlog(models.Model):
     whitelisted_blog_id          = models.AutoField(primary_key=True)
-    compilation_holder_id        = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
 
 
 class BlackListedBlog(models.Model):
     blacklisted_blog_id          = models.AutoField(primary_key=True)
-    compilation_holder_id        = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
 
 
 class Event(models.Model):
@@ -84,8 +85,8 @@ class Blog(models.Model):
     blog_id                      = models.AutoField(primary_key=True)
     workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     event                        = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True)
-    whitelisted_blogs            = models.OneToOneField(WhiteListedBlog, on_delete=models.SET_NULL, null=True)
-    blacklisted_blogs            = models.OneToOneField(BlackListedBlog, on_delete=models.SET_NULL, null=True)
+    whitelisted_blog             = models.OneToOneField(WhiteListedBlog, on_delete=models.SET_NULL, null=True)
+    blacklisted_blog             = models.OneToOneField(BlackListedBlog, on_delete=models.SET_NULL, null=True)
     resource                     = models.CharField(max_length=63, null=True, blank=True)
     name                         = models.CharField(max_length=255, null=True, blank=True)
     url                          = models.CharField(max_length=2048, null=True, blank=True)
