@@ -3,7 +3,6 @@
 
 
 <div class="float-right">
-    <a href="#">{{ request.path }}</a>
     {% if "downloading" in request.path %}
         <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'downloading_workspace_by_id_post_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
     {% else %}

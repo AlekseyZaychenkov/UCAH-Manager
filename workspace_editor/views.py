@@ -45,7 +45,7 @@ def home(request, workspace_id=None, post_id=None):
     return render(request, "workspace.html", context)
 
 
-def downloading(request, workspace_id=None, post_id=None):
+def downloading(request, workspace_id=None, holder_id=None, post_id=None):
     workspace = __workspace_choice(request, workspace_id)
 
     if request.POST:
