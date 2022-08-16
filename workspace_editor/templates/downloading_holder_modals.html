@@ -1,7 +1,7 @@
 {% load widget_tweaks %} {% block content %}
 
 
-<div class="modal fade" id="new_compilation_modal" tabindex="-1" role="dialog" aria-labelledby="new_compilation_modal_label" aria-hidden="true">
+<div class="modal fade" id="new_holder_modal" tabindex="-1" role="dialog" aria-labelledby="new_holder_modal_label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
 
@@ -19,50 +19,26 @@
                         <div class="col-md-8 mx-auto">
                             <label for="name">Name:</label>
                             {% render_field compilation_create_form.name class="form-control" value="No named compilation" %}
-                            {{ post_create_form.name.errors }}
+                            {{ compilation_create_form.name.errors }}
                         </div>
                     </div>
-<!--                    <div class="form-row">-->
-<!--                        <div class="col-md-6">-->
-<!--                            <label for="whitelisted_blogs">White list of blogs:</label>-->
-<!--                            {% render_field compilation_create_form.whitelisted_blogs class="form-control" %}-->
-<!--                            {{ post_create_form.whitelisted_blogs.errors }}-->
-<!--                        </div>-->
-<!--                        <div class="col-md-6">-->
-<!--                            <label for="blacklisted_blogs">Black list of blogs:</label>-->
-<!--                            {% render_field compilation_create_form.blacklisted_blogs class="form-control" %}-->
-<!--                            {{ post_create_form.blacklisted_blogs.errors }}-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <div class="form-row">-->
-<!--                        <div class="col-md-6">-->
-<!--                            <label for="whitelisted_tags">White list of tags:</label>-->
-<!--                            {% render_field compilation_create_form.whitelisted_tags class="form-control" %}-->
-<!--                            {{ post_create_form.whitelisted_tags.errors }}-->
-<!--                        </div>-->
-<!--                        <div class="col-md-6">-->
-<!--                            <label for="blacklisted_tags">White list of tags:</label>-->
-<!--                            {% render_field compilation_create_form.blacklisted_tags class="form-control" %}-->
-<!--                            {{ post_create_form.blacklisted_tags.errors }}-->
-<!--                        </div>-->
-<!--                    </div>-->
                     <div class="form-row">
                         <div class="col-md-6">
                             <label for="resources">Resource:</label>
                             {% render_field compilation_create_form.resources class="form-control" %}
-                            {{ post_create_form.resources.errors }}
+                            {{ compilation_create_form.resources.errors }}
                         </div>
                     </div>
                     <div class="form-row">
                         <label for="description">Description:</label>
                         {% render_field compilation_create_form.description class="form-control" %}
-                        {{ post_create_form.description.errors }}
+                        {{ compilation_create_form.description.errors }}
                     </div>
 
                     <hr>
 
                     <div class="float-right">
-                        <button class="btn btn-primary " type="submit" name="action" value="create_compilation">Create new compilation</button>
+                        <button class="btn btn-primary " type="submit" name="action" value="create_holder">Create new compilation</button>
                         <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                     </div>
                 </form>
@@ -73,10 +49,101 @@
 
 
 
+<div class="modal fade" id="edit_holder_modal" tabindex="-1" role="dialog" aria-labelledby="edit_holder_modal_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Edit compilation</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form enctype="multipart/form-data" method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="col-md-8 mx-auto">
+                            <label for="name">Name:</label>
+                            {% render_field compilation_edit_form.name class="form-control" value=selected_holder.name %}
+                            {{ compilation_edit_form.name.errors }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-md-6">
+                            <label for="whitelisted_blogs">White list of blogs:</label>
+                            {% render_field compilation_edit_form.whitelisted_blogs class="form-control" value=selected_holder.whitelisted_blogs %}
+                            {{ compilation_edit_form.whitelisted_blogs.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="blacklisted_blogs">Black list of blogs:</label>
+                            {% render_field compilation_edit_form.blacklisted_blogs class="form-control" value=selected_holder.blacklisted_blogs %}
+                            {{ compilation_edit_form.blacklisted_blogs.errors }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-md-6">
+                            <label for="whitelisted_tags">White list of tags:</label>
+                            {% render_field compilation_edit_form.whitelisted_tags class="form-control" value=selected_holder.whitelisted_tags %}
+                            {{ compilation_edit_form.whitelisted_tags.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="blacklisted_tags">White list of tags:</label>
+                            {% render_field compilation_edit_form.blacklisted_tags class="form-control" value=selected_holder.blacklisted_tags %}
+                            {{ compilation_edit_form.blacklisted_tags.errors }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-md-6">
+                            <label for="resources">Resource:</label>
+                            {% render_field compilation_edit_form.resources class="form-control"%}
+                            {{ compilation_edit_form.resources.errors }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label for="description">Description:</label>
+                        {% render_field compilation_edit_form.description class="form-control" value=selected_holder.description %}
+                        {{ compilation_edit_form.description.errors }}
+                    </div>
+
+                    <hr>
+
+                    <div class="float-right">
+                        <button class="btn btn-primary " type="submit" name="action" value="edit_holder">Save changes</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 
+<div class="modal fade" id="delete_compilation_modal" tabindex="-1" role="dialog" aria-labelledby="delete_holder_modal_label">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete a compilation</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Do you really want to delete compilation '{{selected_for_delete_holder.name}}'?</p>
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
 
-
+                    <div class="d-none">
+                        {% render_field compilation_delete_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=selected_for_delete_holder.compilation_holder_id %}
+                    </div>
+                    <button class="btn btn-danger" type="submit" name="action" value="delete_holder">Yes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 

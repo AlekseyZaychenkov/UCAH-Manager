@@ -84,7 +84,9 @@
       <div class="btn-group" role="group">
         <div class="btn-group-vertical">
           <a type="button" class="btn btn-sm btn-primary float-right">Scheduling</a>
-          <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%} ">Downloading</a>
+          {% if workspace is not None %}
+            <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%} ">Downloading</a>
+          {% endif %}
           <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
         </div>
       </div>

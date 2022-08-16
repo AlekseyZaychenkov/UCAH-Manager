@@ -4,14 +4,7 @@
 {% for holder, posts in holder_to_posts.items %}
 
 <div class="card mb-2">
-
-
-<!--    <div class="input-group-prepend" id="button-addon">-->
     <div class="row btn-group" role="group">
-<!--    <ul class="list-group list-group-horizontal">-->
-<!--    <li class="form-row">-->
-
-
 
 <!--    <div class="col">-->
         <div class="col-md-4 col-lg-4">
@@ -31,27 +24,30 @@
         </form>
     </div>
         <div class="col-md-2 mx-auto col-lg-2 mx-auto my-auto">
-<!--        <div class="col">-->
+
             <h6>{{holder.name}}</h6>
         </div>
 
         <div class="col-md-6 col-lg-6">
         <form method="post"> {% csrf_token %}
             <div class="row btn-group" role="group">
-
+                <!-- TODO: pass holder_id to url -->
                 <div class="btn-group-horizontal">
-
-                    <!-- TODO: create edit_compilation_modal -->
-                    <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#edit_compilation_modal">Edit</a>
+                    <a type="button" class="btn btn-outline-dark" href="{% url 'downloading_workspace_by_id_holder_by_id' workspace_id=workspace.workspace_id holder_id=holder.compilation_holder_id %}">Edit</a>
+                    <script>
+                        {% if selected_holder != None %}
+                            $(function() {
+                              $('#edit_holder_modal').modal({show: true});
+                            });
+                        {% endif %}
+                    </script>
                 </div>
 
                 <div class="btn-group-horizontal">
                     <!-- TODO: create form to pass holder_id -->
                     <button class="btn btn-outline-dark" type="submit" name="action" value="download_posts">Download posts</button>
-
                 </div>
 
-<!--                <div class="btn-group-horizontal">-->
                 <div class="btn-group-vertical">
                     <div class="custom-control custom-switch">
                         <label class="custom-control-label">Autoload</label>
@@ -62,37 +58,33 @@
 
                 <div class="col">
                     <div class="form-group-sm">
-                        <label   for="number_on_list">On list</label>
+                        <label for="number_on_list">On list</label>
                         <select class="form-control-sm">
                             {% for i in holder_indexes %}
-                            <option>{{i}}</option>
+                                {% if i == holder.number_on_list %}
+                                    <option selected>{{i}}</option>
+                                {% else %}
+                                    <option>{{i}}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>
                 </div>
             </div>
 
-
             <div class="float-right">
-                <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'downloading_workspace_by_id_holder_by_id' workspace_id=workspace.workspace_id holder_id=holder.compilation_holder_id %}">X</a>
-                <!--            <script>-->
-                <!--            {% if selected_compilation_id != None %}-->
-                <!--                $(function() {-->
-                <!--                  $('#delete_compilation_modal').modal({show: true});-->
-                <!--                });-->
-                <!--            {% endif %}-->
-                <!--            </script>-->
+                <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'downloading_workspace_by_id_holder_by_id_to_delete' workspace_id=workspace.workspace_id holder_id_to_delete=holder.compilation_holder_id %}">X</a>
+                <script>
+                    {% if selected_for_delete_holder != None %}
+                        $(function() {
+                          $('#delete_compilation_modal').modal({show: true});
+                        });
+                    {% endif %}
+                </script>
             </div>
         </form>
 
 
-
-
-<!--        </li>-->
-
-
-
-<!--            </ul>-->
     </div>
     </div>
     <div class="row">
@@ -110,7 +102,7 @@
 
 {% endfor %}
 <div class="card">
-    <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_compilation_modal"> + Add new compilation + </a>
+    <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_holder_modal"> + Add new compilation + </a>
 </div>
 
 {% block compilation_modals %}

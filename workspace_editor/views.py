@@ -40,12 +40,12 @@ def home(request, workspace_id=None, post_id=None):
         return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
 
 
-    context = __prepare_workspace_context(request, workspace, post_id)
+    context = __prepare_workspace_context(request=request, workspace=workspace, post_id=post_id)
 
     return render(request, "workspace.html", context)
 
 
-def downloading(request, workspace_id=None, holder_id=None, post_id=None):
+def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=None, post_id=None):
     workspace = __workspace_choice(request, workspace_id)
 
     if request.POST:
@@ -55,11 +55,12 @@ def downloading(request, workspace_id=None, holder_id=None, post_id=None):
             schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
             __event_request_handler(request, workspace, schedule)
             __post_request_handler(request, workspace, post_id)
-            __compilation_request_handler(request, workspace)
+            __compilation_holder_request_handler(request, workspace, holder_id, holder_id_to_delete)
 
         return redirect(f'downloading_workspace_by_id', workspace_id=workspace.workspace_id)
 
-    context = __prepare_downloading_context(request, workspace, post_id)
+    context = __prepare_downloading_context(request=request, workspace=workspace, holder_id=holder_id,
+                                            holder_id_to_delete=holder_id_to_delete, post_id=post_id)
 
     return render(request, "downloading.html", context)
 
@@ -79,7 +80,7 @@ def __workspace_choice(request, workspace_id=None):
         first_workspace = Workspace.objects.filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).first()
         workspace = first_workspace
         log.warning(f"Redirect to first available workspace")
-        return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
+        redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
 
     elif workspace_id is not None and not Workspace.objects \
             .filter(Q(owner=request.user.pk) | Q(visible_for=request.user)).exists():
@@ -120,16 +121,27 @@ def __workspace_request_handler(request, workspace=None):
 
     return workspace
 
-
-def __compilation_request_handler(request, workspace):
-    if request.POST['action'] == 'create_compilation':
+def __compilation_holder_request_handler(request, workspace, holder_id=None, holder_id_to_delete=None,):
+    if request.POST['action'] == 'create_holder':
         form = CompilationHolderCreateForm(request.POST)
         if form.is_valid():
             form.set_workspace(workspace)
             form.save()
         else:
             log.error(form.errors.as_data())
-
+    elif holder_id and request.POST['action'] == 'edit_holder':
+        form = CompilationHolderEditForm(request.POST)
+        if form.is_valid():
+            holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+            form.save_edited_holder(holder)
+        else:
+            log.error(form.errors.as_data())
+    elif holder_id_to_delete and request.POST['action'] == 'delete_holder':
+        form = CompilationHolderDeleteForm(request.POST)
+        if form.is_valid():
+            form.delete()
+        else:
+            log.error(form.errors.as_data())
 
 def __event_request_handler(request, workspace, schedule):
     if request.POST['action'] == "create_event":
@@ -166,16 +178,17 @@ def __post_request_handler(request, workspace, post_id=None):
 
 
 def __prepare_workspace_context(request, workspace=None, post_id=None):
-    context = __prepare_mutual_context(request, workspace, post_id)
+    context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
     return context
 
 
-def __prepare_downloading_context(request, workspace=None, post_id=None):
-    context = __prepare_mutual_context(request, workspace, post_id)
+def __prepare_downloading_context(request, workspace=None, holder_id=None, holder_id_to_delete=None, post_id=None):
+    context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
 
     if workspace:
         context['compilation_create_form'] = CompilationHolderCreateForm()
-        context['compilation_edit_form']   = CompilationHolderCreateForm()
+        context['compilation_edit_form']   = CompilationHolderEditForm()
+        context['compilation_delete_form']   = CompilationHolderDeleteForm()
 
         holders = CompilationHolder.objects.filter(workspace=workspace.workspace_id).order_by('number_on_list')
 
@@ -195,6 +208,13 @@ def __prepare_downloading_context(request, workspace=None, post_id=None):
             holder_indexes.append(count)
             count += 1
         context['holder_indexes'] = holder_indexes
+
+        if holder_id:
+            context['selected_holder'] = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+
+        if holder_id_to_delete:
+            context['selected_for_delete_holder'] = CompilationHolder.objects.get(compilation_holder_id=holder_id_to_delete)
+
 
 
     return context
@@ -217,11 +237,12 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
     context["create_form"] = WorkspaceCreateForm()
     context["edit_form"] = WorkspaceEditForm(initial={"user_id": request.user.pk, "owner": request.user})
 
-    context["selected_workspace_id"] = workspace.workspace_id
-    context["workspace"] = workspace
 
 
     if workspace:
+        context["workspace"] = workspace
+        context["selected_workspace_id"] = workspace.workspace_id
+
         schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
 
         # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
@@ -253,8 +274,6 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["main_compilation"] = main_compilation
 
         context["selected_post_id"] = post_id
-
-
 
     return context
 

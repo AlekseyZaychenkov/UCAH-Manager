@@ -6,6 +6,7 @@ from UCA_Manager.settings import PATH_TO_STORE
 from loader.utils import generate_storage_patch, save_files
 import shutil
 
+from workspace_editor.models import CompilationHolder
 
 log = logging.getLogger(__name__)
 
@@ -58,3 +59,52 @@ def copy_post_to(post_id, recipient_compilation_id, copy_files=False):
     compilation.update()
 
     return new_post.id
+
+
+def delete_compilation_holder(holder_id):
+    holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+
+    delete_compilation(holder.compilation_id)
+
+    other_holders = CompilationHolder.objects.filter(workspace=holder.workspace_id)
+    for oh in other_holders:
+        oh.number_on_list -= 1
+        oh.save()
+
+    holder.delete()
+
+
+def delete_compilation(compilation_id):
+    compilation = Compilation.objects.get(id=compilation_id)
+
+    post_ids = compilation.post_ids
+    for post_id in post_ids:
+        delete_post(post_id)
+
+    compilation.delete()
+
+
+def delete_post(post_id):
+    post = Post.objects.get(id=post_id)
+
+    if post:
+        compilation_id = post.compilation_id
+        compilation = Compilation.objects.get(id=compilation_id)
+
+        if compilation:
+            compilation.post_ids.remove(post.id)
+            compilation.update()
+        else:
+            log.error(f"No compilation with id='{compilation_id}' for post id='{post.id}' ")
+
+        if len(post.stored_file_urls) > 0:
+            folder = post.stored_file_urls[0].parent
+            for file in post.stored_file_urls:
+                os.remove(file)
+            if len(os.listdir(folder)) == 0:
+                shutil.rmtree(folder)
+
+        post.delete()
+
+    else:
+        log.error(f"No post with id='{post.id}' ")

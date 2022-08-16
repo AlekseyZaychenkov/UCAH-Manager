@@ -4,7 +4,7 @@ import logging
 from django import forms
 
 from loader.models import Post, Compilation
-from workspace_editor.utils import copy_post_to
+from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog
 from account.models import Account
@@ -116,6 +116,13 @@ class CompilationHolderCreateForm(forms.ModelForm):
                                                 ))
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
 
+
+    class Meta:
+        model = CompilationHolder
+        exclude = ('workspace', 'whitelisted_blog_id', 'blacklisted_blog_id', 'whitelisted_tags', 'blacklisted_tags',
+                   'number_on_list', 'compilation_id', )
+
+
     def set_workspace(self, workspace):
         holder = self.instance
         holder.workspace_id = workspace.workspace_id
@@ -125,24 +132,21 @@ class CompilationHolderCreateForm(forms.ModelForm):
         holder = self.instance
 
         other_holders = CompilationHolder.objects.filter(workspace=holder.workspace_id)
-        for holder in other_holders:
-            holder.number_on_list += 1
-            holder.save()
+        for oh in other_holders:
+            oh.number_on_list += 1
+            oh.save()
         holder.number_on_list = 1
 
         holder.compilation_id = create_empty_compilation().id
+
+        # TODO: delete after migrations of db
+        holder.whitelisted_tags = ""
+        holder.blacklisted_tags = ""
 
         if commit:
             holder.save()
 
         return holder
-
-
-    class Meta:
-        model = CompilationHolder
-        exclude = ('workspace', 'whitelisted_blogs', 'blacklisted_blogs', 'whitelisted_tags', 'blacklisted_tags',
-                   'number_on_list', 'compilation_id', )
-        # exclude = ('workspace', 'number_on_list', 'compilation_id', )
 
 
 class CompilationHolderEditForm(forms.ModelForm):
@@ -157,7 +161,6 @@ class CompilationHolderEditForm(forms.ModelForm):
     def save_edited_holder(self, holder, commit=True):
         edited_holder = self.instance
 
-
         edited_holder.workspace_id          = holder.workspace_id
         edited_holder.compilation_holder_id = holder.compilation_holder_id
 
@@ -167,7 +170,7 @@ class CompilationHolderEditForm(forms.ModelForm):
             tag = ''.join(filter(str.isalnum, tag))
             if tag not in tags:
                 tags.append(tag)
-        holder.whitelisted_tags = ' '.join(tags)
+        edited_holder.whitelisted_tags = ' '.join(tags)
 
         tags = []
         for tag in self.cleaned_data["blacklisted_tags"].split():
@@ -175,7 +178,7 @@ class CompilationHolderEditForm(forms.ModelForm):
             tag = ''.join(filter(str.isalnum, tag))
             if tag not in tags:
                 tags.append(tag)
-        holder.blacklisted_tags = ' '.join(tags)
+        edited_holder.blacklisted_tags = ' '.join(tags)
 
         for blog_name in self.cleaned_data["whitelisted_blogs"].split():
             blog = Blog()
@@ -187,7 +190,7 @@ class CompilationHolderEditForm(forms.ModelForm):
             whitelisted_blog.save()
             blog.save()
 
-            holder.whitelisted_blog.add(whitelisted_blog)
+            edited_holder.whitelisted_blog.add(whitelisted_blog)
 
         for blog_name in self.cleaned_data["blacklisted_blogs"].split():
             blog = Blog()
@@ -200,14 +203,19 @@ class CompilationHolderEditForm(forms.ModelForm):
             blog.save()
             holder.blacklisted_blog.add(blacklisted_blog)
 
-            holder.blacklisted_blogs.add(blog)
+            edited_holder.blacklisted_blogs.add(blog)
 
         # workspace = Workspace.objects.get(workspace_id=holder.workspace_id)
+        # TODO: swap cleared data with another holder
         other_holders = CompilationHolder.objects.filter(workspace=edited_holder.workspace_id)
-        for edited_holder in other_holders:
-            edited_holder.number_on_list += 1
-            edited_holder.save()
-        edited_holder.number_on_list = 1
+
+        temp = holder.number_on_list
+        for oh in other_holders:
+            if oh.number_on_list == edited_holder.number_on_list:
+                oh.number_on_list = holder.number_on_list
+                oh.save()
+                break
+        edited_holder.number_on_list = temp
 
         edited_holder.compilation_id = create_empty_compilation().id
 
@@ -221,7 +229,19 @@ class CompilationHolderEditForm(forms.ModelForm):
         model = CompilationHolder
         # exclude = ('workspace', 'whitelisted_blogs', 'blacklisted_blogs', 'whitelisted_tags', 'blacklisted_tags',
         #            'number_on_list', 'compilation_id', )
-        exclude = ('workspace', 'number_on_list', 'compilation_id', 'name')
+        exclude = ('workspace',
+                   'number_on_list',
+                   'compilation_id',
+                   # 'name'
+                   )
+
+
+class CompilationHolderDeleteForm(forms.Form):
+    compilation_holder_id = forms.IntegerField(required=True)
+    def delete(self):
+        holder_id = self.data["compilation_holder_id"]
+        delete_compilation_holder(holder_id)
+
 
 
 class EventCreateForm(forms.ModelForm):
@@ -261,6 +281,8 @@ class EventEditForm(forms.ModelForm):
 
 
     # TODO: delete after finishing CompilationHolderCreateForm
+
+
 class CompilationCreateForm(forms.Form):
     name                         = forms.CharField(required=True)
     resource                     = 'Tumbler'
@@ -319,29 +341,7 @@ class PostDeleteForm(forms.Form):
     post_id = forms.CharField(required=True)
     def delete(self):
         post_id = self.data["post_id"]
-        post = Post.objects.get(id=post_id)
-
-        if post:
-            compilation_id = post.compilation_id
-            compilation = Compilation.objects.get(id=compilation_id)
-
-            if compilation:
-                compilation.post_ids.remove(post.id)
-                compilation.update()
-            else:
-                log.error(f"No compilation with id='{compilation_id}' for post id='{post.id}' ")
-
-            if len(post.stored_file_urls) > 0:
-                folder = post.stored_file_urls[0].parent
-                for file in post.stored_file_urls:
-                    os.remove(file)
-                if len(os.listdir(folder)) == 0:
-                    shutil.rmtree(folder)
-
-            post.delete()
-
-        else:
-            log.error(f"No post with id='{post.id}' ")
+        delete_post(post_id)
 
 
 def get_workspaces(user_id):
