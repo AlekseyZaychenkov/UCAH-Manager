@@ -9,7 +9,7 @@ from workspace_editor.models import Workspace, Event, Schedule, CompilationHolde
     BlackListedBlog
 from account.models import Account
 from UCA_Manager.settings import PATH_TO_STORE, RESOURCES
-from loader.utils import generate_storage_patch, create_empty_compilation, \
+from loader.utils import generate_storage_path, create_empty_compilation, \
     save_files_from_request
 
 from django.db.models import Q
@@ -19,6 +19,20 @@ import shutil
 
 
 log = logging.getLogger(__name__)
+
+POSTS_PER_DOWNLOAD_CHOICES = (
+            (5, 5),
+            (10, 10),
+            (15, 15),
+            (20, 20),
+            (25, 25),
+            (30, 30),
+            (35, 35),
+            (40, 40),
+            (45, 45),
+            (50, 50),
+        )
+
 
 class WorkspaceCreateForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
@@ -111,9 +125,8 @@ class WorkspaceEditForm(WorkspaceCreateForm):
 
 class CompilationHolderCreateForm(forms.ModelForm):
     name                = forms.CharField(required=True)
-    resources           = forms.ChoiceField(choices=(
-                                                    ("Tumbler", "Tumbler"),
-                                                ))
+    resources           = forms.ChoiceField(choices=RESOURCES)
+    posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
 
 
@@ -152,10 +165,13 @@ class CompilationHolderCreateForm(forms.ModelForm):
 class CompilationHolderEditForm(forms.ModelForm):
     name                = forms.CharField(required=True)
     whitelisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
+    selected_blogs      = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     blacklisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
     whitelisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
+    selected_tags       = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     blacklisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
     resources           = forms.ChoiceField(choices=RESOURCES)
+    posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
 
     def save_edited_holder(self, holder, commit=True):
@@ -227,21 +243,25 @@ class CompilationHolderEditForm(forms.ModelForm):
 
     class Meta:
         model = CompilationHolder
-        # exclude = ('workspace', 'whitelisted_blogs', 'blacklisted_blogs', 'whitelisted_tags', 'blacklisted_tags',
-        #            'number_on_list', 'compilation_id', )
         exclude = ('workspace',
                    'number_on_list',
                    'compilation_id',
-                   # 'name'
                    )
 
 
 class CompilationHolderDeleteForm(forms.Form):
     compilation_holder_id = forms.IntegerField(required=True)
+
     def delete(self):
         holder_id = self.data["compilation_holder_id"]
         delete_compilation_holder(holder_id)
 
+
+class CompilationHolderDownloadForm(forms.Form):
+    compilation_holder_id = forms.IntegerField(required=True)
+
+    def get_holder_id(self):
+        return self.data["compilation_holder_id"]
 
 
 class EventCreateForm(forms.ModelForm):
@@ -281,21 +301,19 @@ class EventEditForm(forms.ModelForm):
 
 
     # TODO: delete after finishing CompilationHolderCreateForm
-
-
-class CompilationCreateForm(forms.Form):
-    name                         = forms.CharField(required=True)
-    resource                     = 'Tumbler'
-    search_tag                   = forms.CharField(required=True)
-    search_blogs                 = forms.CharField(required=False)
-    downloaded_date              = str(datetime.now())
-
-    print(f"search_tag: '{search_tag}'")
-    search_tag  = 'paleontology'
-
-    # TODO: check if its works
-    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
-    post_ids                     = list()
+# class CompilationCreateForm(forms.Form):
+#     name                         = forms.CharField(required=True)
+#     resource                     = 'Tumbler'
+#     search_tag                   = forms.CharField(required=True)
+#     search_blogs                 = forms.CharField(required=False)
+#     downloaded_date              = str(datetime.now())
+#
+#     print(f"search_tag: '{search_tag}'")
+#     search_tag  = 'paleontology'
+#
+#     # TODO: change 'id' to 'workspace_id'
+#     storage                      = generate_storage_path(PATH_TO_STORE, workspace_id=id)
+#     post_ids                     = list()
 
 
 class PostCreateForm(forms.Form):
@@ -344,6 +362,7 @@ class PostDeleteForm(forms.Form):
         delete_post(post_id)
 
 
+# TODO: move method to utils
 def get_workspaces(user_id):
     workspaces = Workspace.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
     choices = []
@@ -352,5 +371,3 @@ def get_workspaces(user_id):
         choices.append((workspace.pk, workspace.name))
 
     return choices
-
-

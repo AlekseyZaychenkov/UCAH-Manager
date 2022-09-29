@@ -16,20 +16,36 @@ class TumblrLoader:
         sync_table(Post)
         sync_table(Compilation)
 
-
+    def print_user_info(self):
+        user_info = (self.client.info())['user']
+        print(f"My user for connection to Tumbler:"
+              f"\nname: {user_info['name']}"
+              f"\nfollowing: {user_info['following']}"
+              f"\ndefault_post_format: {user_info['default_post_format']}"
+              f"\nlikes: {user_info['likes']}"
+              f"\nblogs: {len(user_info['blogs'])}"
+              )
 
 
     # TODO: implement bool flag 'storeFilesLocal' (for downloading images and gifs or not)
-    def save(self, response, compilation, storagePath=None, tag=''):
+    def save(self, response, compilation, storage_path=None, tag=''):
+        old_post_ids = compilation.post_ids
+        social_network_post_ids = []
+        for old_post_id in old_post_ids:
+            post = Post.objects.get(id=old_post_id)
+            social_network_post_ids.append(post.id_in_social_network)
+
         print(f"Start parsing response:")
         for post in response:
-            postId = post['id']
+            post_id = post['id']
 
-            # if postId != 681406879305498624:
+            if post_id in social_network_post_ids:
+                continue
+            # if post_id != 681406879305498624:
             #     continue
 
             print(f"\npost['blog']['name']: {post['blog']['name']}"
-                  f"\npostId: {postId}"
+                  f"\npost_id: {post_id}"
                   f"\npost['post_url']: {post['post_url']}\n\n")
             # print(f"\nPost: {post}")
 
@@ -63,23 +79,23 @@ class TumblrLoader:
                 # for link in soup.find_all():
                 #     print(f"data-url: {link.get('data-url')}\n")
 
-            if('photos' in post):
+            if'photos' in post:
                 for p in post['photos']:
                     file_urls.append(p['original_size']['url'])
 
 
             # TODO: implement method for saving images from urls to local or cloud storage
-            # TODO: use enam for choising type of storage
+            # TODO: use enum to select type of storage
             # TODO: figure is possible use mock for tests calling self.save_files() or not
 
-            post_storage_path = os.path.join(storagePath, str(postId))
+            post_storage_path = os.path.join(storage_path, str(post_id))
             saved_file_addresses = save_files(post_storage_path, file_urls) if len(file_urls) > 0 else None
 
             post = Post.create(
                 # information about original post
                 blog_name             = post['blog']['name'],
                 blog_url              = post['blog']['url'],
-                id_in_social_network  = postId,
+                id_in_social_network  = post_id,
                 original_post_url     = post['post_url'],
                 posted_date           = post['date'],
                 posted_timestamp      = post['timestamp'],
@@ -107,13 +123,13 @@ class TumblrLoader:
 
 
     # TODO: add time limit
-    def download(self, compilation, number, storagePath=None, tag=None, blogs=None):
-        print(f"Getting '{number}' posts from Tambler by tag: '{tag}' and blogs '{blogs}'")
+    def download(self, compilation, number, storage_path=None, tag=None, blogs=None):
+        print(f"Getting '{number}' posts from Tumbler by tag: '{tag}' and blogs '{blogs}'")
 
         look_before = 0
         response = list()
 
-        if blogs == None:
+        if blogs is None:
             while number > 0:
                 limit = 20 if number > 20 else number
 
@@ -125,7 +141,7 @@ class TumblrLoader:
                 # TODO: sort posts by timestamp and filter out posts beyond requested number
 
                 print(f"Downloaded '{len(response)}' posts with tag '{tag}' from Tumblr")
-                self.save(response, compilation, storagePath=storagePath, tag=tag)
+                self.save(response, compilation, storage_path=storage_path, tag=tag)
 
                 if len(response) == 0:
                     break
@@ -160,7 +176,7 @@ class TumblrLoader:
                 print(f"Downloaded '{len(response)}' posts from Tumblr")
 
 
-                self.save(response, compilation, storagePath=storagePath, tag=tag)
+                self.save(response, compilation, storage_path=storage_path, tag=tag)
 
                 look_before = response[-1]['timestamp']
                 number -= len(response)

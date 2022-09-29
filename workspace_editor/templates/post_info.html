@@ -18,17 +18,18 @@
 </div>
 
 
-<!-- TODO: make a text foldable-->
+<!-- TODO: make a text foldable -->
 <p class="pt-3">{{post.text}}</p>
 
 <!-- TODO: place picture more compact -->
 <div class="row">
     {% for pi in post.stored_file_urls %}
         {% if forloop.counter == 1 %}
-        <img src="../{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+        <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+        <p class="pt-3">"{{MEDIA_LOCATION}}/{{pi}}"</p>
         {% else %}
         <div class="col-md-4 col-lg-4 p-2">
-            <img src="../{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+            <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
         </div>
         {% endif %}
     {% empty %}

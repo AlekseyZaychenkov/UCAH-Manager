@@ -31,7 +31,7 @@ class Test_VKLoader(SimpleTestCase):
     def create_loader(self):
         return VKLoader()
 
-    # TODO: test method for generate_storage_patch()
+    # TODO: test method for generate_storage_path()
     # TODO: test method for save_files()
 
 

@@ -2,9 +2,10 @@ import logging
 import os
 
 from loader.models import Post, Compilation
-from UCA_Manager.settings import PATH_TO_STORE
-from loader.utils import generate_storage_patch, save_files
+from UCA_Manager.settings import PATH_TO_STORE, MEDIA_ROOT
+from loader.utils import generate_storage_path, save_files
 import shutil
+from pathlib import Path
 
 from workspace_editor.models import CompilationHolder
 
@@ -16,8 +17,8 @@ def copy_post_to(post_id, recipient_compilation_id, copy_files=False):
     old_post = Post.objects.get(id=post_id)
 
     # TODO: create storage path  user/workspace/schedule
-    # savedFileAddresses = save_files(storagePath, file_urls) if storagePath is not None else None
-    path = generate_storage_patch(PATH_TO_STORE, comp_id=recipient_compilation_id, others="createdForSchedule")
+    # savedFileAddresses = save_files(storage_path, file_urls) if storage_path is not None else None
+    path = generate_storage_path(PATH_TO_STORE, comp_id=recipient_compilation_id, others="createdForSchedule")
     saved_file_addresses = save_files(path, old_post.file_urls)
     print(f"copy_post_to() - old_post.text: {old_post.text}")
 
@@ -78,8 +79,13 @@ def delete_compilation(compilation_id):
     compilation = Compilation.objects.get(id=compilation_id)
 
     post_ids = compilation.post_ids
-    for post_id in post_ids:
-        delete_post(post_id)
+    if post_ids:
+        post = Post.objects.get(id=post_ids[0])
+        folder = os.path.join(MEDIA_ROOT, Path(post.stored_file_urls[0]).parent.parent)
+        for post_id in post_ids:
+            delete_post(post_id)
+        shutil.rmtree(folder)
+
 
     compilation.delete()
 
@@ -92,17 +98,22 @@ def delete_post(post_id):
         compilation = Compilation.objects.get(id=compilation_id)
 
         if compilation:
-            compilation.post_ids.remove(post.id)
-            compilation.update()
+            if post.id in compilation.post_ids:
+                compilation.post_ids.remove(post.id)
+                compilation.update()
         else:
             log.error(f"No compilation with id='{compilation_id}' for post id='{post.id}' ")
 
         if len(post.stored_file_urls) > 0:
-            folder = post.stored_file_urls[0].parent
-            for file in post.stored_file_urls:
-                os.remove(file)
-            if len(os.listdir(folder)) == 0:
-                shutil.rmtree(folder)
+            # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local
+            folder = os.path.join(MEDIA_ROOT, Path(post.stored_file_urls[0]).parent)
+            for file in os.listdir():
+                print (file)
+            # for file in post.stored_file_urls:
+            #     os.remove(Path(file))
+            # if len(os.listdir(folder)) == 0:
+
+            shutil.rmtree(folder)
 
         post.delete()
 

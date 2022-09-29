@@ -43,9 +43,11 @@ class CompilationHolder(models.Model):
     workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     name                         = models.CharField(max_length=255)
+    posts_per_download           = models.IntegerField()
     number_on_list               = models.IntegerField()
     compilation_id               = models.CharField(max_length=128)
     whitelisted_tags             = models.TextField(null=True, blank=True)
+    selected_tags                = models.TextField(null=True, blank=True)
     blacklisted_tags             = models.TextField(null=True, blank=True)
     resources                    = models.CharField(max_length=4095, null=True, blank=True)
     description                  = models.TextField(null=True, blank=True)
@@ -53,6 +55,11 @@ class CompilationHolder(models.Model):
 
 class WhiteListedBlog(models.Model):
     whitelisted_blog_id          = models.AutoField(primary_key=True)
+    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+
+
+class SelectedBlog(models.Model):
+    selected_blog_id             = models.AutoField(primary_key=True)
     compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
 
 

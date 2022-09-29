@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
 import logging
 
-from workspace_editor.forms import EventCreateForm, EventEditForm, CompilationCreateForm
+from loader.tumblr_loader import TumblrLoader
+from settings import MEDIA_ROOT
+from workspace_editor.forms import EventCreateForm, EventEditForm
 from workspace_editor.models import Workspace
 from workspace_editor.serializers import WorkspaceSerializer
 from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
@@ -23,7 +25,9 @@ from loader.models import *
 
 log = logging.getLogger(__name__)
 
-
+RESOURCES_PER_NAMES = {
+    "Tumbler": TumblrLoader()
+}
 
 @login_required
 def home(request, workspace_id=None, post_id=None):
@@ -123,17 +127,49 @@ def __workspace_request_handler(request, workspace=None):
 
 def __compilation_holder_request_handler(request, workspace, holder_id=None, holder_id_to_delete=None,):
     if request.POST['action'] == 'create_holder':
-        form = CompilationHolderCreateForm(request.POST)
+        form = CompilationHolderCreateForm(request.POST,
+                                           initial={'name': "Compilation holder",
+                                                    'posts_per_download': 25})
         if form.is_valid():
             form.set_workspace(workspace)
             form.save()
         else:
             log.error(form.errors.as_data())
+
     elif holder_id and request.POST['action'] == 'edit_holder':
-        form = CompilationHolderEditForm(request.POST)
+        form = CompilationHolderEditForm(request.POST,
+                                         initial={'name': "Compilation holder",
+                                                  'posts_per_download': 25})
         if form.is_valid():
             holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
             form.save_edited_holder(holder)
+        else:
+            log.error(form.errors.as_data())
+
+    elif request.POST['action'] == 'download_posts':
+        form = CompilationHolderDownloadForm(request.POST)
+        if form.is_valid():
+            holder = CompilationHolder.objects.get(compilation_holder_id=form.get_holder_id())
+
+            loader = RESOURCES_PER_NAMES[holder.resources]
+            loader.print_user_info()
+
+            # TODO: use holder.selected_blogs in condition
+            if holder.selected_tags:
+                # TODO: use array after realisation multiple tag downloading
+                tag = holder.selected_tags.split()[0]
+                number = holder.posts_per_download
+
+                # blogs = holder.selected_blog
+
+                compilation = Compilation.objects.get(id=holder.compilation_id)
+
+                path = generate_storage_path(PATH_TO_STORE, work_sp_id=workspace.workspace_id, comp_id=compilation.id)
+                compilation.storage = path
+
+                # TODO: made asynchronous
+                loader.download(compilation, number, tag=tag, storage_path=path)
+
         else:
             log.error(form.errors.as_data())
     elif holder_id_to_delete and request.POST['action'] == 'delete_holder':
@@ -186,9 +222,11 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
     context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
 
     if workspace:
-        context['compilation_create_form'] = CompilationHolderCreateForm()
-        context['compilation_edit_form']   = CompilationHolderEditForm()
+        context['compilation_create_form']   = CompilationHolderCreateForm()
+        context['compilation_edit_form']     = CompilationHolderEditForm()
+        context['compilation_download_form'] = CompilationHolderDownloadForm()
         context['compilation_delete_form']   = CompilationHolderDeleteForm()
+
 
         holders = CompilationHolder.objects.filter(workspace=workspace.workspace_id).order_by('number_on_list')
 
@@ -214,8 +252,6 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
 
         if holder_id_to_delete:
             context['selected_for_delete_holder'] = CompilationHolder.objects.get(compilation_holder_id=holder_id_to_delete)
-
-
 
     return context
 
@@ -251,14 +287,14 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["schedule_events"] = __get_events_for_schedule(schedule.schedule_id)
         context["selected_schedule_id"] = int(schedule.schedule_id)
 
-        # TODO: rename event_createform to event_create_form
         context["event_create_form"] = EventCreateForm()
         # TODO: rename event_edit_form to event_create_form
         context["edit_event_form"] = EventEditForm()
         context["post_create_form"] = PostCreateForm()
-
         context["post_delete_form"] = PostDeleteForm()
 
+        # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local
+        context["MEDIA_LOCATION"] = "../media"
 
         main_compilation = Compilation.objects.get(id=uuid.UUID(workspace.main_compilation_id))
         post_ids = main_compilation.post_ids
