@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 import logging
 
 from loader.tumblr_loader import TumblrLoader
-from settings import MEDIA_ROOT
+from workspace_editor.utils import copy_compilation_posts
 from workspace_editor.forms import EventCreateForm, EventEditForm
 from workspace_editor.models import Workspace
 from workspace_editor.serializers import WorkspaceSerializer
@@ -137,17 +137,27 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
             log.error(form.errors.as_data())
 
     elif holder_id and request.POST['action'] == 'edit_holder':
-        form = CompilationHolderEditForm(request.POST,
-                                         initial={'name': "Compilation holder",
-                                                  'posts_per_download': 25})
+        holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+
+        form = CompilationHolderEditForm(
+             request.POST,
+             initial={'name': holder.name,
+                      'whitelisted_blogs': WhiteListedBlog.objects.filter(compilation_holder=holder),
+                      'selected_blogs': SelectedBlog.objects.filter(compilation_holder=holder),
+                      'blacklisted_blogs': BlackListedBlog.objects.filter(compilation_holder=holder),
+                      'whitelisted_tags': holder.whitelisted_tags,
+                      'selected_tags': holder.selected_tags,
+                      'blacklisted_tags': holder.blacklisted_tags,
+                      'resources': holder.resources,
+                      'posts_per_download': holder.posts_per_download,
+                      'description': holder.description})
         if form.is_valid():
-            holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
             form.save_edited_holder(holder)
         else:
             log.error(form.errors.as_data())
 
     elif request.POST['action'] == 'download_posts':
-        form = CompilationHolderDownloadForm(request.POST)
+        form = CompilationHolderGetIdForm(request.POST)
         if form.is_valid():
             holder = CompilationHolder.objects.get(compilation_holder_id=form.get_holder_id())
 
@@ -159,8 +169,8 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
                 # TODO: use array after realisation multiple tag downloading
                 tag = holder.selected_tags.split()[0]
                 number = holder.posts_per_download
-
-                # blogs = holder.selected_blog
+                # TODO: use downloading from specific blogs:
+                #  blogs = holder.selected_blog
 
                 compilation = Compilation.objects.get(id=holder.compilation_id)
 
@@ -169,7 +179,17 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
 
                 # TODO: made asynchronous
                 loader.download(compilation, number, tag=tag, storage_path=path)
+        else:
+            log.error(form.errors.as_data())
 
+    elif request.POST['action'] == 'copy_posts_to_main_compilation':
+        form = CompilationHolderGetIdForm(request.POST)
+        if form.is_valid():
+            holder = CompilationHolder.objects.get(compilation_holder_id=form.get_holder_id())
+            compilation = Compilation.objects.get(id=holder.compilation_id)
+            copy_compilation_posts(workspace_id=workspace.workspace_id,
+                                   sender_compilation_id=compilation.id,
+                                   recipient_compilation_id=uuid.UUID(workspace.main_compilation_id))
         else:
             log.error(form.errors.as_data())
     elif holder_id_to_delete and request.POST['action'] == 'delete_holder':
@@ -183,7 +203,7 @@ def __event_request_handler(request, workspace, schedule):
     if request.POST['action'] == "create_event":
         form = EventCreateForm(request.POST)
         if form.is_valid():
-            form.safe_copied_post(workspace.scheduled_compilation_id)
+            form.safe_copied_post(workspace.workspace_id, workspace.scheduled_compilation_id)
             form.set_schedule(schedule)
             form.save()
         else:
@@ -195,6 +215,7 @@ def __event_request_handler(request, workspace, schedule):
             form.save()
         else:
             log.error(form.errors.as_data())
+
 
 def __post_request_handler(request, workspace, post_id=None):
     if request.POST['action'] == 'create_post':
@@ -224,7 +245,7 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
     if workspace:
         context['compilation_create_form']   = CompilationHolderCreateForm()
         context['compilation_edit_form']     = CompilationHolderEditForm()
-        context['compilation_download_form'] = CompilationHolderDownloadForm()
+        context['compilation_get_id_form']   = CompilationHolderGetIdForm()
         context['compilation_delete_form']   = CompilationHolderDeleteForm()
 
 

@@ -7,6 +7,7 @@ from cassandra.cqlengine.management import drop_table
 import pytumblr as pytumblr
 import vk
 import urllib
+import shutil
 
 
 from loader.models import Compilation, Post
@@ -138,25 +139,32 @@ def generate_storage_path(root_path, work_sp_id=None, comp_id=None, others=None)
     return path
 
 
-def save_files(storage_path, file_urls):
-    if storage_path is not None:
+def save_files(storage_path, file_urls=None, file_paths=None):
+    if storage_path:
         print(f"Trying to create directory '{storage_path}'")
         os.makedirs(storage_path, exist_ok=True)
 
     # TODO: implement realization for cloud (google-drive) storing
     saved_file_addresses = list()
 
-    print(f"Downloading and saving files to '{storage_path}'")
-    for image_url in file_urls:
-        path_to_image = os.path.join(storage_path, os.path.basename(image_url))
+    if file_urls:
+        print(f"Downloading and saving files to '{storage_path}'")
+        for file_url in file_urls:
+            path_to_image = os.path.join(storage_path, os.path.basename(file_url))
 
-        opener = urllib.request.URLopener()
-        opener.addheader('User-Agent', 'Mozilla/5.0')
-        filename, headers = opener.retrieve(image_url, path_to_image)
-        # TODO: use MEDIA_URL for cloud storage
-        relative_path = os.path.relpath(filename, MEDIA_ROOT)
+            opener = urllib.request.URLopener()
+            opener.addheader('User-Agent', 'Mozilla/5.0')
+            filename, headers = opener.retrieve(file_url, path_to_image)
+            # TODO: use MEDIA_URL for cloud storage
+            relative_path = os.path.relpath(filename, MEDIA_ROOT)
 
-        saved_file_addresses.append(relative_path)
+            saved_file_addresses.append(relative_path)
+    elif file_paths:
+        for file_path in file_paths:
+            shutil.copy(file_path, storage_path)
+            relative_path = os.path.relpath(file_path, MEDIA_ROOT)
+
+            saved_file_addresses.append(relative_path)
 
     return saved_file_addresses
 

@@ -9,21 +9,27 @@
             <form method="post"> {% csrf_token %}
                 <div class="btn-group">
                     <!-- TODO: change to form to pass holder_id -->
-                    <button class="btn btn-primary" type="submit" name="action" value="add_all_from_holder_to_main"><< Add all</button>
-        <!--        </form>-->
+                    <div class="d-none">
+                        {% render_field compilation_get_id_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=holder.compilation_holder_id %}
+                    </div>
+                    <button class="btn btn-primary" type="submit" name="action" value="copy_posts_to_main_compilation"><< Add all</button>
 
-        <!--        <form method="post"> {% csrf_token %}-->
+
                     <!-- TODO: create holder_filters_modal -->
                     <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#holder_filters_modal">Filters</a>
                     <button type="button" disabled class="btn btn-outline-dark">
-                        posts <span class="badge badge-light">{{holder.number_on_list|length}}</span>
+                        <span class="badge badge-light">{{posts|length}}</span>
                     </button>
                 </div>
             </form>
         </div>
 
         <div class="col-md-2 mx-auto col-lg-2 mx-auto my-auto">
-            <h6>{{holder.name}}</h6>
+            <div class="row">
+                <container class="border border-dark" style="width:fit-content;">
+                    {{holder.name}}
+                </container>
+            </div>
         </div>
 
         <div class="col-md-6 col-lg-6">
@@ -43,7 +49,7 @@
 
                     <div class="btn-group-horizontal">
                         <div class="d-none">
-                            {% render_field compilation_download_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=holder.compilation_holder_id %}
+                            {% render_field compilation_get_id_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=holder.compilation_holder_id %}
                         </div>
                         <button class="btn btn-outline-dark" type="submit" name="action" value="download_posts">Download posts</button>
                     </div>
