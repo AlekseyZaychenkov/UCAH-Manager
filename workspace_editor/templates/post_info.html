@@ -25,10 +25,10 @@
 <div class="row">
     {% for pi in post.stored_file_urls %}
         {% if forloop.counter == 1 %}
-        <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 200px; object-fit: contain;" alt="">
+        <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 100px; object-fit: contain;" alt="">
         {% else %}
         <div class="col-md-4 col-lg-4 p-2">
-            <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 75px; object-fit: contain;" alt="">
+            <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 35px; object-fit: contain;" alt="">
         </div>
         {% endif %}
     {% empty %}

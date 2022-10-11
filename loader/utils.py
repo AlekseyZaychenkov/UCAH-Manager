@@ -115,19 +115,6 @@ def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
     )
 
 
-# TODO: rename storage to storage_path
-def create_compilation(resource, name=None, tag=None, blogs=None, storage=None):
-    return Compilation.create(
-        name            = name,
-        resource        = resource,
-        search_tag      = tag,
-        search_blogs    = blogs,
-        update_date     = str(datetime.now()),
-        storage         = storage,
-        post_ids        = list()
-    )
-
-
 def generate_storage_path(root_path, work_sp_id=None, comp_id=None, others=None):
     path = root_path
     if work_sp_id:

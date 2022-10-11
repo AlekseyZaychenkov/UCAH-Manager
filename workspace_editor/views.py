@@ -139,18 +139,7 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
     elif holder_id and request.POST['action'] == 'edit_holder':
         holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
 
-        form = CompilationHolderEditForm(
-             request.POST,
-             initial={'name': holder.name,
-                      'whitelisted_blogs': WhiteListedBlog.objects.filter(compilation_holder=holder),
-                      'selected_blogs': SelectedBlog.objects.filter(compilation_holder=holder),
-                      'blacklisted_blogs': BlackListedBlog.objects.filter(compilation_holder=holder),
-                      'whitelisted_tags': holder.whitelisted_tags,
-                      'selected_tags': holder.selected_tags,
-                      'blacklisted_tags': holder.blacklisted_tags,
-                      'resources': holder.resources,
-                      'posts_per_download': holder.posts_per_download,
-                      'description': holder.description})
+        form = CompilationHolderEditForm(request.POST)
         if form.is_valid():
             form.save_edited_holder(holder)
         else:
@@ -243,11 +232,31 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
     context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
 
     if workspace:
-        context['compilation_create_form']   = CompilationHolderCreateForm()
-        context['compilation_edit_form']     = CompilationHolderEditForm()
-        context['compilation_get_id_form']   = CompilationHolderGetIdForm()
-        context['compilation_delete_form']   = CompilationHolderDeleteForm()
+        context['compilation_create_form'] = CompilationHolderCreateForm()
+        if holder_id:
+            holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+            whitelisted_blogs_names = ' '.join(list(map(lambda blog: blog.name,
+                                               WhiteListedBlog.objects.filter(compilation_holder=holder))))
+            selected_blogs_names = ' '.join(list(map(lambda blog: blog.name,
+                                               SelectedBlog.objects.filter(compilation_holder=holder))))
+            blacklisted_blogs_names = ' '.join(list(map(lambda blog: blog.name,
+                                               BlackListedBlog.objects.filter(compilation_holder=holder))))
 
+            context['compilation_edit_form'] = CompilationHolderEditForm(
+                 initial={'name': holder.name,
+                          'whitelisted_blogs': whitelisted_blogs_names,
+                          'selected_blogs': selected_blogs_names,
+                          'blacklisted_blogs': blacklisted_blogs_names,
+                          'whitelisted_tags': holder.whitelisted_tags,
+                          'selected_tags': holder.selected_tags,
+                          'blacklisted_tags': holder.blacklisted_tags,
+                          'resources': holder.resources,
+                          'posts_per_download': holder.posts_per_download,
+                          # TODO: make constraints for number_on_list from 1 to N_holders - 1
+                          'number_on_list':  holder.number_on_list,
+                          'description': holder.description})
+        context['compilation_get_id_form'] = CompilationHolderGetIdForm()
+        context['compilation_delete_form'] = CompilationHolderDeleteForm()
 
         holders = CompilationHolder.objects.filter(workspace=workspace.workspace_id).order_by('number_on_list')
 
@@ -260,13 +269,6 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
                 posts.append(Post.objects.get(id=id))
             holder_to_posts[holder] = posts
         context['holder_to_posts'] = holder_to_posts
-
-        holder_indexes = []
-        count = 1
-        for holder in holders:
-            holder_indexes.append(count)
-            count += 1
-        context['holder_indexes'] = holder_indexes
 
         if holder_id:
             context['selected_holder'] = CompilationHolder.objects.get(compilation_holder_id=holder_id)

@@ -6,7 +6,7 @@ from django import forms
 from loader.models import Post, Compilation
 from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
-    BlackListedBlog
+    BlackListedBlog, SelectedBlog
 from account.models import Account
 from UCA_Manager.settings import PATH_TO_STORE, RESOURCES
 from loader.utils import generate_storage_path, create_empty_compilation, \
@@ -126,7 +126,7 @@ class WorkspaceEditForm(WorkspaceCreateForm):
 class CompilationHolderCreateForm(forms.ModelForm):
     name                = forms.CharField(required=True)
     resources           = forms.ChoiceField(choices=RESOURCES)
-    posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
+    posts_per_download  = forms.ChoiceField(initial=25, choices=POSTS_PER_DOWNLOAD_CHOICES)
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
 
 
@@ -175,6 +175,7 @@ class CompilationHolderEditForm(forms.ModelForm):
     blacklisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     resources           = forms.ChoiceField(choices=RESOURCES)
     posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
+    number_on_list      = forms.IntegerField(required=False)
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
 
     def save_edited_holder(self, holder, commit=True):
@@ -191,6 +192,14 @@ class CompilationHolderEditForm(forms.ModelForm):
             if tag not in tags:
                 tags.append(tag)
         edited_holder.whitelisted_tags = ' '.join(tags)
+
+        tags = []
+        for tag in self.cleaned_data["selected_tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            tag = ''.join(filter(str.isalnum, tag))
+            if tag not in tags:
+                tags.append(tag)
+        edited_holder.selected_tags = ' '.join(tags)
 
         tags = []
         for tag in self.cleaned_data["blacklisted_tags"].split():
@@ -212,6 +221,18 @@ class CompilationHolderEditForm(forms.ModelForm):
 
             edited_holder.whitelisted_blog.add(whitelisted_blog)
 
+        for blog_name in self.cleaned_data["selected_blogs"].split():
+            blog = Blog()
+            # TODO: checking for existing blog with this name in selected resource
+            blog.name = blog_name
+            selected_blogs = SelectedBlog()
+            blog.whitelisted_blog = selected_blogs
+            selected_blogs.compilation_holder = holder
+            selected_blogs.save()
+            blog.save()
+
+            edited_holder.whitelisted_blog.add(selected_blogs)
+
         for blog_name in self.cleaned_data["blacklisted_blogs"].split():
             blog = Blog()
             # TODO: checking for existing blog with this name in selected resource
@@ -225,17 +246,12 @@ class CompilationHolderEditForm(forms.ModelForm):
 
             edited_holder.blacklisted_blogs.add(blog)
 
-        # workspace = Workspace.objects.get(workspace_id=holder.workspace_id)
-        # TODO: swap cleared data with another holder
+        edited_holder.number_on_list = self.cleaned_data["number_on_list"]
         other_holders = CompilationHolder.objects.filter(workspace=edited_holder.workspace_id)
-
-        temp = holder.number_on_list
         for oh in other_holders:
-            if oh.number_on_list == edited_holder.number_on_list:
-                oh.number_on_list = holder.number_on_list
+            if oh.number_on_list >= edited_holder.number_on_list:
+                oh.number_on_list += 1
                 oh.save()
-                break
-        edited_holder.number_on_list = temp
 
         if commit:
             edited_holder.save()
@@ -246,7 +262,6 @@ class CompilationHolderEditForm(forms.ModelForm):
     class Meta:
         model = CompilationHolder
         exclude = ('workspace',
-                   'number_on_list',
                    'compilation_id',
                    )
 

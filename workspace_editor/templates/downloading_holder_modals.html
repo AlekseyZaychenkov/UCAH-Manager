@@ -30,7 +30,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="posts_per_download">Maximum posts per download:</label>
-                                {% render_field compilation_edit_form.posts_per_download class="form-control"%}
+                                {% render_field compilation_create_form.posts_per_download class="form-control"%}
                                 {{ compilation_edit_form.posts_per_download.errors }}
                             </div>
                         </div>
@@ -128,6 +128,14 @@
                                 {% render_field compilation_edit_form.posts_per_download class="form-control"%}
                                 {{ compilation_edit_form.posts_per_download.errors }}
                             </div>
+
+
+                            <div class="col-md-6">
+                                <label for="number_on_list">On list:</label>
+                                {% render_field compilation_edit_form.number_on_list class="form-control"%}
+                                {{ compilation_edit_form.number_on_list.errors }}
+                            </div>
+
                         </div>
                     </div>
                     <div class="form-group">
@@ -137,6 +145,21 @@
                             {{ compilation_edit_form.description.errors }}
                         </div>
                     </div>
+
+<!--                    <div class="col">-->
+<!--                        <div class="form-group-sm">-->
+<!--                            <label for="number_on_list">On list</label>-->
+<!--                            <select class="form-control-sm">-->
+<!--                                {% for i in holder_indexes %}-->
+<!--v-->
+<!--                                        <option>{{i}}</option>-->
+
+<!--                                {% endfor %}-->
+<!--                            </select>-->
+<!--                        </div>-->
+<!--                    </div>-->
+
+
 
                     <div class="form-group">
                         <div class="float-right">

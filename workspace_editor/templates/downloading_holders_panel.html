@@ -14,7 +14,6 @@
                     </div>
                     <button class="btn btn-primary" type="submit" name="action" value="copy_posts_to_main_compilation"><< Add all</button>
 
-
                     <!-- TODO: create holder_filters_modal -->
                     <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#holder_filters_modal">Filters</a>
                     <button type="button" disabled class="btn btn-outline-dark">
@@ -35,7 +34,6 @@
         <div class="col-md-6 col-lg-6">
             <form method="post"> {% csrf_token %}
                 <div class="row btn-group" role="group">
-                    <!-- TODO: pass holder_id to url -->
                     <div class="btn-group-horizontal">
                         <a type="button" class="btn btn-outline-dark" href="{% url 'downloading_workspace_by_id_holder_by_id' workspace_id=workspace.workspace_id holder_id=holder.compilation_holder_id %}">Edit</a>
                         <script>
@@ -64,15 +62,9 @@
                     <div class="col">
                         <div class="form-group-sm">
                             <label for="number_on_list">On list</label>
-                            <select class="form-control-sm">
-                                {% for i in holder_indexes %}
-                                    {% if i == holder.number_on_list %}
-                                        <option selected>{{i}}</option>
-                                    {% else %}
-                                        <option>{{i}}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
+                            <container class="border border-dark" style="width:fit-content;">
+                                {{holder.number_on_list}}
+                            </container>
                         </div>
                     </div>
                 </div>
@@ -102,8 +94,8 @@
         {% endfor %}
     </div>
 </div>
-
 {% endfor %}
+
 <div class="card">
     <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_holder_modal"> + Add new compilation + </a>
 </div>
@@ -111,7 +103,5 @@
 {% block compilation_modals %}
 {% include 'downloading_holder_modals.html' %}
 {% endblock %}
-
-
 
 {% endblock content %}
