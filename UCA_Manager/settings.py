@@ -58,9 +58,6 @@ LOGIN_REDIRECT_URL = 'home'
 
 # Application definition
 INSTALLED_APPS = [
-    # TODO: delete after creating compilation viewer
-    # "ecomapp",
-
     'account',
     'workspace_editor',
     'loader',
@@ -186,6 +183,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn')
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+
+RESOURCES = (
+    ("Tumbler", "Tumbler"),
+)
 
 # IMAGES AND VIDEO STORING
 # TODO: create set of storages for specific user

@@ -4,11 +4,12 @@ import logging
 from django import forms
 
 from loader.models import Post, Compilation
-from workspace_editor.utils import copy_post_to
-from workspace_editor.models import Workspace, Event, Schedule
+from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
+from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
+    BlackListedBlog, SelectedBlog
 from account.models import Account
-from UCA_Manager.settings import PATH_TO_STORE
-from loader.utils import generate_storage_patch, create_empty_compilation, \
+from UCA_Manager.settings import PATH_TO_STORE, RESOURCES
+from loader.utils import generate_storage_path, create_empty_compilation, \
     save_files_from_request
 
 from django.db.models import Q
@@ -19,14 +20,28 @@ import shutil
 
 log = logging.getLogger(__name__)
 
-class WorkspaceForm(forms.ModelForm):
+POSTS_PER_DOWNLOAD_CHOICES = (
+            (5, 5),
+            (10, 10),
+            (15, 15),
+            (20, 20),
+            (25, 25),
+            (30, 30),
+            (35, 35),
+            (40, 40),
+            (45, 45),
+            (50, 50),
+        )
+
+
+class WorkspaceCreateForm(forms.ModelForm):
     visible_for = forms.CharField(required=False)
     editable_by = forms.CharField(required=False)
 
     class Meta:
         model = Workspace
         exclude = ("owner", "visible_for", "editable_by", "schedule", "schedule_archive",
-                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id")
+                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id", "description")
 
     def set_owner(self, user):
         workspace = self.instance
@@ -61,7 +76,7 @@ class WorkspaceForm(forms.ModelForm):
         return workspace
 
 
-class WorkspaceEditForm(WorkspaceForm):
+class WorkspaceEditForm(WorkspaceCreateForm):
     workspace_id = forms.CharField(required=True)
     name         = forms.CharField(required=True)
     visible_for  = forms.CharField(required=False)
@@ -71,14 +86,14 @@ class WorkspaceEditForm(WorkspaceForm):
     class Meta:
         model = Workspace
         exclude = ("owner", "schedule", "schedule_archive",
-                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id")
+                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id", "description")
 
     def __init__(self, *args, **kwargs):
         super(WorkspaceEditForm, self).__init__(*args, **kwargs)
         if self.initial:
             self.fields["workspaces"] = forms.ChoiceField(choices=get_workspaces(self.initial["user_id"]), required=True)
 
-    def save(self, workspace, commit=True):
+    def save_edited_workspace(self, workspace, commit=True):
         edited_workspace = self.instance
 
         edited_workspace.owner = workspace.owner
@@ -108,28 +123,171 @@ class WorkspaceEditForm(WorkspaceForm):
         return edited_workspace
 
 
-class ScheduleForm(forms.ModelForm):
-    workspace = forms.CharField(required=False)
+class CompilationHolderCreateForm(forms.ModelForm):
+    name                = forms.CharField(required=True)
+    resources           = forms.ChoiceField(choices=RESOURCES)
+    posts_per_download  = forms.ChoiceField(initial=25, choices=POSTS_PER_DOWNLOAD_CHOICES)
+    description         = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
+
 
     class Meta:
-        model = Schedule
-        fields = '__all__'
+        model = CompilationHolder
+        exclude = ('workspace', 'whitelisted_blog_id', 'blacklisted_blog_id', 'whitelisted_tags', 'blacklisted_tags',
+                   'number_on_list', 'compilation_id', )
+
+
+    def set_workspace(self, workspace):
+        holder = self.instance
+        holder.workspace_id = workspace.workspace_id
+        self.instance = holder
 
     def save(self, commit=True):
-        schedule = self.instance
-        if commit:
-            schedule.save()
+        holder = self.instance
 
-        return schedule
+        other_holders = CompilationHolder.objects.filter(workspace=holder.workspace_id)
+        for oh in other_holders:
+            oh.number_on_list += 1
+            oh.save()
+        holder.number_on_list = 1
+
+        holder.compilation_id = create_empty_compilation().id
+
+        # TODO: delete after migrations of db
+        holder.whitelisted_tags = ""
+        holder.blacklisted_tags = ""
+
+        if commit:
+            holder.save()
+
+        return holder
+
+
+class CompilationHolderEditForm(forms.ModelForm):
+    # TODO: implement mechanism for creating list of all blogs urls and blog names in resource - two dicts
+    #  (call asynchron before each downloading context recreation)
+    # TODO: implement mechanism for hints during printing blogs names (from variant from the list)
+    name                = forms.CharField(required=True)
+    whitelisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+    selected_blogs      = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+    blacklisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+    whitelisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+    selected_tags       = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+    blacklisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+    resources           = forms.ChoiceField(choices=RESOURCES)
+    posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
+    number_on_list      = forms.IntegerField(required=False)
+    description         = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
+
+    def save_edited_holder(self, holder, commit=True):
+        edited_holder = self.instance
+
+        edited_holder.workspace_id          = holder.workspace_id
+        edited_holder.compilation_holder_id = holder.compilation_holder_id
+        edited_holder.compilation_id        = holder.compilation_id
+
+        tags = []
+        for tag in self.cleaned_data["whitelisted_tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            tag = ''.join(filter(str.isalnum, tag))
+            if tag not in tags:
+                tags.append(tag)
+        edited_holder.whitelisted_tags = ' '.join(tags)
+
+        tags = []
+        for tag in self.cleaned_data["selected_tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            tag = ''.join(filter(str.isalnum, tag))
+            if tag not in tags:
+                tags.append(tag)
+        edited_holder.selected_tags = ' '.join(tags)
+
+        tags = []
+        for tag in self.cleaned_data["blacklisted_tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            tag = ''.join(filter(str.isalnum, tag))
+            if tag not in tags:
+                tags.append(tag)
+        edited_holder.blacklisted_tags = ' '.join(tags)
+
+        for blog_name in self.cleaned_data["whitelisted_blogs"].split():
+            blog = Blog()
+            # TODO: checking for existing blog with this name in selected resource
+            blog.name = blog_name
+            whitelisted_blog = WhiteListedBlog()
+            blog.whitelisted_blog = whitelisted_blog
+            whitelisted_blog.compilation_holder = holder
+            whitelisted_blog.save()
+            blog.save()
+
+            edited_holder.whitelisted_blog.add(whitelisted_blog)
+
+        for blog_name in self.cleaned_data["selected_blogs"].split():
+            blog = Blog()
+            # TODO: checking for existing blog with this name in selected resource
+            blog.name = blog_name
+            selected_blogs = SelectedBlog()
+            blog.whitelisted_blog = selected_blogs
+            selected_blogs.compilation_holder = holder
+            selected_blogs.save()
+            blog.save()
+
+            edited_holder.whitelisted_blog.add(selected_blogs)
+
+        for blog_name in self.cleaned_data["blacklisted_blogs"].split():
+            blog = Blog()
+            # TODO: checking for existing blog with this name in selected resource
+            blog.name = blog_name
+            blacklisted_blog = BlackListedBlog()
+            blog.blacklisted_blog = blacklisted_blog
+            blacklisted_blog.compilation_holder = holder
+            blacklisted_blog.save()
+            blog.save()
+            holder.blacklisted_blog.add(blacklisted_blog)
+
+            edited_holder.blacklisted_blogs.add(blog)
+
+        edited_holder.number_on_list = self.cleaned_data["number_on_list"]
+        other_holders = CompilationHolder.objects.filter(workspace=edited_holder.workspace_id)
+        for oh in other_holders:
+            if oh.number_on_list >= edited_holder.number_on_list:
+                oh.number_on_list += 1
+                oh.save()
+
+        if commit:
+            edited_holder.save()
+
+        return edited_holder
+
+
+    class Meta:
+        model = CompilationHolder
+        exclude = ('workspace',
+                   'compilation_id',
+                   )
+
+
+class CompilationHolderDeleteForm(forms.Form):
+    compilation_holder_id = forms.IntegerField(required=True)
+
+    def delete(self):
+        holder_id = self.data["compilation_holder_id"]
+        delete_compilation_holder(holder_id)
+
+
+class CompilationHolderGetIdForm(forms.Form):
+    compilation_holder_id = forms.IntegerField(required=True)
+
+    def get_holder_id(self):
+        return self.data["compilation_holder_id"]
 
 
 class EventCreateForm(forms.ModelForm):
-    start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
-    post_id = forms.CharField(required=True)
+    start_date  = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    post_id     = forms.CharField(required=True)
 
-    def safe_copied_post(self, recipient_compilation_id):
+    def safe_copied_post(self, workspace_id, recipient_compilation_id):
         post_id = self.instance.post_id
-        new_post_id = copy_post_to(post_id, recipient_compilation_id)
+        new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
         self.instance.post_id = new_post_id
 
     def set_schedule(self, schedule):
@@ -159,19 +317,20 @@ class EventEditForm(forms.ModelForm):
         exclude = ('post_id', 'schedule_id', )
 
 
-class CompilationCreateForm(forms.Form):
-    name                         = forms.CharField(required=True)
-    resource                     = 'Tumbler'
-    search_tag                   = forms.CharField(required=True)
-    search_blogs                 = forms.CharField(required=False)
-    downloaded_date              = str(datetime.now())
-
-    print(f"search_tag: '{search_tag}'")
-    search_tag  = 'paleontology'
-
-    # TODO: check if its works
-    storage                      = generate_storage_patch(PATH_TO_STORE, comp_id=id)
-    post_ids                     = list()
+    # TODO: delete after finishing CompilationHolderCreateForm
+# class CompilationCreateForm(forms.Form):
+#     name                         = forms.CharField(required=True)
+#     resource                     = 'Tumbler'
+#     search_tag                   = forms.CharField(required=True)
+#     search_blogs                 = forms.CharField(required=False)
+#     downloaded_date              = str(datetime.now())
+#
+#     print(f"search_tag: '{search_tag}'")
+#     search_tag  = 'paleontology'
+#
+#     # TODO: change 'id' to 'workspace_id'
+#     storage                      = generate_storage_path(PATH_TO_STORE, workspace_id=id)
+#     post_ids                     = list()
 
 
 class PostCreateForm(forms.Form):
@@ -213,47 +372,14 @@ class PostCreateForm(forms.Form):
         return post
 
 
-# class PostChoiceForm(forms.Form):
-#     post_id = forms.CharField(required=True)
-#
-#     def get_id(self):
-#         return self.data["post_id"]
-
-
 class PostDeleteForm(forms.Form):
     post_id = forms.CharField(required=True)
     def delete(self):
         post_id = self.data["post_id"]
-        post = Post.objects.get(id=post_id)
-
-        if post:
-            compilation_id = post.compilation_id
-            compilation = Compilation.objects.get(id=compilation_id)
-
-            if compilation:
-                compilation.post_ids.remove(post.id)
-                compilation.update()
-            else:
-                log.error(f"No compilation with id='{compilation_id}' for post id='{post.id}' ")
-
-            if len(post.stored_file_urls) > 0:
-                folder = post.stored_file_urls[0].parent
-                for file in post.stored_file_urls:
-                    os.remove(file)
-                if len(os.listdir(folder)) == 0:
-                    shutil.rmtree(folder)
-
-            post.delete()
-
-        else:
-            log.error(f"No post with id='{post.id}' ")
+        delete_post(post_id)
 
 
-
-
-
-
-
+# TODO: move method to utils
 def get_workspaces(user_id):
     workspaces = Workspace.objects.filter(Q(owner=user_id) | Q(editable_by=user_id))
     choices = []
@@ -262,5 +388,3 @@ def get_workspaces(user_id):
         choices.append((workspace.pk, workspace.name))
 
     return choices
-
-

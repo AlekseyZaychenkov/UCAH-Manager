@@ -17,7 +17,6 @@
                     <div class="d-none">
                         {% render_field post_create_form.workspace_id|append_attr:"readonly:readonly" class="form-control" id="workspace_id" value=workspace.workspace_id %}
                     </div>
-
                     <div class="form-row">
                         <label for="tags">Tags:</label>
                         {% render_field post_create_form.tags class="form-control" %}
@@ -28,13 +27,11 @@
                         {% render_field post_create_form.text class="form-control" %}
                         {{ post_create_form.text.errors }}
                     </div>
-
                     <div class="form-row">
                         <label for="images">Images:</label>
                         {% render_field post_create_form.images class+="form-control form-control" %}
                         {{ post_create_form.images.errors }}
                     </div>
-
                     <div class="form-row">
                         <label for="description">Description:</label>
                         {% render_field post_create_form.description class="form-control" %}
@@ -44,7 +41,7 @@
                     <hr>
 
                     <div class="float-right">
-                        <button class="btn btn-primary " type="submit" name="action" value="create_post">Create</button>
+                        <button class="btn btn-primary" type="submit" name="action" value="create_post">Create</button>
                         <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                     </div>
                 </form>
@@ -79,13 +76,12 @@
     </div>
 
 
-
 </div>
 
 
 
 
-</body>
+
 
 
 {% endblock content %}

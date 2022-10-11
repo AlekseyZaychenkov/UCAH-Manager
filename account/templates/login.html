@@ -24,6 +24,24 @@
                     {{ form.password.errors }}
                 </div>
                 <button class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" type="submit">Login</button>
+
+                <script>
+                    {% if email_does_not_exist %}
+                        $(function() {
+                          $('#email_does_not_exist_modal').modal({show: true});
+                        });
+                    {% endif %}
+                </script>
+                <script>
+                    {% if password_is_wrong %}
+                        $(function() {
+                          $('#password_is_wrong_modal').modal({show: true});
+                        });
+                    {% endif %}
+                </script>
+                {% block login_error_modals %}
+                {% include 'registration/login_error_modals.html' %}
+                {% endblock %}
               </form>
                 <a class="btn btn-lg btn-primary btn-block btn-login text-uppercase font-weight-bold mb-2" href="{% url 'to_register' %}">Create an account</a>
             </div>
