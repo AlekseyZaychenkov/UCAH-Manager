@@ -1,5 +1,4 @@
-{% load widget_tweaks %} {% block content %}
-{% load static %}
+{% load widget_tweaks %} {% block content %} {% load static %}
 
 
 <div class="container">
@@ -9,12 +8,18 @@
     {% for post in main_compilation %}
     <div class="col-md-6 card">
       <div class="m-2">
+        <div class="float-right">
+            {% block post_clean_text_button %}
+            {% include 'post_clean_text_button.html' %}
+            {% endblock %}
 
+            {% block post_delete_button %}
+            {% include 'post_delete_button.html' %}
+            {% endblock %}
+        </div>
         {% block post_info %}
         {% include 'post_info.html' %}
         {% endblock %}
-
-
       </div>
     </div>
     {% endfor %}

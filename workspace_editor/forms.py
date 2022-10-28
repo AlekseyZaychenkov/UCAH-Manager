@@ -4,6 +4,7 @@ import logging
 from django import forms
 
 from loader.models import Post, Compilation
+from loader.vk_loader import VKLoader
 from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog, SelectedBlog
@@ -13,9 +14,8 @@ from loader.utils import generate_storage_path, create_empty_compilation, \
     save_files_from_request
 
 from django.db.models import Q
-from datetime import datetime
+import datetime
 import os
-import shutil
 
 
 log = logging.getLogger(__name__)
@@ -121,6 +121,22 @@ class WorkspaceEditForm(WorkspaceCreateForm):
             edited_workspace.save()
 
         return edited_workspace
+
+
+class WorkspaceUploadPostsForm(forms.Form):
+
+    def upload_posts(self, schedule_id):
+        # TODO: implement checking for events with late datetime and show error on frontend
+        if Event.objects.filter(schedule_id=schedule_id).exists():
+            events = Event.objects.filter(schedule_id=schedule_id).order_by('start_date')
+
+            vk_loader = VKLoader()
+            for event in events:
+                vk_loader.upload(event)
+
+
+    class Meta:
+        widgets = {'empty_field': forms.HiddenInput(),}
 
 
 class CompilationHolderCreateForm(forms.ModelForm):
@@ -285,15 +301,18 @@ class EventCreateForm(forms.ModelForm):
     start_date  = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
     post_id     = forms.CharField(required=True)
 
-    def safe_copied_post(self, workspace_id, recipient_compilation_id):
+    def safe_copied_post(self, workspace_id, recipient_compilation_id, delete_original_post=False):
         post_id = self.instance.post_id
         new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
+        if delete_original_post:
+            delete_post(post_id, delete_files=False)
         self.instance.post_id = new_post_id
 
     def set_schedule(self, schedule):
         event = self.instance
         event.schedule = schedule
         self.instance = event
+
 
     class Meta:
         model = Event
@@ -315,22 +334,6 @@ class EventEditForm(forms.ModelForm):
     class Meta:
         model = Event
         exclude = ('post_id', 'schedule_id', )
-
-
-    # TODO: delete after finishing CompilationHolderCreateForm
-# class CompilationCreateForm(forms.Form):
-#     name                         = forms.CharField(required=True)
-#     resource                     = 'Tumbler'
-#     search_tag                   = forms.CharField(required=True)
-#     search_blogs                 = forms.CharField(required=False)
-#     downloaded_date              = str(datetime.now())
-#
-#     print(f"search_tag: '{search_tag}'")
-#     search_tag  = 'paleontology'
-#
-#     # TODO: change 'id' to 'workspace_id'
-#     storage                      = generate_storage_path(PATH_TO_STORE, workspace_id=id)
-#     post_ids                     = list()
 
 
 class PostCreateForm(forms.Form):
@@ -370,6 +373,42 @@ class PostCreateForm(forms.Form):
             post.save()
 
         return post
+
+
+class PostEditForm(forms.Form):
+    post_id         = forms.CharField(required=True)
+    tags            = forms.CharField(required=False)
+    text            = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    images          = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
+    description     = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+
+    def save(self, workspace, compilation, images=None, commit=True):
+        post = Post.objects.get(id=self.cleaned_data["post_id"])
+
+        tags = list()
+        for tag in self.cleaned_data["tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            tag = ''.join(filter(str.isalnum, tag))
+            if tag not in tags:
+                tags.append(tag)
+        post.start_date = tags
+
+        post.text = self.cleaned_data["text"]
+
+        if images:
+            post_storage_path \
+                = os.path.join(PATH_TO_STORE, str(workspace.workspace_id), str(compilation.id), str(post.id))
+            saved_file_addresses = save_files_from_request(post_storage_path, images)
+            post.stored_file_urls = saved_file_addresses
+
+        post.description = self.cleaned_data["description"]
+
+        if commit:
+            post.save()
+
+        return post
+
+
 
 
 class PostDeleteForm(forms.Form):

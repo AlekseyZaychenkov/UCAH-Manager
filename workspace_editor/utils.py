@@ -100,7 +100,7 @@ def delete_compilation(compilation_id):
     compilation.delete()
 
 
-def delete_post(post_id):
+def delete_post(post_id, delete_files=True):
     post = Post.objects.get(id=post_id)
 
     if post:
@@ -113,7 +113,7 @@ def delete_post(post_id):
         else:
             log.error(f"No compilation with id='{compilation_id}' for post id='{post.id}' ")
 
-        if len(post.stored_file_urls) > 0:
+        if delete_files and len(post.stored_file_urls) > 0:
             # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local
             folder = os.path.join(MEDIA_ROOT, Path(post.stored_file_urls[0]).parent)
             shutil.rmtree(folder)

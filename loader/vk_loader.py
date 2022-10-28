@@ -5,11 +5,13 @@ import logging
 from time import sleep
 import requests
 import vk
+from UCA_Manager.settings import PATH_TO_STORE, MEDIA_ROOT
 
 from cassandra.cqlengine.management import sync_table
 
 from credentials import VK_UCA_GROUP_NUMBER, VK_USER_ID, VK_APP_TOKEN,  VK_API_VERSION
 from loader.models import Post, Compilation
+from workspace_editor.models import Event
 from utils import create_vk_client
 
 
@@ -25,7 +27,13 @@ class VKLoader:
         vk.logger.setLevel('DEBUG')
 
 
-    def upload(self, post):
+    def upload(self, event: Event, as_soon_as_possible=False):
+        if Post.objects.filter(id=event.post_id).count() == 0:
+            logging.error(f"For event with id='{event.event_id}' "
+                          f"post with id='{event.post_id}' was haven't found in cassandra")
+            return
+        else:
+            post = Post.objects.get(id=event.post_id)
 
         tags_str = self.__prepate_tags_string(post.tags)
 
@@ -36,17 +44,19 @@ class VKLoader:
 
         retry_after = 1
         delay = True
-        while (delay):
+        while delay:
             delay = False
             try:
                 log.debug(f"[{self.__make_time()}] Uploading files to server vk...")
                 attachments = self.__prepare_attachments(post.stored_file_urls)
+                publish_date = self.__convert_publish_data(event.start_date)
 
                 log.debug(f"[{self.__make_time()}] Posting...'.")
                 self.vk_client.wall.post(access_token=VK_APP_TOKEN,
                                          owner_id=-VK_UCA_GROUP_NUMBER,
                                          message=message,
                                          attachments=attachments,
+                                         publish_date=publish_date,
                                          copyright = post.original_post_url,
                                          v=VK_API_VERSION
                                          )
@@ -74,7 +84,7 @@ class VKLoader:
 
         paths = []
         for path in stored_file_urls:
-            paths.append(str(os.path.join('..', path)))
+            paths.append(str(os.path.join('..', MEDIA_ROOT, path)))
 
         if len(paths) > 10:
             log.warning('Created post has more then 10 attachments! VK only allows 10 attachments per 1 post!')
@@ -127,6 +137,10 @@ class VKLoader:
         return attachments
 
 
+    def __convert_publish_data(self, event_time):
+        return event_time.timestamp()
+
+
     def __get_img_upload_url(self):
         # Получаем ссылку для загрузки изображений
         method_url = 'https://api.vk.com/method/photos.getWallUploadServer?'
@@ -167,6 +181,7 @@ class VKLoader:
             return None
 
         tags = []
+        # TODO: implement limit of not more than 10 tags
         for tag in post_tags:
             tag = tag.strip()
             tag = tag.replace(' ', '_')
