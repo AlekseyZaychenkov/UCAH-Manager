@@ -4,6 +4,7 @@ import logging
 from django import forms
 
 from loader.models import Post, Compilation
+from loader.vk_loader import VKLoader
 from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog, SelectedBlog
@@ -13,9 +14,8 @@ from loader.utils import generate_storage_path, create_empty_compilation, \
     save_files_from_request
 
 from django.db.models import Q
-from datetime import datetime
+import datetime
 import os
-import shutil
 
 
 log = logging.getLogger(__name__)
@@ -121,6 +121,22 @@ class WorkspaceEditForm(WorkspaceCreateForm):
             edited_workspace.save()
 
         return edited_workspace
+
+
+class WorkspaceUploadPostsForm(forms.Form):
+
+    def upload_posts(self, schedule_id):
+        # TODO: implement checking for events with late datetime and show error on frontend
+        if Event.objects.filter(schedule_id=schedule_id).exists():
+            events = Event.objects.filter(schedule_id=schedule_id).order_by('start_date')
+
+            vk_loader = VKLoader()
+            for event in events:
+                vk_loader.upload(event)
+
+
+    class Meta:
+        widgets = {'empty_field': forms.HiddenInput(),}
 
 
 class CompilationHolderCreateForm(forms.ModelForm):

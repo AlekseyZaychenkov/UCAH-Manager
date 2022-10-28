@@ -6,13 +6,16 @@
 
         <div class="col col-md-5">
             <form method="post"> {% csrf_token %}
-                    <div class="d-none">
-                        {% render_field compilation_get_id_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=holder.compilation_holder_id %}
-                    </div>
-                    <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="copy_posts_to_main_compilation">History All</button>
+                <div class="btn-group">
+                    <!-- TODO: add dropdown for history previous week -->
+                    <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="schedule_history_previous_week">History previous week</button>
 
-                    <!-- TODO: create holder_filters_modal -->
-                    <a type="button" class="btn btn-outline-dark btn-sm" data-toggle="modal" data-target="#holder_filters_modal">Filters</a>
+                    <!-- TODO: add dropdown for all history -->
+                    <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="schedule_history_all">History All</button>
+
+                    <!-- TODO: add modal for statistic -->
+                    <a type="button" class="btn btn-outline-dark btn-sm" data-toggle="modal" data-target="#schedule_statistic_modal">Statistic</a>
+                </div>
             </form>
         </div>
 
@@ -21,47 +24,43 @@
             <div class="form-group-sm">
                 <label>Posts:</label>
                 <container class="border border-dark" style="width:fit-content;">
-                    {{posts|length}}
+                    {{post_in_schedule}}
                 </container>
             </div>
         </div>
 
 
         <div class="col align-self-end">
-            <form method="post"> {% csrf_token %}
-                <div class="row btn-group" role="group">
-
+            <div class="row btn-group" role="group">
+                <form method="post"> {% csrf_token %}
+                    {{ workspace_upload_posts_form.event_id.as_hidden }}
                     <div class="btn-group-horizontal">
-                        <div class="d-none">
-                            {% render_field compilation_get_id_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=holder.compilation_holder_id %}
-                        </div>
-                        <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="download_posts">Upload posts</button>
+                        <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="upload_posts">Upload posts</button>
                     </div>
+                </form>
 
-                    <div class="btn-group-vertical">
-                        <div class="custom-control custom-switch">
-                            <label class="custom-control-label">Autoload</label>
-                            <input type="checkbox" class="custom-control-input">
-                        </div>
+                <div class="btn-group-vertical">
+                    <div class="custom-control custom-switch">
+                        <label class="custom-control-label">Autoload</label>
+                        <input type="checkbox" class="custom-control-input">
                     </div>
-
-
                 </div>
 
-            </form>
+            </div>
+
         </div>
     </div>
 </div>
 
 
-{% for day, events_to_posts in schedule_events.items  %}
+{% for day, events_to_posts in schedule_events.items %}
 
 <div class="card mb-2">
 
     <h4 class="px-3">{{day.0}}, {{day.1}}</h4>
 
     <div class="row">
-        {% for event, post in events_to_posts.items  %}
+        {% for event, post in events_to_posts.items %}
         <!-- TODO: ml-4 mb-2 - indent from left and bottom - try to use it for more full filling of screen -->
         <div class="col-md-4 ml-4 mb-2 card">
             <div class="col">

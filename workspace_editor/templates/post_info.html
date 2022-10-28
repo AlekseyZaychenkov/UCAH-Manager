@@ -35,6 +35,7 @@
     {% endfor %}
 </div>
 
+<p class="pt-3">{{post.id}}</p>
 {% if post.blog_url is not None %}
     <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
     <!-- TODO: figure out and add other useful information -->
