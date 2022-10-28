@@ -192,7 +192,7 @@ def __event_request_handler(request, workspace, schedule):
     if request.POST['action'] == "create_event":
         form = EventCreateForm(request.POST)
         if form.is_valid():
-            form.safe_copied_post(workspace.workspace_id, workspace.scheduled_compilation_id)
+            form.safe_copied_post(workspace.workspace_id, workspace.scheduled_compilation_id, delete_original_post=True)
             form.set_schedule(schedule)
             form.save()
         else:
@@ -281,7 +281,7 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
 
 # TODO: investigate and move part of methods to __prepare_workspace_context()
 def __prepare_mutual_context(request, workspace=None, post_id=None):
-    context = {}
+    context = dict()
 
     context["resources"] = RESOURCES
 
@@ -343,7 +343,7 @@ def __get_events_for_schedule(selected_schedule_id):
     date = datetime.date.today()
     days_to_show = 7
 
-    while (True):
+    while True:
         day_of_week = calendar.day_name[date.weekday()]
         #  TODO: make more compact and remove db retry
         if Event.objects.filter(schedule_id=selected_schedule_id, start_date__year=date.year,
@@ -353,7 +353,11 @@ def __get_events_for_schedule(selected_schedule_id):
                 .order_by('start_date')
             events_to_posts = dict()
             for event in events:
-                events_to_posts[event] = Post.objects.get(id=event.post_id)
+                if Post.objects.filter(id=event.post_id).count() == 0:
+                    logging.error(
+                        f"Event with id='{event.event_id}' haven't found in cassandra post with id='{event.post_id}'")
+                else:
+                    events_to_posts[event] = Post.objects.get(id=event.post_id)
 
             dates_to_events[(date, day_of_week)] = events_to_posts
         else:

@@ -285,15 +285,18 @@ class EventCreateForm(forms.ModelForm):
     start_date  = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
     post_id     = forms.CharField(required=True)
 
-    def safe_copied_post(self, workspace_id, recipient_compilation_id):
+    def safe_copied_post(self, workspace_id, recipient_compilation_id, delete_original_post=False):
         post_id = self.instance.post_id
         new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
+        if delete_original_post:
+            delete_post(post_id, delete_files=False)
         self.instance.post_id = new_post_id
 
     def set_schedule(self, schedule):
         event = self.instance
         event.schedule = schedule
         self.instance = event
+
 
     class Meta:
         model = Event

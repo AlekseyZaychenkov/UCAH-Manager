@@ -27,7 +27,7 @@
         </div>
         <div class="col-7 col-lg-8">
             {% block schedules %}
-            {% include 'workspace_center_panel.html' %}
+            {% include 'workspace_schedule_panel.html' %}
             {% endblock %}
         </div>
     </div>
@@ -50,7 +50,7 @@
                         <div class="form-label-group">
                             {% if schedule != None %}
                                 {% render_field event_editform.start_date class="form-control" type="datetime-local" id="id_edit_start_date" %}
-                                <label for="id_edit_start_date">Beginning:</label>
+                                <label>Beginning:</label>
                                 {{ event_editform.start_date.errors }}
                             {% endif %}
                         </div>
