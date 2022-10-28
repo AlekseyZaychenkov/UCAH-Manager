@@ -336,22 +336,6 @@ class EventEditForm(forms.ModelForm):
         exclude = ('post_id', 'schedule_id', )
 
 
-    # TODO: delete after finishing CompilationHolderCreateForm
-# class CompilationCreateForm(forms.Form):
-#     name                         = forms.CharField(required=True)
-#     resource                     = 'Tumbler'
-#     search_tag                   = forms.CharField(required=True)
-#     search_blogs                 = forms.CharField(required=False)
-#     downloaded_date              = str(datetime.now())
-#
-#     print(f"search_tag: '{search_tag}'")
-#     search_tag  = 'paleontology'
-#
-#     # TODO: change 'id' to 'workspace_id'
-#     storage                      = generate_storage_path(PATH_TO_STORE, workspace_id=id)
-#     post_ids                     = list()
-
-
 class PostCreateForm(forms.Form):
     tags            = forms.CharField(required=False)
     text            = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
@@ -389,6 +373,42 @@ class PostCreateForm(forms.Form):
             post.save()
 
         return post
+
+
+class PostEditForm(forms.Form):
+    post_id         = forms.CharField(required=True)
+    tags            = forms.CharField(required=False)
+    text            = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+    images          = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
+    description     = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":10}), required=False)
+
+    def save(self, workspace, compilation, images=None, commit=True):
+        post = Post.objects.get(id=self.cleaned_data["post_id"])
+
+        tags = list()
+        for tag in self.cleaned_data["tags"].split():
+            # TODO: checking for existing posts with this tag in selected resource
+            tag = ''.join(filter(str.isalnum, tag))
+            if tag not in tags:
+                tags.append(tag)
+        post.start_date = tags
+
+        post.text = self.cleaned_data["text"]
+
+        if images:
+            post_storage_path \
+                = os.path.join(PATH_TO_STORE, str(workspace.workspace_id), str(compilation.id), str(post.id))
+            saved_file_addresses = save_files_from_request(post_storage_path, images)
+            post.stored_file_urls = saved_file_addresses
+
+        post.description = self.cleaned_data["description"]
+
+        if commit:
+            post.save()
+
+        return post
+
+
 
 
 class PostDeleteForm(forms.Form):

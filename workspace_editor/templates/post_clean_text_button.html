@@ -1,0 +1,10 @@
+{% load widget_tweaks %} {% block content %}
+
+<form method="post"> {% csrf_token %}
+  <div class="d-none">
+    {% render_field post_edit_form.post_id|append_attr:"readonly:readonly" class="form-control" value=post.id %}
+  </div>
+  <button class="btn-sm btn-outline-dark" type="submit" name="action" value="clean_post_text">clean text</button>
+</form>
+
+{% endblock content %}

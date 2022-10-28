@@ -134,6 +134,7 @@ def __workspace_request_handler(request, workspace=None):
 
     return workspace
 
+
 def __compilation_holder_request_handler(request, workspace, holder_id=None, holder_id_to_delete=None,):
     if request.POST['action'] == 'create_holder':
         form = CompilationHolderCreateForm(request.POST,
@@ -225,6 +226,15 @@ def __post_request_handler(request, workspace, post_id=None):
         else:
             log.error(form.errors.as_data())
 
+    elif  request.POST['action'] == 'clean_post_text':
+        form = PostEditForm(request.POST)
+        if form.is_valid():
+            compilation = Compilation.objects.get(id=workspace.main_compilation_id)
+            form.text = ""
+            form.save(workspace=workspace, compilation=compilation, images=request.FILES.getlist('images'))
+        else:
+            log.error(form.errors.as_data())
+
     elif post_id and request.POST['action'] == 'delete_post':
         form = PostDeleteForm(request.POST)
         if form.is_valid():
@@ -310,7 +320,6 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
     context["edit_form"] = WorkspaceEditForm(initial={"user_id": request.user.pk, "owner": request.user})
 
 
-
     if workspace:
         context["workspace"] = workspace
         context["selected_workspace_id"] = workspace.workspace_id
@@ -326,7 +335,9 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["event_create_form"] = EventCreateForm()
         # TODO: rename event_edit_form to event_create_form
         context["edit_event_form"] = EventEditForm()
+
         context["post_create_form"] = PostCreateForm()
+        context["post_edit_form"] = PostEditForm()
         context["post_delete_form"] = PostDeleteForm()
 
         # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local

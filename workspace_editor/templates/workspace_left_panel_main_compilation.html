@@ -19,8 +19,16 @@
             </div>
           </div>
 
+
           <div class="float-right">
+            {% block post_clean_text_button %}
+            {% include 'post_clean_text_button.html' %}
+            {% endblock %}
+
             <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
+            {% block post_delete_button %}
+            {% include 'post_delete_button.html' %}
+            {% endblock %}
           </div>
 
         </form>

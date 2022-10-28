@@ -1,25 +1,9 @@
 {% load widget_tweaks %} {% block content %}
 
 
-
-<div class="float-right">
-    {% if "downloading" in request.path %}
-        <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'downloading_workspace_by_id_post_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
-    {% else %}
-        <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'workspace_by_id_post_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
-    {% endif %}
-    <script>
-        {% if selected_post_id != None %}
-            $(function() {
-              $('#delete_post_modal').modal({show: true});
-            });
-        {% endif %}
-    </script>
-</div>
-
-
+<p class="font-weight-bold" style="font-size:14px; word-wrap: normal;">#{{post.tags|join:" #"}}</p>
 <!-- TODO: make a text foldable -->
-<p class="pt-3">{{post.text}}</p>
+<p style="font-size:14px;">{{post.text}}</p>
 
 <!-- TODO: place picture more compact -->
 <div class="row">
@@ -31,16 +15,14 @@
                 <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 35px; object-fit: contain;" alt="">
             </div>
         {% endif %}
-    {% empty %}
+        {% empty %}
     {% endfor %}
 </div>
 
-<p class="pt-3">{{post.id}}</p>
 {% if post.blog_url is not None %}
     <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
     <!-- TODO: figure out and add other useful information -->
 {% endif %}
-
 
 {% block post_modals %}
 {% include 'post_modals.html' %}
