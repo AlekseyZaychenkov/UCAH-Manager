@@ -235,6 +235,14 @@ def __post_request_handler(request, workspace, post_id=None):
         else:
             log.error(form.errors.as_data())
 
+    elif post_id and request.POST['action'] == 'edit_post':
+        form = PostEditForm(request.POST)
+        if form.is_valid():
+            compilation = Compilation.objects.get(id=workspace.main_compilation_id)
+            form.save(workspace=workspace, compilation=compilation, images=request.FILES.getlist('images'))
+        else:
+            log.error(form.errors.as_data())
+
     elif post_id and request.POST['action'] == 'delete_post':
         form = PostDeleteForm(request.POST)
         if form.is_valid():
@@ -337,7 +345,11 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["edit_event_form"] = EventEditForm()
 
         context["post_create_form"] = PostCreateForm()
-        context["post_edit_form"] = PostEditForm()
+        if post_id:
+            post = Post.objects.get(id=post_id)
+            context["post_edit_form"] = PostEditForm(initial={"tags": '#' + ' #'.join(post.tags),
+                                                              "text": post.text,
+                                                              "description": post.description})
         context["post_delete_form"] = PostDeleteForm()
 
         # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local

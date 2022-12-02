@@ -123,4 +123,3 @@ class Credentials(models.Model):
 # TODO: implement special structure for storing
 #  published each post in each blog with statistic about them
 #  (postUrl1, likes, comments, likes under comments)
-

@@ -84,15 +84,15 @@
           <div class="btn-group-vertical">
             <a type="button" class="btn btn-sm btn-primary float-right">Scheduling</a>
             {% if workspace is not None %}
-            <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%} ">Downloading</a>
+              <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%} ">Downloading</a>
             {% endif %}
             <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
           </div>
         </div>
         {% if workspace is None %}
-        <a type="button" class="btn btn-outline-dark disabled" data-toggle="modal" data-target="#new_post_modal">New post</a>
+          <a type="button" class="btn btn-outline-dark disabled" data-toggle="modal" data-target="#new_post_modal">New post</a>
         {% else %}
-        <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_post_modal">New post</a>
+          <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_post_modal">New post</a>
         {% endif %}
       </div>
 

@@ -9,13 +9,19 @@
     <div class="col-md-6 card">
       <div class="m-2">
         <div class="float-right">
-            {% block post_clean_text_button %}
-            {% include 'post_clean_text_button.html' %}
-            {% endblock %}
+            <div class="btn-group">
+              {% block post_edit_button %}
+              {% include 'post_edit_button.html' %}
+              {% endblock %}
 
-            {% block post_delete_button %}
-            {% include 'post_delete_button.html' %}
-            {% endblock %}
+              {% block post_clean_text_button %}
+              {% include 'post_clean_text_button.html' %}
+              {% endblock %}
+
+              {% block post_delete_button %}
+              {% include 'post_delete_button.html' %}
+              {% endblock %}
+            </div>
         </div>
         {% block post_info %}
         {% include 'post_info.html' %}

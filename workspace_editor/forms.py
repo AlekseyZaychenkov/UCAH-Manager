@@ -9,7 +9,7 @@ from workspace_editor.utils import copy_post_to, delete_post, delete_compilation
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog, SelectedBlog
 from account.models import Account
-from UCA_Manager.settings import PATH_TO_STORE, RESOURCES
+from UCA_Manager.settings import POSTS_FILES_DIRECTORY, RESOURCES, MEDIA_DIRECTORY_NAME
 from loader.utils import generate_storage_path, create_empty_compilation, \
     save_files_from_request
 
@@ -360,7 +360,7 @@ class PostCreateForm(forms.Form):
         if commit:
             if images:
                 post_storage_path \
-                    = os.path.join(PATH_TO_STORE, str(workspace.workspace_id), str(compilation.id), str(post.id))
+                    = os.path.join(MEDIA_DIRECTORY_NAME, POSTS_FILES_DIRECTORY, str(workspace.workspace_id), str(compilation.id), str(post.id))
                 saved_file_addresses = save_files_from_request(post_storage_path, images)
                 post.stored_file_urls = saved_file_addresses
 
@@ -397,7 +397,7 @@ class PostEditForm(forms.Form):
 
         if images:
             post_storage_path \
-                = os.path.join(PATH_TO_STORE, str(workspace.workspace_id), str(compilation.id), str(post.id))
+                = os.path.join(MEDIA_DIRECTORY_NAME, POSTS_FILES_DIRECTORY, str(workspace.workspace_id), str(compilation.id), str(post.id))
             saved_file_addresses = save_files_from_request(post_storage_path, images)
             post.stored_file_urls = saved_file_addresses
 
@@ -413,6 +413,7 @@ class PostEditForm(forms.Form):
 
 class PostDeleteForm(forms.Form):
     post_id = forms.CharField(required=True)
+
     def delete(self):
         post_id = self.data["post_id"]
         delete_post(post_id)

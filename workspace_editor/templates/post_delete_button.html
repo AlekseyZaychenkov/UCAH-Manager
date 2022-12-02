@@ -1,12 +1,13 @@
 {% load widget_tweaks %} {% block content %}
 
 {% if "downloading" in request.path %}
-    <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'downloading_workspace_by_id_post_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
+    <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'downloading_workspace_by_id_post_delete_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
 {% else %}
-    <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'workspace_by_id_post_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
+    <a type="button" class="btn btn-sm btn-danger rounded-circle" href="{% url 'workspace_by_id_post_delete_by_id' workspace_id=workspace.workspace_id post_id=post.id %}">X</a>
 {% endif %}
+
 <script>
-    {% if selected_post_id != None %}
+    {% if "post_delete" in request.path %}
         $(function() {
             $('#delete_post_modal').modal({show: true});
         });
