@@ -169,10 +169,11 @@ def save_files_from_request(storage_path, uploaded_in_memory_files):
     print(f"Downloading and saving files to '{storage_path}'")
     for file in uploaded_in_memory_files:
         path_to_image = os.path.join(storage_path, os.path.basename(file.name))
+        file_relative_path = os.path.relpath(path_to_image, MEDIA_ROOT)
         with open(path_to_image, 'wb') as destination:
             b = file.file
             destination.write(b.read())
-            saved_file_addresses.append(path_to_image)
+            saved_file_addresses.append(file_relative_path)
 
     return saved_file_addresses
 
