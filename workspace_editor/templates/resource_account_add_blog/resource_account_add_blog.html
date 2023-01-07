@@ -1,0 +1,93 @@
+{% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
+{% load static %}
+
+<style>
+.hr {
+  margin-top: 0;
+  padding-top: 0;
+}
+</style>
+
+
+
+<div class="container-fluid">
+    {% block top_menu %}
+    {% include 'resource_account_add_blog/resource_account_add_blog_top_panel.html' %}
+    {% endblock %}
+
+    <hr class="hr">
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">Name</th>
+                <th scope="col">Url</th>
+                <th scope="col">Resource id</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for name, info in blogs.items %}
+            <tr>
+                <td>
+                    {% if info.added %}
+                        <form enctype="multipart/form-data" method="post" class="mt-3"> {% csrf_token %}
+                            <div class="d-none">
+                                {% render_field blog_delete_form.id|append_attr:"readonly:readonly" class="form-control" value=info.id %}
+                            </div>
+
+                            <button class="btn btn-sm btn-danger" style="margin-top: -1.5rem;"
+                                    type="submit" name="action" value="blog_delete">Put away</button>
+                        </form>
+                    {% else %}
+                        <form enctype="multipart/form-data" method="post" class="mt-3"> {% csrf_token %}
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.name|append_attr:"readonly:readonly" class="form-control" value=name %}
+                            </div>
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.avatar_url|append_attr:"readonly:readonly" class="form-control" value=info.avatar_url %}
+                            </div>
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.resource_account|append_attr:"readonly:readonly" class="form-control" value=resource_account %}
+                            </div>
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.blog_resource_number|append_attr:"readonly:readonly" class="form-control" value=info.blog_resource_number %}
+                            </div>
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.workspace_id|append_attr:"readonly:readonly" class="form-control" value=workspace.workspace_id %}
+                            </div>
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.url|append_attr:"readonly:readonly" class="form-control" value=info.url %}
+                            </div>
+
+                            <div class="d-none">
+                                {% render_field blog_create_form.owner_nickname|append_attr:"readonly:readonly" class="form-control" value=resource_account.credentials.name %}
+                            </div>
+
+                            <button class="btn btn-sm btn-primary" style="margin-top: -1.5rem;"
+                                    type="submit" name="action" value="blog_create">Add</button>
+                        </form>
+                    {% endif %}
+                </td>
+                <td>
+                    <img src="{{info.avatar_url}}" class="img-fluid" style="height: 30px; object-fit: contain;" alt="">
+                    {{info.name}}
+                </td>
+                <td>
+                    <a href="https://{{info.url}}" target="_blank">{{info.url}}</a>
+                </td>
+                <td>{{info.blog_resource_number}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock content %}

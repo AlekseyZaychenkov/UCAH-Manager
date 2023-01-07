@@ -2,6 +2,8 @@ from django.contrib.auth.decorators import login_required
 import logging
 
 from loader.tumblr_loader import TumblrLoader
+from loader.vk_loader import VKLoader
+from UCA_Manager.settings import PATH_TO_STORE
 from workspace_editor.utils import copy_compilation_posts
 from workspace_editor.forms import EventCreateForm, EventEditForm
 from workspace_editor.models import Workspace
@@ -29,6 +31,128 @@ RESOURCES_PER_NAMES = {
     "Tumbler": TumblrLoader()
 }
 
+
+@login_required
+def resource_accounts(request, workspace_id=None, resource_account_id=None):
+    context = dict()
+    workspace = __workspace_choice(request, workspace_id)
+
+    if workspace:
+        accounts = ResourceAccount.objects.filter(owner=request.user)
+        resource_accounts_to_resource = dict()
+        for account in accounts:
+            resource_accounts_to_resource[account] = account.credentials
+
+        context["resource_accounts"] = ResourceAccount.objects.filter(owner=request.user)
+
+    if request.POST:
+        if request.POST['action'] == 'resource_account_create':
+            form = ResourceAccountCreateForm(request.POST)
+            if form.is_valid():
+                form.save(owner=request.user, avatar=request.FILES.getlist('avatar'))
+            else:
+                log.error(form.errors.as_data())
+
+        if resource_account_id:
+            if request.POST['action'] == 'resource_account_edit':
+                pass
+            elif request.POST['action'] == 'resource_account_delete':
+                form = ResourceAccountDeleteForm(request.POST)
+                if form.is_valid():
+                    form.delete()
+                else:
+                    log.error(form.errors.as_data())
+
+        return redirect(f'resource_accounts', workspace_id=workspace.workspace_id)
+
+    context["MEDIA_LOCATION"] = "../../media"
+    context["workspace"] = workspace
+    if resource_account_id:
+        context["resource_account_id"] = resource_account_id
+
+    context["resource_account_create_form"] = ResourceAccountCreateForm()
+    context["resource_account_delete_form"] = ResourceAccountDeleteForm()
+
+    return render(request, "resource_accounts/resource_accounts.html", context)
+
+
+@login_required
+def resource_account_add_blog(request, workspace_id, resource_account_id):
+    context = dict()
+
+    resource_account = ResourceAccount.objects.get(resource_account_id=resource_account_id)
+    context["resource_account"] = resource_account
+    context["workspace"] = Workspace.objects.get(workspace_id=workspace_id)
+    context["owner"] = request.user
+
+    blogs_info = dict()
+    if resource_account.credentials.resource == "VKontakte":
+        vk_loader = VKLoader(vk_app_token=resource_account.credentials.token)
+        blogs_resource_numbers = vk_loader.get_controlled_blogs_resource_numbers()
+        blogs_info = vk_loader.get_blogs_info(blogs_resource_numbers)
+        for blog in blogs_info.values():
+            if Blog.objects.filter(blog_resource_number=blog.blog_resource_number).exists():
+                blog.added = True
+                blog.id = Blog.objects.get(blog_resource_number=blog.blog_resource_number).blog_id
+            else:
+                blog.added = False
+    context["blogs"] = blogs_info
+
+    if request.POST:
+        if request.POST['action'] == 'blog_create':
+            resource_account = ResourceAccount.objects.get(resource_account_id=resource_account_id)
+            form = BlogCreateForm(request.POST)
+            if form.is_valid():
+                form.save(resource_account=resource_account,
+                          account=request.user,
+                          avatar=request.FILES.getlist('avatar'))
+            else:
+                log.error(form.errors.as_data())
+
+        elif request.POST['action'] == 'blog_delete':
+            form = BlogDeleteForm(request.POST)
+            if form.is_valid():
+                form.delete()
+            else:
+                log.error(form.errors.as_data())
+        return redirect(f'resource_account_add_blog', workspace_id=workspace_id, resource_account_id=resource_account_id)
+
+    context["blog_create_form"] = BlogCreateForm()
+    context["blog_delete_form"] = BlogDeleteForm()
+
+    return render(request, "resource_account_add_blog/resource_account_add_blog.html", context)
+
+
+@login_required
+def blogs(request, workspace_id=None, blog_id=None):
+    context = dict()
+    workspace = __workspace_choice(request, workspace_id)
+
+    if request.POST:
+        if blog_id and request.POST['action'] == 'blog_delete':
+            form = BlogDeleteForm(request.POST)
+            if form.is_valid():
+                form.delete()
+            else:
+                log.error(form.errors.as_data())
+        return redirect(f'blogs', workspace_id=workspace.workspace_id)
+
+    context["MEDIA_LOCATION"] = "../../media"
+    # TODO: rename POSTS_FILES_DIRECTORY to FILES_STORAGE_DIRECTORY
+    context["BLOGS_MEDIA_LOCATION"] \
+        = os.path.join("../../media", str(request.user), 'blogs')
+    context["workspace"] = workspace
+    if workspace:
+        context["blogs"] = Blog.objects.filter(Q(workspace=workspace) | Q(controlled=True))
+    if blog_id:
+        context["blog_id"] = blog_id
+
+    # TODO: make initials for blogs, that this account can moderate
+    context["blog_delete_form"] = BlogDeleteForm()
+
+    return render(request, "blogs/blogs.html", context)
+
+
 @login_required
 def home(request, workspace_id=None, post_id=None):
     workspace = __workspace_choice(request, workspace_id)
@@ -49,6 +173,7 @@ def home(request, workspace_id=None, post_id=None):
     return render(request, "workspace.html", context)
 
 
+@login_required
 def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=None, post_id=None):
     workspace = __workspace_choice(request, workspace_id)
 
@@ -226,12 +351,12 @@ def __post_request_handler(request, workspace, post_id=None):
         else:
             log.error(form.errors.as_data())
 
-    elif  request.POST['action'] == 'clean_post_text':
+    elif request.POST['action'] == 'clean_post_text':
         form = PostEditForm(request.POST)
         if form.is_valid():
             compilation = Compilation.objects.get(id=workspace.main_compilation_id)
-            form.text = ""
-            form.save(workspace=workspace, compilation=compilation, images=request.FILES.getlist('images'))
+            # form.text = ""
+            form.save(workspace=workspace, compilation=compilation)
         else:
             log.error(form.errors.as_data())
 
@@ -253,6 +378,10 @@ def __post_request_handler(request, workspace, post_id=None):
 
 def __prepare_workspace_context(request, workspace=None, post_id=None):
     context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
+
+    context["event_create_form"] = EventCreateForm()
+    # TODO: rename event_edit_form to event_edit_form
+    context["edit_event_form"] = EventEditForm()
 
     context["workspace_upload_posts_form"] = WorkspaceUploadPostsForm()
 
@@ -340,16 +469,15 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["post_in_schedule"], context["schedule_events"] = __get_events_for_schedule(schedule.schedule_id)
         context["selected_schedule_id"] = int(schedule.schedule_id)
 
-        context["event_create_form"] = EventCreateForm()
-        # TODO: rename event_edit_form to event_create_form
-        context["edit_event_form"] = EventEditForm()
-
         context["post_create_form"] = PostCreateForm()
         if post_id:
             post = Post.objects.get(id=post_id)
             context["post_edit_form"] = PostEditForm(initial={"tags": '#' + ' #'.join(post.tags),
                                                               "text": post.text,
                                                               "description": post.description})
+        else:
+            context["post_edit_form"] = PostEditForm()
+
         context["post_delete_form"] = PostDeleteForm()
 
         # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local
@@ -371,6 +499,7 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["selected_post_id"] = post_id
 
     return context
+
 
 
 def __get_events_for_schedule(schedule_id):

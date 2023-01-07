@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 import logging
+import shutil
+import urllib
+from pathlib import Path
 
 from django import forms
 
+from credentials import VK_APP_TOKEN
 from loader.models import Post, Compilation
+
 from loader.vk_loader import VKLoader
 from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
-    BlackListedBlog, SelectedBlog
+    BlackListedBlog, SelectedBlog, ResourceAccount, Credentials
 from account.models import Account
-from UCA_Manager.settings import POSTS_FILES_DIRECTORY, RESOURCES, MEDIA_DIRECTORY_NAME
+from UCA_Manager.settings import POSTS_FILES_DIRECTORY, RESOURCES, MEDIA_DIRECTORY_NAME, MEDIA_ROOT
 from loader.utils import generate_storage_path, create_empty_compilation, \
-    save_files_from_request
+    save_files_from_request, save_files_from_urls
 
 from django.db.models import Q
 import datetime
@@ -130,7 +135,7 @@ class WorkspaceUploadPostsForm(forms.Form):
         if Event.objects.filter(schedule_id=schedule_id).exists():
             events = Event.objects.filter(schedule_id=schedule_id).order_by('start_date')
 
-            vk_loader = VKLoader()
+            vk_loader = VKLoader(vk_app_token=VK_APP_TOKEN)
             for event in events:
                 vk_loader.upload(event)
 
@@ -409,14 +414,132 @@ class PostEditForm(forms.Form):
         return post
 
 
-
-
 class PostDeleteForm(forms.Form):
     post_id = forms.CharField(required=True)
 
     def delete(self):
         post_id = self.data["post_id"]
         delete_post(post_id)
+
+
+class ResourceAccountCreateForm(forms.Form):
+    name                         = forms.CharField(max_length=255)
+    avatar                       = forms.FileField(widget=forms.ClearableFileInput(), required=False)
+    resource                     = forms.ChoiceField(choices=RESOURCES)
+    login                        = forms.CharField(max_length=255, required=False)
+    password                     = forms.CharField(max_length=255, required=False)
+    consumer_key                 = forms.CharField(max_length=255, required=False)
+    consumer_secret              = forms.CharField(max_length=255, required=False)
+    token                        = forms.CharField(max_length=255, required=False)
+    secret                       = forms.CharField(max_length=255, required=False)
+
+    def save(self, owner=None, avatar=None, commit=True):
+        data = self.data
+        credentials = Credentials(
+            resource = data.get('resource'),
+            login = data.get('login'),
+            password = data.get('password'),
+            consumer_key = data.get('consumer_key'),
+            consumer_secret = data.get('consumer_secret'),
+            token = data.get('token'),
+            secret = data.get('secret'))
+
+        if commit:
+            credentials.save()
+            account = ResourceAccount(
+                name = data.get('name'),
+                owner = owner,
+                credentials = credentials)
+            account.save()
+
+            if avatar:
+                post_storage_path \
+                    = os.path.join(MEDIA_DIRECTORY_NAME, POSTS_FILES_DIRECTORY, str(owner), 'accounts', str(account.name))
+                # TODO: rename POSTS_FILES_DIRECTORY to FILES_STORAGE_DIRECTORY
+                saved_file_addresses = save_files_from_request(post_storage_path, avatar)
+                account.avatar = saved_file_addresses[0]
+
+                account.save()
+
+
+class ResourceAccountDeleteForm(forms.Form):
+    id = forms.CharField(required=True)
+
+    def delete(self):
+        account = ResourceAccount.objects.get(resource_account_id=self.data["id"])
+        if account.avatar:
+            # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local
+            folder = os.path.join(MEDIA_ROOT, Path(str(account.avatar)).parent)
+            shutil.rmtree(folder)
+        account.delete()
+
+
+class BlogAddFromResourceAccountForm1(forms.Form):
+    resource_account = forms.ModelChoiceField(queryset=ResourceAccount.objects.all())
+
+    def get_blogs_list(self):
+        data = self.data
+
+        if data.get('resource_account').resource == ("VKontakte", "VKontakte"):
+            vk_loader = VKLoader(vk_app_token=data.get('resource_account').token)
+            blogs_resource_numbers = vk_loader.get_controlled_blogs_resource_numbers()
+            return vk_loader.get_blogs_info(blogs_resource_numbers)
+
+
+            # context["blog_create_form"] = BlogCreateForm(initial={'name':})
+
+
+class BlogCreateForm(forms.Form):
+    name                         = forms.CharField(max_length=255, required=False)
+    avatar_url                   = forms.CharField(max_length=2047, required=False)
+    blog_resource_number         = forms.IntegerField(required=False)
+    workspace_id                 = forms.IntegerField(required=False)
+    url                          = forms.CharField(max_length=2047, required=False)
+
+    def save(self, account=None, resource_account=None, avatar=None, commit=True):
+        data = self.cleaned_data
+
+        blog = Blog(
+            name = data.get('name'),
+            resource=resource_account.credentials.resource,
+            blog_resource_number = data.get('blog_resource_number'),
+            workspace = Workspace.objects.get(workspace_id=data.get('workspace_id')),
+            controlled = True,
+            account = account,
+            resource_account = resource_account,
+            url = data.get('url'))
+
+        if commit:
+            blog.save()
+
+            if data.get('avatar_url'):
+                new_storage_dir = os.path.join(MEDIA_DIRECTORY_NAME, str(account), 'blogs', str(blog.blog_id))
+                print(f"Trying to create directory '{new_storage_dir}'")
+                os.makedirs(new_storage_dir, exist_ok=True)
+
+                safe_as = os.path.basename(data.get('avatar_url')).split('?')[0]
+                path_to_image = os.path.join(new_storage_dir, safe_as)
+
+                opener = urllib.request.URLopener()
+                opener.addheader('User-Agent', 'Mozilla/5.0')
+                opener.retrieve(data.get('avatar_url'), path_to_image)
+
+                blog.avatar = safe_as
+                blog.save()
+
+        return blog
+
+
+class BlogDeleteForm(forms.Form):
+    id = forms.CharField(required=True)
+
+    def delete(self):
+        blog = Blog.objects.get(blog_id=self.data["id"])
+        if blog.avatar:
+            # TODO: use MEDIA_URL for cloud storage and MEDIA_ROOT for local
+            blog_folder = os.path.join(MEDIA_ROOT, str(blog.account), 'blogs', str(blog.blog_id))
+            shutil.rmtree(blog_folder)
+        blog.delete()
 
 
 # TODO: move method to utils
