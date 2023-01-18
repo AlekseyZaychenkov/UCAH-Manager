@@ -5,15 +5,9 @@ from account.models import Account
 class Schedule(models.Model):
     schedule_id                  = models.AutoField(primary_key=True)
 
-    def __str__(self):
-        return self.name
-
 
 class ScheduleArchive(models.Model):
     schedule_id                  = models.AutoField(primary_key=True)
-
-    def __str__(self):
-        return self.name
 
 
 class Workspace(models.Model):
@@ -119,7 +113,7 @@ class Blog(models.Model):
 class Event(models.Model):
     event_id                     = models.AutoField(primary_key=True)
     schedule                     = models.ForeignKey(Schedule, on_delete=models.CASCADE)
-    blog                         = models.ForeignKey(Blog, on_delete=models.CASCADE, null=True, blank=True)
+    blogs                        = models.ForeignKey(Blog, on_delete=models.SET_NULL, null=True, blank=True)
     post_id                      = models.CharField(max_length=128, null=True, blank=True)
     start_date                   = models.DateTimeField()
 

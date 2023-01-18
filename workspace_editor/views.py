@@ -182,6 +182,7 @@ def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=
 
         if workspace:
             schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
+            # TODO: check if __event_request_handler need here
             __event_request_handler(request, workspace, schedule)
             __post_request_handler(request, workspace, post_id)
             __compilation_holder_request_handler(request, workspace, holder_id, holder_id_to_delete)
@@ -379,11 +380,23 @@ def __post_request_handler(request, workspace, post_id=None):
 def __prepare_workspace_context(request, workspace=None, post_id=None):
     context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
 
-    context["event_create_form"] = EventCreateForm()
-    # TODO: rename event_edit_form to event_edit_form
-    context["edit_event_form"] = EventEditForm()
+    if workspace:
+        schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
 
-    context["workspace_upload_posts_form"] = WorkspaceUploadPostsForm()
+        # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
+        #  only current user compilations
+        context["my_compilations"] = Compilation.objects.all()
+        context["post_in_schedule"], context["schedule_events"] = __get_events_for_schedule(schedule.schedule_id)
+        context["selected_schedule_id"] = int(schedule.schedule_id)
+
+        context["blogs"] = Blog.objects.filter(Q(workspace=workspace) | Q(controlled=True))
+        context["BLOGS_MEDIA_LOCATION"] = os.path.join("../../media", str(request.user), 'blogs')
+
+        context["event_create_form"] = EventCreateForm()
+        # TODO: rename event_edit_form to event_edit_form
+        context["edit_event_form"] = EventEditForm()
+
+        context["workspace_upload_posts_form"] = WorkspaceUploadPostsForm()
 
     return context
 
@@ -461,14 +474,6 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["workspace"] = workspace
         context["selected_workspace_id"] = workspace.workspace_id
 
-        schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
-
-        # TODO: make table compilationsOwners with compilation_id, owner and visible_for for looking for
-        #  only current user compilations
-        context["my_compilations"] = Compilation.objects.all()
-        context["post_in_schedule"], context["schedule_events"] = __get_events_for_schedule(schedule.schedule_id)
-        context["selected_schedule_id"] = int(schedule.schedule_id)
-
         context["post_create_form"] = PostCreateForm()
         if post_id:
             post = Post.objects.get(id=post_id)
@@ -499,7 +504,6 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["selected_post_id"] = post_id
 
     return context
-
 
 
 def __get_events_for_schedule(schedule_id):

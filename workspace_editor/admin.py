@@ -19,3 +19,8 @@ class CredentialsAdmin(admin.ModelAdmin):
 @admin.register(Blog)
 class BlogAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    pass
