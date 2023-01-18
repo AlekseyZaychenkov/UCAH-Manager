@@ -1,6 +1,5 @@
 {% load widget_tweaks %} {% block content %}
 
-<p style="font-size:14px;">{{MEDIA_LOCATION}}/{{post.stored_file_urls}}</p>
 
 <p class="font-weight-bold" style="font-size:14px; word-wrap: normal;">#{{post.tags|join:" #"}}</p>
 <!-- TODO: make a text foldable -->
@@ -26,7 +25,7 @@
 {% endif %}
 
 {% block post_modals %}
-{% include 'post_modals.html' %}
+{% include 'post/post_modals.html' %}
 {% endblock %}
 
 {% endblock content %}

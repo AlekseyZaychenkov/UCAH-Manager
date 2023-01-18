@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from cassandra.cqlengine.management import sync_table
 from loader.models import Post, Compilation
-from loader.utils import Utils, save_files, create_tumblr_client
+from loader.utils import Utils, save_files_from_urls, create_tumblr_client
 
 import pathlib
 
@@ -89,7 +89,7 @@ class TumblrLoader:
             # TODO: figure is possible use mock for tests calling self.save_files() or not
 
             post_storage_path = os.path.join(storage_path, str(post_id))
-            saved_file_addresses = save_files(post_storage_path, file_urls=file_urls) if len(file_urls) > 0 else None
+            saved_file_addresses = save_files_from_urls(post_storage_path, file_urls=file_urls) if len(file_urls) > 0 else None
 
             post = Post.create(
                 # information about original post

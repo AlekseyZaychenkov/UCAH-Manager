@@ -9,37 +9,39 @@
     {% for post in main_compilation %}
     <div class="col-md-6 card">
       <div class="m-2">
-        <form method="post"> {% csrf_token %}
 
-          <div class="btn-group row" role="group">
-            {% render_field event_create_form.start_date class="form-control-sm" type="datetime-local" %}
-            {{ event_create_form.start_date.errors }}
+        <form method="post"> {% csrf_token %}
+          <div class="row" role="group">
+            <div class="form-row">
+              {% render_field event_create_form.start_date class="form-control-sm" type="datetime-local" %}
+              {{ event_create_form.start_date.errors }}
+            </div>
+
             <div class="d-none">
               {% render_field event_create_form.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
             </div>
+            <button class="btn btn-sm btn-primary text-uppercase font-weight-bold" type="submit" name="action" value="create_event">>></button>
           </div>
         </form>
 
-          <div class="float-right">
-            <div class="btn-group">
+          <div class="float-top">
               {% block post_edit_button %}
-              {% include 'post_edit_button.html' %}
+              {% include 'post/post_edit_button.html' %}
               {% endblock %}
 
               {% block post_clean_text_button %}
-              {% include 'post_clean_text_button.html' %}
+              {% include 'post/post_clean_text_button.html' %}
               {% endblock %}
 
-              <button class="btn btn-sm btn-primary text-uppercase font-weight-bold" type="submit" name="action" value="create_event">>></button>
+
 
               {% block post_delete_button %}
-              {% include 'post_delete_button.html' %}
+              {% include 'post/post_delete_button.html' %}
               {% endblock %}
-            </div>
           </div>
 
         {% block post_info %}
-        {% include 'post_info.html' %}
+        {% include 'post/post_info.html' %}
         {% endblock %}
 
       </div>

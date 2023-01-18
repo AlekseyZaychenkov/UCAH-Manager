@@ -128,7 +128,7 @@ def generate_storage_path(root_path, work_sp_id=None, comp_id=None, others=None)
 
 # TODO: investigate using and code duplication in save_files and save_files_from_request methods
 #  Move one of them to workspace_editor if necessary
-def save_files(new_storage_path, file_urls=None, file_paths=None):
+def save_files_from_urls(new_storage_path, file_urls=None, file_paths=None):
     if new_storage_path:
         print(f"Trying to create directory '{new_storage_path}'")
         os.makedirs(new_storage_path, exist_ok=True)
@@ -176,6 +176,7 @@ def save_files_from_request(storage_path, uploaded_in_memory_files):
             saved_file_addresses.append(file_relative_path)
 
     return saved_file_addresses
+
 
 
 def delete_dir(dir_to_search):

@@ -188,6 +188,7 @@ POSTS_FILES_DIRECTORY = "photo_and_video_storage"
 
 RESOURCES = (
     ("Tumbler", "Tumbler"),
+    ("VKontakte", "VKontakte"),
 )
 
 # IMAGES AND VIDEO STORING

@@ -12,7 +12,7 @@ from cassandra.cqlengine.management import sync_table
 from credentials import VK_UCA_GROUP_NUMBER, VK_USER_ID, VK_APP_TOKEN,  VK_API_VERSION
 from loader.models import Post, Compilation
 from workspace_editor.models import Event
-from utils import create_vk_client
+from loader.utils import create_vk_client
 
 
 log = logging.getLogger(__name__)
@@ -20,11 +20,76 @@ log = logging.getLogger(__name__)
 
 class VKLoader:
 
-    def __init__(self):
+    def __init__(self, vk_app_token):
         sync_table(Post)
         sync_table(Compilation)
-        self.vk_client = create_vk_client(VK_APP_TOKEN)
+        self.vk_app_token = vk_app_token
+        self.vk_client = create_vk_client(vk_app_token)
         vk.logger.setLevel('DEBUG')
+
+
+    def get_controlled_blogs_resource_numbers(self):
+        blogs_list = list()
+
+        retry_after = 1
+        delay = True
+        while delay:
+            delay = False
+            try:
+                log.debug(f"[{self.__make_time()}] Downloading list of blogs from vk...")
+
+                blogs_list= self.vk_client.groups.get(
+                                         filter=['admin', 'editor'],
+                                         v=VK_API_VERSION)
+
+                log.debug(f"List of blogs successfully downloaded.")
+
+            except vk.exceptions.VkAPIError as err:
+                log.warning(f"[{self.__make_time()}] - Error {err}")
+                if int(err.code) == 6:
+                    delay = True
+                    sleep(retry_after)
+                    log.debug(f"[{self.__make_time()}] sleep {retry_after} sec")
+
+            except Exception as err:
+                log.error(f"[{self.__make_time()}] - Error {err}")
+
+        return blogs_list
+
+
+    def get_blogs_info(self, blogs_list:list):
+        blogs_info_list = dict()
+
+        retry_after = 1
+        delay = True
+        while delay:
+            delay = False
+            try:
+                log.info(f"[{self.__make_time()}] !!! Downloading info for blogs with ids='{blogs_list['items']}' ...")
+
+                blogs_info = self.vk_client.groups.getById(access_token=self.vk_app_token,
+                                                              group_ids=blogs_list["items"],
+                                                              v=VK_API_VERSION)
+
+                for blog_info in blogs_info:
+                    blogs_info_list[blog_info["name"]] = BlogInfo(name = blog_info["name"],
+                                                               avatar_url = blog_info["photo_200"],
+                                                               blog_resource_number = blog_info["id"],
+                                                               url = f'vk.com/{blog_info["screen_name"]}')
+
+                log.info(f"Dict of blogs successfully downloaded.")
+                log.info(f"Blog info: {blogs_info.values()}")
+            except vk.exceptions.VkAPIError as err:
+                log.warning(f"[{self.__make_time()}] - Error {err}")
+                if int(err.code) == 6:
+                    delay = True
+                    sleep(retry_after)
+                    log.debug(f"[{self.__make_time()}] sleep {retry_after} sec")
+
+            except Exception as err:
+                log.error(f"[{self.__make_time()}] - Error {err}")
+
+        return blogs_info_list
 
 
     def upload(self, event: Event, as_soon_as_possible=False):
@@ -52,14 +117,13 @@ class VKLoader:
                 publish_date = self.__convert_publish_data(event.start_date)
 
                 log.debug(f"[{self.__make_time()}] Posting...'.")
-                self.vk_client.wall.post(access_token=VK_APP_TOKEN,
+                self.vk_client.wall.post(access_token=self.vk_app_token,
                                          owner_id=-VK_UCA_GROUP_NUMBER,
                                          message=message,
                                          attachments=attachments,
                                          publish_date=publish_date,
                                          copyright = post.original_post_url,
-                                         v=VK_API_VERSION
-                                         )
+                                         v=VK_API_VERSION)
 
                 log.info(f"[{self.__make_time()}] post {post.id} successfully uploaded.")
 
@@ -145,7 +209,7 @@ class VKLoader:
         # Получаем ссылку для загрузки изображений
         method_url = 'https://api.vk.com/method/photos.getWallUploadServer?'
         response = requests.post(method_url,
-                                 dict(access_token=VK_APP_TOKEN,
+                                 dict(access_token=self.vk_app_token,
                                       gid=VK_UCA_GROUP_NUMBER,
                                       v=VK_API_VERSION)
                                  )
@@ -156,7 +220,7 @@ class VKLoader:
     def __get_doc_upload_url(self):
         method_url = 'https://api.vk.com/method/docs.getWallUploadServer?'
         response = requests.post(method_url,
-                                 dict(access_token=VK_APP_TOKEN,
+                                 dict(access_token=self.vk_app_token,
                                       gid=VK_UCA_GROUP_NUMBER,
                                       v=VK_API_VERSION)
                                  )
@@ -191,3 +255,21 @@ class VKLoader:
             tags.append(tag)
 
         return " ".join(tags)
+
+
+class BlogInfo:
+    name:str
+    avatar_url:str
+    blog_resource_number:int
+    url:str
+    added:bool
+    id:int
+
+    def __init__(self, name:str, avatar_url:str, blog_resource_number:int, url:str):
+        self.name = name
+        self.avatar_url = avatar_url
+        self.blog_resource_number = blog_resource_number
+        self.url = url
+
+
+

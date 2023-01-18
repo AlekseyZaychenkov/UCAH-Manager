@@ -3,7 +3,7 @@ import os
 
 from loader.models import Post, Compilation
 from UCA_Manager.settings import PATH_TO_STORE, MEDIA_ROOT
-from loader.utils import generate_storage_path, save_files
+from loader.utils import generate_storage_path, save_files_from_urls
 import shutil
 from pathlib import Path
 
@@ -24,7 +24,7 @@ def copy_post_to(workspace_id, recipient_compilation_id, post_id):
     stored_file_urls = []
     for url in old_post.stored_file_urls:
         stored_file_urls.append(os.path.join(MEDIA_ROOT, url))
-    saved_file_addresses = save_files(path, file_paths=stored_file_urls)
+    saved_file_addresses = save_files_from_urls(path, file_paths=stored_file_urls)
 
     new_post = Post.create(
         # information about original post

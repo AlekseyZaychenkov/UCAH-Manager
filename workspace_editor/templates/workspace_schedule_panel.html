@@ -63,27 +63,9 @@
         {% for event, post in events_to_posts.items %}
         <!-- TODO: ml-4 mb-2 - indent from left and bottom - try to use it for more full filling of screen -->
         <div class="col-md-4 ml-4 mb-2 card">
-            <div class="col">
-                <!-- TODO: add proposed time field and showing -->
-                <!-- TODO: check and fix time edition -->
-                <form method="post">
-                    <p4 class="text-sm-left text-monospace">{{event.start_date|date:"d/m/Y G:i"}}</p4>
-                    <div class="row float-right">
-                        {% if event_editform != None %}
-                            {% render_field event_editform.start_date class="form-control-sm" type="datetime-local" %}
-                            {{ event_editform.start_date.errors }}
-                        {% endif %}
-                        <button class="btn btn-primary btn-sm" type="submit" name="action" value="edit_event">edit</button>
-
-                        {% block post_delete_button %}
-                        {% include 'post_delete_button.html' %}
-                        {% endblock %}
-                    </div>
-                </form>
-                {% block post_info %}
-                {% include 'post_info.html' %}
-                {% endblock %}
-            </div>
+            {% block event_info %}
+            {% include 'event/event_info.html' %}
+            {% endblock %}
         </div>
         {% endfor %}
     </div>
