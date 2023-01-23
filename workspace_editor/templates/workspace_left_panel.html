@@ -70,7 +70,7 @@
       <div class="col-md-5 col-lg-5">
         <div class="btn-group row" role="group">
           <button type="button" disabled class="btn btn-outline-dark">
-            <a href="#">Rules</a>
+            <a href="{% url 'event_rules' workspace_id=workspace.workspace_id%}">Rules</a>
           </button>
           <button class="btn btn-primary" type="submit" name="action" value="add_all_posts">Add all >></button>
         </div>
@@ -84,7 +84,7 @@
           <div class="btn-group-vertical">
             <a type="button" class="btn btn-sm btn-primary float-right">Scheduling</a>
             {% if workspace is not None %}
-              <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%} ">Downloading</a>
+              <a type="button" class="btn btn-sm btn-outline-dark float-right" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id%}">Downloading</a>
             {% endif %}
             <a type="button" class="btn btn-sm btn-outline-dark float-right" href="#">Pipelines</a>
           </div>

@@ -16,17 +16,17 @@
           {% csrf_token %}
           <div class="form-label-group">
             {% render_field create_form.name class="form-control" %}
-            <label for="id_owner">Name of the workspace</label>
+            <label>Name of the workspace</label>
             {{ create_form.name.errors }}
           </div>
           <div class="form-label-group">
             {% render_field create_form.visible_for class="form-control" %}
-            <label for="id_visible_for">Visible for:</label>
+            <label>Visible for:</label>
             {{ create_form.visible_for.errors }}
           </div>
           <div class="form-label-group">
             {% render_field create_form.editable_by class="form-control" %}
-            <label for="id_editable_by">Editable by:</label>
+            <label>Editable by:</label>
             {{ create_form.editable_by.errors }}
           </div>
 

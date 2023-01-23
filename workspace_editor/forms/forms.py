@@ -45,8 +45,8 @@ class WorkspaceCreateForm(forms.ModelForm):
 
     class Meta:
         model = Workspace
-        exclude = ("owner", "visible_for", "editable_by", "schedule", "schedule_archive",
-                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id", "description")
+        exclude = ("owner", "visible_for", "editable_by", "schedule", "schedule_archive", "scheduled_compilation_id",
+                   "main_compilation_id", "main_compilation_archive_id", "event_rules", "description")
 
     def set_owner(self, user):
         workspace = self.instance
@@ -57,6 +57,11 @@ class WorkspaceCreateForm(forms.ModelForm):
         workspace = self.instance
         workspace.schedule_id = schedule.schedule_id
         workspace.schedule_archive_id = schedule_archive.schedule_id
+        self.instance = workspace
+
+    def set_event_rules(self, event_rules):
+        workspace = self.instance
+        workspace.event_rules = event_rules
         self.instance = workspace
 
     def save(self, commit=True):
@@ -90,8 +95,8 @@ class WorkspaceEditForm(WorkspaceCreateForm):
 
     class Meta:
         model = Workspace
-        exclude = ("owner", "schedule", "schedule_archive",
-                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id", "description")
+        exclude = ("owner", "schedule", "schedule_archive", "scheduled_compilation_id", "main_compilation_id",
+                   "main_compilation_archive_id", "event_rules", "description")
 
     def __init__(self, *args, **kwargs):
         super(WorkspaceEditForm, self).__init__(*args, **kwargs)
@@ -496,7 +501,7 @@ class BlogCreateForm(forms.Form):
     workspace_id                 = forms.IntegerField(required=False)
     url                          = forms.CharField(max_length=2047, required=False)
 
-    def save(self, account=None, resource_account=None, avatar=None, commit=True):
+    def save(self, account=None, resource_account=None, commit=True):
         data = self.cleaned_data
 
         blog = Blog(

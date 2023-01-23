@@ -1,27 +1,16 @@
 from django.contrib.auth.decorators import login_required
-import logging
 
 from loader.tumblr_loader import TumblrLoader
-from loader.vk_loader import VKLoader
 from UCA_Manager.settings import PATH_TO_STORE
 from workspace_editor.utils import copy_compilation_posts
-from workspace_editor.forms import EventCreateForm, EventEditForm
-from workspace_editor.models import Workspace
 from workspace_editor.serializers import WorkspaceSerializer
-from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
-from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
 
-from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
-from django.core.mail import send_mail
-from django.http import JsonResponse
-from .models import *
+from workspace_editor.models import *
 import calendar
-from .forms import *
+from workspace_editor.forms.forms import *
 import datetime
-from loader.utils import delete_dir
 
 from loader.models import *
 
@@ -104,8 +93,7 @@ def resource_account_add_blog(request, workspace_id, resource_account_id):
             form = BlogCreateForm(request.POST)
             if form.is_valid():
                 form.save(resource_account=resource_account,
-                          account=request.user,
-                          avatar=request.FILES.getlist('avatar'))
+                          account=request.user)
             else:
                 log.error(form.errors.as_data())
 
@@ -232,6 +220,12 @@ def __workspace_request_handler(request, workspace=None):
             schedule_archive = ScheduleArchive()
             schedule_archive.save()
             form.set_schedules(schedule, schedule_archive)
+            event_rules = EventRules.objects.create()
+            for i in range(0, 7):
+                for j in range(0, i):
+                    PostingTime.objects.create(time=datetime.time(hour=0, minute=0, second=0),
+                                               event_rules=event_rules, priority=i).save()
+            form.set_event_rules(event_rules)
             workspace = form.save()
         else:
             log.error(form.errors.as_data())
@@ -399,6 +393,7 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
         context["workspace_upload_posts_form"] = WorkspaceUploadPostsForm()
 
     return context
+
 
 
 def __prepare_downloading_context(request, workspace=None, holder_id=None, holder_id_to_delete=None, post_id=None):

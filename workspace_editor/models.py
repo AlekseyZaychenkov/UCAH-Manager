@@ -1,5 +1,7 @@
 from django.db import models
 from account.models import Account
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class Schedule(models.Model):
@@ -8,6 +10,43 @@ class Schedule(models.Model):
 
 class ScheduleArchive(models.Model):
     schedule_id                  = models.AutoField(primary_key=True)
+
+
+class EventRules(models.Model):
+    event_rules_id              = models.AutoField(primary_key=True)
+
+
+class TagRule(models.Model):
+    tag_rule_id                  = models.AutoField(primary_key=True)
+    input_tag                    = models.CharField(max_length=511, default='', blank=True)
+    output_tag                   = models.CharField(max_length=511, default='', blank=True)
+
+    DISTRIBUTION_TYPE_CHOICES = (
+        ("1 per day", "1 per day"),
+        ("2 per day", "2 per day"),
+        ("3 per day", "3 per day"),
+        ("4 per day", "4 per day"),
+        ("5 per day", "5 per day"),
+        ("6 per day", "6 per day"),
+        ("1 day", "1 day"),
+        ("3 days", "3 days"),
+        ("over 1 week", "over 1 week"),
+        ("2 weeks", "over 1 weeks"),
+        ("over 1 month", "over 1 month"),
+        ("over 2 month", "over 2 months"),
+        ("over 3 month", "over 3 months"),
+    )
+    distribution_type            = models.CharField(max_length=12,
+                                                    choices=DISTRIBUTION_TYPE_CHOICES, default="over 1 week")
+    event_rules                  = models.ForeignKey(EventRules, on_delete=models.CASCADE)
+#     TODO: make field to store distribution type choices
+
+
+class PostingTime(models.Model):
+    posting_time_id             = models.AutoField(primary_key=True)
+    time                        = models.TimeField()
+    event_rules                 = models.ForeignKey(EventRules, on_delete=models.CASCADE)
+    priority                    = models.IntegerField()
 
 
 class Workspace(models.Model):
@@ -24,11 +63,20 @@ class Workspace(models.Model):
     schedule                     = models.OneToOneField(Schedule, on_delete=models.CASCADE)
     schedule_archive             = models.OneToOneField(ScheduleArchive, on_delete=models.CASCADE)
 
+    # TODO: delete null=True
+    event_rules                 = models.OneToOneField(EventRules, on_delete=models.CASCADE, null=True)
+
     # TODO: uncomment after changing field
     # description                  = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+@receiver(post_delete, sender=Workspace)
+def auto_delete_schedules_and_event_rules_with_workspace(sender, instance, **kwargs):
+    instance.schedule.delete()
+    instance.schedule_archive.delete()
+    instance.event_rules.delete()
 
 
 class CompilationHolder(models.Model):
@@ -88,6 +136,10 @@ class ResourceAccount(models.Model):
     credentials         = models.OneToOneField(Credentials, on_delete=models.CASCADE, null=True, default=False)
     url                 = models.CharField(max_length=255, null=True, blank=True)
 
+@receiver(post_delete, sender=ResourceAccount)
+def auto_delete_credentials_with_resource_account(sender, instance, **kwargs):
+    instance.credentials.delete()
+
 
 class Blog(models.Model):
     blog_id                      = models.AutoField(primary_key=True)
@@ -96,15 +148,12 @@ class Blog(models.Model):
     resource                     = models.CharField(max_length=63)
     blog_resource_number         = models.BigIntegerField(null=True, blank=True)
     workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-    controlled                   = models.BooleanField(default=False)
-    account                      = models.ForeignKey(Account, on_delete=models.CASCADE)
-    resource_account             = models.ForeignKey(ResourceAccount, on_delete=models.CASCADE, null=True, default=None)
     url                          = models.CharField(max_length=2047, null=True, blank=True)
 
-    # TODO: figure out: Is it really need to have whitelisted and blacklisted blogs here?
-    whitelisted_blog             = models.OneToOneField(WhiteListedBlog, on_delete=models.SET_NULL, null=True, blank=True)
-    blacklisted_blog             = models.OneToOneField(BlackListedBlog, on_delete=models.SET_NULL, null=True, blank=True)
-
+    controlled                   = models.BooleanField(default=False)
+    tag_rule                     = models.ForeignKey(TagRule, on_delete=models.SET_NULL, null=True, blank=True)
+    account                      = models.ForeignKey(Account, on_delete=models.CASCADE)
+    resource_account             = models.ForeignKey(ResourceAccount, on_delete=models.CASCADE, null=True, default=None)
 
     def __str__(self):
         return str(self.name) + " " + str(self.resource)

@@ -1,0 +1,69 @@
+{% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
+{% load static %}
+
+<style>
+.hr {
+  margin-top: 0;
+  padding-top: 0;
+}
+</style>
+
+
+
+<div class="container-fluid">
+    {% block top_menu %}
+    {% include 'event_rules/event_rules_top_panel.html' %}
+    {% endblock %}
+
+    <hr class="hr">
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Input tag</th>
+                <th scope="col">Output</th>
+                <th scope="col">Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for account in resource_accounts %}
+            <tr>
+                <td>
+                    <img src="{{MEDIA_LOCATION}}/{{account.avatar}}" class="img-fluid" style="height: 30px; object-fit: contain;" alt="">
+                    {{account.name}}
+                </td>
+                <td>{{account.credentials.resource}}</td>
+                <td>
+                    <a type="button" class="btn btn-sm btn-secondary"
+                       href="{% url 'resource_account_add_blog' workspace_id=workspace.workspace_id resource_account_id=account.resource_account_id %}">Show to add from list</a>
+                </td>
+                <td>
+<!--                    <a type="button" class="btn btn-sm btn-secondary"-->
+<!--                       href="{% url 'resource_account_edit' workspace_id=workspace.workspace_id resource_account_id=account.resource_account_id %}">Edit</a>-->
+                </td>
+                <td>
+                    <a type="button" class="btn btn-sm btn-danger rounded-circle"
+                       href="{% url 'resource_account_delete' workspace_id=workspace.workspace_id resource_account_id=account.resource_account_id %}">X</a>
+                    <script>
+                        {% if "delete" in request.path %}
+                            $(function() {
+                                $('#resource_account_delete_modal').modal({show: true});
+                            });
+                        {% endif %}
+                    </script>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="modal"
+            data-target="#resource_account_create_modal"> Create new resource account </button>
+
+    {% block event_rules_modals %}
+    {% include 'event_rules/event_rules_modals.html' %}
+    {% endblock %}
+
+</div>
+
+{% endblock content %}
