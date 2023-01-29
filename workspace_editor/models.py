@@ -14,13 +14,6 @@ class ScheduleArchive(models.Model):
 
 class EventRules(models.Model):
     event_rules_id              = models.AutoField(primary_key=True)
-
-
-class TagRule(models.Model):
-    tag_rule_id                  = models.AutoField(primary_key=True)
-    input_tag                    = models.CharField(max_length=511, default='', blank=True)
-    output_tag                   = models.CharField(max_length=511, default='', blank=True)
-
     DISTRIBUTION_TYPE_CHOICES = (
         ("1 per day", "1 per day"),
         ("2 per day", "2 per day"),
@@ -37,9 +30,22 @@ class TagRule(models.Model):
         ("over 3 month", "over 3 months"),
     )
     distribution_type            = models.CharField(max_length=12,
-                                                    choices=DISTRIBUTION_TYPE_CHOICES, default="over 1 week")
+                                                    choices=DISTRIBUTION_TYPE_CHOICES,
+                                                    default="over 1 week")
+    START_TYPE_CHOICES = (
+        ("Add to empty slots", "Add to empty slots"),
+        ("From first empty day", "From first empty day"),
+    )
+    start_type                   = models.CharField(max_length=20,
+                                                    choices=START_TYPE_CHOICES,
+                                                    default="Add to empty slots")
+
+
+class TagRule(models.Model):
+    tag_rule_id                  = models.AutoField(primary_key=True)
+    input_tag                    = models.CharField(max_length=511, default='', blank=True)
+    output_tag                   = models.CharField(max_length=511, default='', blank=True)
     event_rules                  = models.ForeignKey(EventRules, on_delete=models.CASCADE)
-#     TODO: make field to store distribution type choices
 
 
 class PostingTime(models.Model):
@@ -63,11 +69,9 @@ class Workspace(models.Model):
     schedule                     = models.OneToOneField(Schedule, on_delete=models.CASCADE)
     schedule_archive             = models.OneToOneField(ScheduleArchive, on_delete=models.CASCADE)
 
-    # TODO: delete null=True
-    event_rules                 = models.OneToOneField(EventRules, on_delete=models.CASCADE, null=True)
+    event_rules                 = models.OneToOneField(EventRules, on_delete=models.CASCADE)
 
-    # TODO: uncomment after changing field
-    # description                  = models.TextField(null=True, blank=True)
+    description                  = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name

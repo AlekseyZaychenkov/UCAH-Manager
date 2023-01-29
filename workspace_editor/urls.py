@@ -15,8 +15,9 @@ urlpatterns = [
     path('workspace?workspace_id=<int:workspace_id>?post_delete_id=<str:post_id>', home,
          name="workspace_by_id_post_delete_by_id"),
 
-    path('workspace/workspace_id=<int:workspace_id>/rules', event_rules, name="event_rules"),
-
+    path('workspace/workspace_id=<int:workspace_id>/rules', event_rules_view, name="event_rules"),
+    path('workspace/workspace_id=<int:workspace_id>/rules/event_rule_id=<int:event_rule_id>/delete',
+                                                        event_rules_view, name="event_rules_tag_rule_delete"),
 
     path('downloading?workspace_id=<int:workspace_id>?post_id=<str:post_id>', downloading,
          name="downloading_workspace_by_id_post_by_id"),

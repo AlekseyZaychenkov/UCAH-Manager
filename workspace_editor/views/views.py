@@ -26,6 +26,7 @@ def resource_accounts(request, workspace_id=None, resource_account_id=None):
     context = dict()
     workspace = __workspace_choice(request, workspace_id)
 
+    # TODO: add if-else for workspace like in method event_rules (event_rules_view.py)
     if workspace:
         accounts = ResourceAccount.objects.filter(owner=request.user)
         resource_accounts_to_resource = dict()
@@ -116,6 +117,7 @@ def blogs(request, workspace_id=None, blog_id=None):
     context = dict()
     workspace = __workspace_choice(request, workspace_id)
 
+    # TODO: add if-else for workspace like in method event_rules (event_rules_view.py)
     if request.POST:
         if blog_id and request.POST['action'] == 'blog_delete':
             form = BlogDeleteForm(request.POST)
