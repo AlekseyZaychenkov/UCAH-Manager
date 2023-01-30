@@ -11,6 +11,8 @@ from workspace_editor.models import CompilationHolder
 
 log = logging.getLogger(__name__)
 
+
+
 def copy_post_to(workspace_id, recipient_compilation_id, post_id):
     compilation = Compilation.objects.get(id=recipient_compilation_id)
     old_post = Post.objects.get(id=post_id)

@@ -10,6 +10,7 @@ from credentials import VK_APP_TOKEN
 from loader.models import Post, Compilation
 
 from loader.vk_loader import VKLoader
+from utils_text import parse_tags_from_input
 from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
 from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog, SelectedBlog, ResourceAccount, Credentials
@@ -211,29 +212,9 @@ class CompilationHolderEditForm(forms.ModelForm):
         edited_holder.compilation_holder_id = holder.compilation_holder_id
         edited_holder.compilation_id        = holder.compilation_id
 
-        tags = []
-        for tag in self.cleaned_data["whitelisted_tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        edited_holder.whitelisted_tags = ' '.join(tags)
-
-        tags = []
-        for tag in self.cleaned_data["selected_tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        edited_holder.selected_tags = ' '.join(tags)
-
-        tags = []
-        for tag in self.cleaned_data["blacklisted_tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        edited_holder.blacklisted_tags = ' '.join(tags)
+        edited_holder.whitelisted_tags = parse_tags_from_input(self.cleaned_data["whitelisted_tags"])
+        edited_holder.selected_tags = parse_tags_from_input(self.cleaned_data["selected_tags"])
+        edited_holder.blacklisted_tags = parse_tags_from_input(self.cleaned_data["blacklisted_tags"])
 
         for blog_name in self.cleaned_data["whitelisted_blogs"].split():
             blog = Blog()
@@ -394,15 +375,7 @@ class PostEditForm(forms.Form):
 
     def save(self, workspace, compilation, images=None, commit=True):
         post = Post.objects.get(id=self.cleaned_data["post_id"])
-
-        tags = list()
-        for tag in self.cleaned_data["tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        post.start_date = tags
-
+        post.tags = parse_tags_from_input(self.cleaned_data["tags"])
         post.text = self.cleaned_data["text"]
 
         if images:
@@ -532,7 +505,7 @@ class BlogCreateForm(forms.Form):
                 blog.avatar = safe_as
                 blog.save()
 
-        return blog
+            return blog
 
 
 class BlogDeleteForm(forms.Form):

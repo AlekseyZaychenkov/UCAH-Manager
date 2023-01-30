@@ -43,9 +43,10 @@ class EventRules(models.Model):
 
 class TagRule(models.Model):
     tag_rule_id                  = models.AutoField(primary_key=True)
-    input_tag                    = models.CharField(max_length=511, default='', blank=True)
-    output_tag                   = models.CharField(max_length=511, default='', blank=True)
     event_rules                  = models.ForeignKey(EventRules, on_delete=models.CASCADE)
+    input                        = models.CharField(max_length=4095, default='', blank=True)
+    output                       = models.CharField(max_length=4095, default='', blank=True)
+    for_all                      = models.BooleanField(default=False)
 
 
 class PostingTime(models.Model):
@@ -155,7 +156,7 @@ class Blog(models.Model):
     url                          = models.CharField(max_length=2047, null=True, blank=True)
 
     controlled                   = models.BooleanField(default=False)
-    tag_rule                     = models.ForeignKey(TagRule, on_delete=models.SET_NULL, null=True, blank=True)
+    tag_rule                     = models.ManyToManyField(TagRule)
     account                      = models.ForeignKey(Account, on_delete=models.CASCADE)
     resource_account             = models.ForeignKey(ResourceAccount, on_delete=models.CASCADE, null=True, default=None)
 

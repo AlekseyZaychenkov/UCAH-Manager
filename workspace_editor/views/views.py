@@ -1,9 +1,12 @@
 from django.contrib.auth.decorators import login_required
 
+from workspace_editor.forms.event_rules_forms import BlogAddTagRuleForm
 from loader.tumblr_loader import TumblrLoader
 from UCA_Manager.settings import PATH_TO_STORE
+from utils_text import prepare_tags_for_edit_form
 from workspace_editor.utils import copy_compilation_posts
 from workspace_editor.serializers import WorkspaceSerializer
+from django.http import QueryDict
 from django.shortcuts import render, redirect
 
 from django.core.paginator import Paginator
@@ -93,8 +96,20 @@ def resource_account_add_blog(request, workspace_id, resource_account_id):
             resource_account = ResourceAccount.objects.get(resource_account_id=resource_account_id)
             form = BlogCreateForm(request.POST)
             if form.is_valid():
-                form.save(resource_account=resource_account,
-                          account=request.user)
+                blog = form.save(resource_account=resource_account,
+                                 account=request.user)
+                workspace = Workspace.objects.get(workspace_id=workspace_id)
+                tag_rules = TagRule.objects.filter(event_rules=workspace.event_rules, for_all=True)
+                for tag_rule in tag_rules:
+                    query_dict = QueryDict('', mutable=True)
+                    query_dict.update({'blog_id': blog.blog_id,
+                                       'tag_rule_id': tag_rule.tag_rule_id,
+                                       'apply': True})
+                    form = BlogAddTagRuleForm(query_dict)
+                    if form.is_valid():
+                        form.save()
+                    else:
+                        log.error(form.errors.as_data())
             else:
                 log.error(form.errors.as_data())
 
@@ -352,7 +367,6 @@ def __post_request_handler(request, workspace, post_id=None):
         form = PostEditForm(request.POST)
         if form.is_valid():
             compilation = Compilation.objects.get(id=workspace.main_compilation_id)
-            # form.text = ""
             form.save(workspace=workspace, compilation=compilation)
         else:
             log.error(form.errors.as_data())
@@ -474,7 +488,7 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["post_create_form"] = PostCreateForm()
         if post_id:
             post = Post.objects.get(id=post_id)
-            context["post_edit_form"] = PostEditForm(initial={"tags": '#' + ' #'.join(post.tags),
+            context["post_edit_form"] = PostEditForm(initial={"tags": prepare_tags_for_edit_form(post.tags),
                                                               "text": post.text,
                                                               "description": post.description})
         else:

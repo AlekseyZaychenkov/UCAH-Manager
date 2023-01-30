@@ -2,21 +2,65 @@ import logging
 
 from django import forms
 
+from utils_text import parse_tags_from_input
 from workspace_editor.models import *
 
 log = logging.getLogger(__name__)
 
 
+class BlogAddTagRuleForm(forms.ModelForm):
+    blog_id = forms.IntegerField(required=True)
+    tag_rule_id = forms.IntegerField(required=True)
+    apply = forms.BooleanField(required=False)
+
+    def save(self, commit=True):
+        data = self.cleaned_data
+        blog = Blog.objects.get(blog_id=data.get("blog_id"))
+        tag_rule = TagRule.objects.get(tag_rule_id=data.get("tag_rule_id"))
+
+        if bool(data.get("apply")):
+            blog.tag_rule.add(tag_rule)
+        else:
+            blog.tag_rule.remove(tag_rule)
+
+        if commit:
+            blog.save()
+    class Meta:
+        model = Blog
+        exclude = ('name', 'avatar', 'resource', 'blog_resource_number',
+                   'workspace', 'url', 'controlled', 'tag_rule', 'account', 'resource_account', )
+
 
 class TagRuleCreateForm(forms.ModelForm):
-    input_tag = forms.CharField(required=False)
-    output_tag = forms.CharField(required=False)
-    events_rules = forms.CharField(required=True)
+    event_rules_id = forms.IntegerField(required=True)
+    input = forms.CharField(required=False)
+    output = forms.CharField(required=False)
+    for_all = forms.BooleanField(required=False)
+
+    def save(self, commit=True):
+        tag_rule = self.instance
+        data = self.cleaned_data
+        event_rules = EventRules.objects.get(event_rules_id=data.get("event_rules_id"))
+        tag_rule.event_rules = event_rules
+        tag_rule.input = parse_tags_from_input(data.get("input"))
+        tag_rule.output = parse_tags_from_input(data.get("output"))
+
+        if commit:
+            tag_rule.save()
+            return tag_rule
 
     class Meta:
         model = TagRule
-        exclude = ('', )
+        exclude = ('event_rules', )
 
+
+class TagRuleDeleteForm(forms.Form):
+    id = forms.IntegerField(required=True)
+
+    def delete(self):
+        data = self.cleaned_data
+        tag_rule = TagRule.objects.get(tag_rule_id=data.get("id"))
+        tag_rule.delete()
 
 class PostingTimeEditForm(forms.ModelForm):
     posting_time_id = forms.IntegerField(required=True)
