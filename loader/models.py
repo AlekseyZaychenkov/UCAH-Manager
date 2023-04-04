@@ -34,8 +34,10 @@ class Post(Model):
     # TODO: rename to external_links
     external_link_urls    = columns.List(value_type=columns.Text, required=False)
 
+
     # information for administration notes and file storing
     description           = columns.Text(required=False)
+
 
     # information after posted
     url                   = columns.Text(max_length=2048, required=False)

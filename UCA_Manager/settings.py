@@ -58,6 +58,9 @@ LOGIN_REDIRECT_URL = 'home'
 
 # Application definition
 INSTALLED_APPS = [
+    # TODO: delete after creating compilation viewer
+    # "ecomapp",
+
     'account',
     'workspace_editor',
     'loader',
@@ -179,18 +182,11 @@ ROOT_DIR = os.path.join("..", os.path.dirname(os.path.abspath(__file__)))
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
-MEDIA_DIRECTORY_NAME = 'media'
-MEDIA_ROOT = os.path.join(BASE_DIR, MEDIA_DIRECTORY_NAME)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn')
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-POSTS_FILES_DIRECTORY = "photo_and_video_storage"
-
-RESOURCES = (
-    ("Tumbler", "Tumbler"),
-    ("VKontakte", "VKontakte"),
-)
 
 # IMAGES AND VIDEO STORING
 # TODO: create set of storages for specific user
-PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../..", MEDIA_ROOT, POSTS_FILES_DIRECTORY)
+PATH_TO_STORE = os.path.join(os.path.abspath(os.curdir), "../..", MEDIA_ROOT, "photo_and_video_storage")
