@@ -9,39 +9,24 @@
     {% for post in main_compilation %}
     <div class="col-md-6 card">
       <div class="m-2">
-
         <form method="post"> {% csrf_token %}
-          <div class="row" role="group">
-            <div class="form-row">
-              {% render_field event_create_form.datetime class="form-control-sm" type="datetime-local" %}
-              {{ event_create_form.datetime.errors }}
-            </div>
 
+          <div class="btn-group row" role="group">
+            {% render_field event_createform.start_date class="form-control-sm" type="datetime-local" %}
+            {{ event_createform.start_date.errors }}
             <div class="d-none">
-              {% render_field event_create_form.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
+              {% render_field event_createform.post_id|append_attr:"readonly:readonly" class="form-control" id="id_name_event" value=post.id %}
             </div>
-            <button class="btn btn-sm btn-primary text-uppercase font-weight-bold" type="submit" name="action" value="create_event">>></button>
           </div>
+
+          <div class="float-right">
+            <button class="btn-sm btn-primary text-uppercase font-weight-bold mb-1" type="submit" name="action" value="create_event">>></button>
+          </div>
+
         </form>
 
-          <div class="float-top">
-              {% block post_edit_button %}
-              {% include 'post/post_edit_button.html' %}
-              {% endblock %}
-
-              {% block post_clean_text_button %}
-              {% include 'post/post_clean_text_button.html' %}
-              {% endblock %}
-
-
-
-              {% block post_delete_button %}
-              {% include 'post/post_delete_button.html' %}
-              {% endblock %}
-          </div>
-
         {% block post_info %}
-        {% include 'post/post_info.html' %}
+        {% include 'post_info.html' %}
         {% endblock %}
 
       </div>

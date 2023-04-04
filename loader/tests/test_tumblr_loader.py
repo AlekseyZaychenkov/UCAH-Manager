@@ -1,6 +1,6 @@
 import os
 
-from loader.utils import generate_storage_path
+from loader.utils import generate_storage_patch
 from loader.utils import create_compilation
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UCA_Manager.settings")
@@ -41,7 +41,11 @@ class Test_TumblrLoader(SimpleTestCase):
         # drop_table(Post)
         # drop_table(Compilation)
 
-    # TODO: test method for generate_storage_path()
+    # TODO: make the function fixture
+    def create_parser(self):
+        return TumblrLoader()
+
+    # TODO: test method for generate_storage_patch()
     # TODO: test method for save_files()
 
 
@@ -53,12 +57,23 @@ class Test_TumblrLoader(SimpleTestCase):
     # TODO: create method for response and dump for 1 tag
     # TODO: create method for response and dump for 1 tag and many blogs
 
+    def print_user_info(self, client):
+        userInfo = (client.info())['user']
+        print(f"My user for connection to Tumbler:"
+              f"\nname: {userInfo['name']}"
+              f"\nfollowing: {userInfo['following']}"
+              f"\ndefault_post_format: {userInfo['default_post_format']}"
+              f"\nlikes: {userInfo['likes']}"
+              f"\nblogs: {len(userInfo['blogs'])}"
+              )
 
 
     def test_download(self):
         self.prepare_db()
-        tmblr = TumblrLoader()
-        tmblr.print_user_info()
+        tmblr = self.create_parser()
+        self.print_user_info(tmblr.client)
+
+
 
         tag = 'art'
         number = 25
@@ -74,14 +89,12 @@ class Test_TumblrLoader(SimpleTestCase):
             # blogs=blogs
         )
 
-        path = generate_storage_path(PATH_TO_STORE, comp_id=compilation.id)
+        path = generate_storage_patch(PATH_TO_STORE, comp_id=compilation.id)
         compilation.storage = path
 
-        tmblr.download(compilation, number, tag=tag, storage_path=path)
+        tmblr.download(compilation, number, tag=tag, storagePath=path)
 
-
-
-        pe = Post.objects.allow_filtering().filter(compilation_id=compilation.id)
+        pe = Post.objects.filter(compilation_id=compilation.id)
         pe = sorted(pe, key=lambda post: post['posted_timestamp'], reverse=True)
 
         print("Posts:")
@@ -95,12 +108,12 @@ class Test_TumblrLoader(SimpleTestCase):
             # print(f"instance.posted_date: {instance.posted_date}")
 
             # print(f"instance.text: {instance.text}")
-            print(f"instance.file_urls: {instance.file_urls}")
+            # print(f"instance.file_urls: {instance.file_urls}")
             # print(f"instance.external_link_urls: {instance.external_link_urls}")
 
             print(f"instance.tags: {instance.tags}")
 
-            print(f"instance.file_urls: {instance.stored_file_urls}")
+            # print(f"instance.file_urls: {instance.stored_file_urls}")
             # print(f"instance.external_link_urls: {instance.external_link_urls}")
             #
             # print(f"instance.description: {instance.description}")
