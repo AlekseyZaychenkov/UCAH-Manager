@@ -13,8 +13,8 @@
         <form method="post"> {% csrf_token %}
           <div class="row" role="group">
             <div class="form-row">
-              {% render_field event_create_form.start_date class="form-control-sm" type="datetime-local" %}
-              {{ event_create_form.start_date.errors }}
+              {% render_field event_create_form.datetime class="form-control-sm" type="datetime-local" %}
+              {{ event_create_form.datetime.errors }}
             </div>
 
             <div class="d-none">

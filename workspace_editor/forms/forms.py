@@ -7,17 +7,18 @@ from pathlib import Path
 from django import forms
 
 from credentials import VK_APP_TOKEN
-from loader.models import Post, Compilation
+from loader.models import Post
 
 from loader.vk_loader import VKLoader
-from utils_text import parse_tags_from_input
-from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
-from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
+from workspace_editor.utils_text import parse_tags_from_input
+from workspace_editor.utils.utils import delete_post, delete_compilation_holder, move_post_to_compilation
+from workspace_editor.utils.event_utils import calculate_datetime_from_event_rules
+from workspace_editor.models import Workspace, Event, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog, SelectedBlog, ResourceAccount, Credentials
 from account.models import Account
 from UCA_Manager.settings import POSTS_FILES_DIRECTORY, RESOURCES, MEDIA_DIRECTORY_NAME, MEDIA_ROOT
-from loader.utils import generate_storage_path, create_empty_compilation, \
-    save_files_from_request, save_files_from_urls
+from loader.utils import create_empty_compilation, \
+    save_files_from_request
 
 from django.db.models import Q
 import datetime
@@ -57,7 +58,7 @@ class WorkspaceCreateForm(forms.ModelForm):
     def set_schedules(self, schedule, schedule_archive):
         workspace = self.instance
         workspace.schedule_id = schedule.schedule_id
-        workspace.schedule_archive_id = schedule_archive.schedule_id
+        workspace.schedule_archive = schedule_archive
         self.instance = workspace
 
     def set_event_rules(self, event_rules):
@@ -139,7 +140,7 @@ class WorkspaceUploadPostsForm(forms.Form):
     def upload_posts(self, schedule_id):
         # TODO: implement checking for events with late datetime and show error on frontend
         if Event.objects.filter(schedule_id=schedule_id).exists():
-            events = Event.objects.filter(schedule_id=schedule_id).order_by('start_date')
+            events = Event.objects.filter(schedule_id=schedule_id).order_by('datetime')
 
             vk_loader = VKLoader(vk_app_token=VK_APP_TOKEN)
             for event in events:
@@ -289,21 +290,36 @@ class CompilationHolderGetIdForm(forms.Form):
 
 
 class EventCreateForm(forms.ModelForm):
-    start_date  = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    # TODO: validate that datetime not earlier, than now
+    datetime    = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=False)
     post_id     = forms.CharField(required=True)
+    blogs       = forms.ModelChoiceField(Blog.objects.all(), required=False)
 
-    def safe_copied_post(self, workspace_id, recipient_compilation_id, delete_original_post=False):
-        post_id = self.instance.post_id
-        new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
-        if delete_original_post:
-            delete_post(post_id, delete_files=False)
-        self.instance.post_id = new_post_id
+    def save_copied_post(self, workspace_id, recipient_compilation_id, delete_original_post=False):
+        self.instance.post_id = move_post_to_compilation(workspace_id,
+                                                         recipient_compilation_id,
+                                                         self.instance.post_id,
+                                                         delete_original_post)
+
+    def set_datetime_if_did_not_selected(self):
+        event = self.instance
+        if not event.datetime:
+            calculated_datetime = calculate_datetime_from_event_rules(schedule=event.schedule)
+            if calculated_datetime:
+                event.datetime = calculated_datetime
+            else:
+                raise forms.ValidationError("No available auto calculated slots with current event rules!")
 
     def set_schedule(self, schedule):
         event = self.instance
         event.schedule = schedule
         self.instance = event
 
+    def save(self, commit=True):
+        event = self.instance
+        if commit:
+            event.save()
+        return event
 
     class Meta:
         model = Event
@@ -311,12 +327,12 @@ class EventCreateForm(forms.ModelForm):
 
 
 class EventEditForm(forms.ModelForm):
-    start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    datetime = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
 
     # TODO: check and fix
     def save(self, commit=True):
         event = self.instance
-        event.start_date = self.cleaned_data["start_date"]
+        event.datetime = self.cleaned_data["datetime"]
         if commit:
             event.save()
 
@@ -325,6 +341,16 @@ class EventEditForm(forms.ModelForm):
     class Meta:
         model = Event
         exclude = ('post_id', 'schedule_id', )
+
+
+class EventDeleteForm(forms.Form):
+    event_id = forms.CharField(required=True)
+
+    def delete(self):
+        event_id = self.data["event_id"]
+        event = Event.objects.get(event_id=event_id)
+        delete_post(event.post_id)
+        event.delete()
 
 
 class PostCreateForm(forms.Form):

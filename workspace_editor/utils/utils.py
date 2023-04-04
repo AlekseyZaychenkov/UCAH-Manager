@@ -1,19 +1,22 @@
 import logging
 import os
+import shutil
+import pytz
 
+# from workspace_editor.forms.forms import EventCreateForm
 from loader.models import Post, Compilation
 from UCA_Manager.settings import PATH_TO_STORE, MEDIA_ROOT
 from loader.utils import generate_storage_path, save_files_from_urls
-import shutil
 from pathlib import Path
 
-from workspace_editor.models import CompilationHolder
+from workspace_editor.utils.post_editing_utils import apply_substitution_rules
+from workspace_editor.models import *
 
+utc=pytz.UTC
 log = logging.getLogger(__name__)
 
-
-
-def copy_post_to(workspace_id, recipient_compilation_id, post_id):
+# TODO: change all post_id and compilation_id from :int to :str
+def copy_post_to(workspace_id: int, recipient_compilation_id: int, post_id: int):
     compilation = Compilation.objects.get(id=recipient_compilation_id)
     old_post = Post.objects.get(id=post_id)
     for existing_post_id in compilation.post_ids:
@@ -68,41 +71,7 @@ def copy_post_to(workspace_id, recipient_compilation_id, post_id):
     return new_post.id
 
 
-def copy_compilation_posts(workspace_id, sender_compilation_id, recipient_compilation_id):
-    sender_compilation = Compilation.objects.get(id=sender_compilation_id)
-    post_ids = sender_compilation.post_ids
-    for post_id in post_ids:
-        copy_post_to(workspace_id, recipient_compilation_id, post_id)
-
-
-def delete_compilation_holder(holder_id):
-    holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
-    delete_compilation(holder.compilation_id)
-
-    other_holders = CompilationHolder.objects.filter(workspace=holder.workspace_id)
-    for oh in other_holders:
-        oh.number_on_list -= 1
-        oh.save()
-
-    holder.delete()
-
-
-def delete_compilation(compilation_id):
-    compilation = Compilation.objects.get(id=compilation_id)
-
-    post_ids = compilation.post_ids
-    if post_ids:
-        post = Post.objects.get(id=post_ids[0])
-        folder = os.path.join(MEDIA_ROOT, Path(post.stored_file_urls[0]).parent.parent)
-        for post_id in post_ids:
-            delete_post(post_id)
-        shutil.rmtree(folder)
-
-
-    compilation.delete()
-
-
-def delete_post(post_id, delete_files=True):
+def delete_post(post_id: int, delete_files=True):
     post = Post.objects.get(id=post_id)
 
     if post:
@@ -122,3 +91,49 @@ def delete_post(post_id, delete_files=True):
         post.delete()
     else:
         log.error(f"No post with id='{post.id}' ")
+
+
+def move_post_to_compilation(workspace_id: int, recipient_compilation_id: int, post_id: int, delete_original_post=False):
+    new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
+    # TODO: move to EventEditForm and applying blog to event
+    apply_substitution_rules(workspace_id=workspace_id, post_id=new_post_id)
+    if delete_original_post:
+        delete_post(post_id, delete_files=False)
+
+    return new_post_id
+
+
+def copy_compilation_posts(workspace_id: int, sender_compilation_id: int, recipient_compilation_id: int):
+    sender_compilation = Compilation.objects.get(id=sender_compilation_id)
+    post_ids = sender_compilation.post_ids
+    for post_id in post_ids:
+        copy_post_to(workspace_id, recipient_compilation_id, post_id)
+
+
+def delete_compilation_holder(holder_id: int):
+    holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+    delete_compilation(holder.compilation_id)
+
+    other_holders = CompilationHolder.objects.filter(workspace=holder.workspace_id)
+    for oh in other_holders:
+        oh.number_on_list -= 1
+        oh.save()
+
+    holder.delete()
+
+
+def delete_compilation(compilation_id: int):
+    compilation = Compilation.objects.get(id=compilation_id)
+
+    post_ids = compilation.post_ids
+    if post_ids:
+        post = Post.objects.get(id=post_ids[0])
+        folder = os.path.join(MEDIA_ROOT, Path(post.stored_file_urls[0]).parent.parent)
+        for post_id in post_ids:
+            delete_post(post_id)
+        shutil.rmtree(folder)
+
+
+    compilation.delete()
+
+

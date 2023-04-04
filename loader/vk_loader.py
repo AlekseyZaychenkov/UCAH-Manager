@@ -114,7 +114,7 @@ class VKLoader:
             try:
                 log.debug(f"[{self.__make_time()}] Uploading files to server vk...")
                 attachments = self.__prepare_attachments(post.stored_file_urls)
-                publish_date = self.__convert_publish_data(event.start_date)
+                publish_date = self.__convert_publish_data(event.datetime)
 
                 log.debug(f"[{self.__make_time()}] Posting...'.")
                 self.vk_client.wall.post(access_token=self.vk_app_token,

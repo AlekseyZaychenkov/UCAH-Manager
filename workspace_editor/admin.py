@@ -1,6 +1,4 @@
 from django.contrib import admin
-
-from django import forms
 from workspace_editor.models import *
 
 
@@ -8,15 +6,14 @@ from workspace_editor.models import *
 class WorkspaceAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(ScheduleArchived)
+class ScheduleArchiveAdmin(admin.ModelAdmin):
+    pass
 
 # @admin.register(Schedule)
 # class ScheduleAdmin(admin.ModelAdmin):
 #     pass
 #
-#
-# @admin.register(ScheduleArchive)
-# class ScheduleArchiveAdmin(admin.ModelAdmin):
-#     pass
 
 @admin.register(ResourceAccount)
 class ResourceAccountAdmin(admin.ModelAdmin):
@@ -35,6 +32,7 @@ class BlogAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
+    list_display = ('event_id', 'datetime', 'schedule')
     pass
 
 
