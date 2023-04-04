@@ -9,12 +9,13 @@ from django import forms
 from credentials import VK_APP_TOKEN
 from loader.models import Post
 
+from account.models import Account
 from loader.vk_loader import VKLoader
 from workspace_editor.utils.utils import delete_post, delete_compilation_holder, move_post_to_compilation
 from workspace_editor.utils.event_utils import calculate_datetime_from_event_rules
 from workspace_editor.models import Workspace, Event, CompilationHolder, Blog, WhiteListedBlog, \
     BlackListedBlog, SelectedBlog, ResourceAccount, Credentials
-from account.models import Account
+
 from UCA_Manager.settings import POSTS_FILES_DIRECTORY, RESOURCES, MEDIA_DIRECTORY_NAME, MEDIA_ROOT
 from loader.utils import create_empty_compilation, \
     save_files_from_request
