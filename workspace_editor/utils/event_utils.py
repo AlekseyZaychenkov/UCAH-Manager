@@ -137,19 +137,22 @@ def __calculate_datetime_for_time_range(distribution_type_code: float,
     total_days_to_fill = int(1 / target_event_density + 0.5)
 
     for priority in range(1, slots_on_lowest_priority + 1):
+        print(f"priority: {priority}")
 
         day_numbers = get_day_numbers(total_days=total_days_to_fill)
         for day_number in day_numbers:
+            print(f"day_number: {day_number}")
+
             slots_for_date = __get_all_slots_for_date(event_rules=event_rules,
                                                       priority=priority,
                                                       current_date=first_date + timedelta(days=day_number))
 
-            current_date = date(year=datetime_now.year, month=datetime_now.month, day=datetime_now.day) \
-                           + timedelta(days=day_number)
+            current_date = date(year=datetime_now.year, month=datetime_now.month, day=datetime_now.day + day_number)
 
             free_slot = __get_first_free_slot(day_slots=slots_for_date, current_date=current_date, schedule=schedule)
 
             if free_slot:
+                print(f"<== free_slot: {free_slot} ==>")
                 return free_slot
 
     return None
