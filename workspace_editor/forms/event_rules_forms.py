@@ -2,7 +2,6 @@ import logging
 
 from django import forms
 
-from workspace_editor.utils_text import parse_tags_from_input
 from workspace_editor.models import *
 
 log = logging.getLogger(__name__)
