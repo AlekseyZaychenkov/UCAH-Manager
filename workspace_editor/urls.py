@@ -1,7 +1,8 @@
 from django.urls import path
 
-from workspace_editor.views import *
 
+from workspace_editor.views.views import *
+from workspace_editor.views.event_rules_views import *
 
 urlpatterns = [
     path('workspace', home, name="workspace"),
@@ -14,6 +15,15 @@ urlpatterns = [
          name="workspace_by_id_post_edit_by_id"),
     path('workspace?workspace_id=<int:workspace_id>?post_delete_id=<str:post_id>', home,
          name="workspace_by_id_post_delete_by_id"),
+
+    path('workspace?workspace_id=<int:workspace_id>?event_delete_id=<str:event_id>', home,
+         name="workspace_by_id_event_delete_by_id"),
+
+    path('workspace/workspace_id=<int:workspace_id>/rules', event_rules_view, name="event_rules"),
+    path('workspace/workspace_id=<int:workspace_id>/rules/tag_rules/create',
+                                                        event_rules_view, name="event_rules_tag_rule_create"),
+    path('workspace/workspace_id=<int:workspace_id>/rules/tag_rules/tag_rule_id=<int:tag_rule_id>/delete',
+                                                        event_rules_view, name="event_rules_tag_rules_tag_rule_delete"),
 
     path('downloading?workspace_id=<int:workspace_id>?post_id=<str:post_id>', downloading,
          name="downloading_workspace_by_id_post_by_id"),

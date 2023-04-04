@@ -1,1 +1,1 @@
-export DJANGO_SETTINGS_MODULE=UCAH_Manager.settings
+export DJANGO_SETTINGS_MODULE=UCA_Manager.settings

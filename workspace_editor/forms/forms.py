@@ -7,16 +7,18 @@ from pathlib import Path
 from django import forms
 
 from credentials import VK_APP_TOKEN
-from loader.models import Post, Compilation
+from loader.models import Post
 
-from loader.vk_loader import VKLoader
-from workspace_editor.utils import copy_post_to, delete_post, delete_compilation_holder
-from workspace_editor.models import Workspace, Event, Schedule, CompilationHolder, Blog, WhiteListedBlog, \
-    BlackListedBlog, SelectedBlog, ResourceAccount, Credentials
 from account.models import Account
+from loader.vk_loader import VKLoader
+from workspace_editor.utils.utils import delete_post, delete_compilation_holder, move_post_to_compilation
+from workspace_editor.utils.event_utils import calculate_datetime_from_event_rules
+from workspace_editor.models import Workspace, Event, CompilationHolder, Blog, WhiteListedBlog, \
+    BlackListedBlog, SelectedBlog, ResourceAccount, Credentials
+
 from UCA_Manager.settings import POSTS_FILES_DIRECTORY, RESOURCES, MEDIA_DIRECTORY_NAME, MEDIA_ROOT
-from loader.utils import generate_storage_path, create_empty_compilation, \
-    save_files_from_request, save_files_from_urls
+from loader.utils import create_empty_compilation, \
+    save_files_from_request
 
 from django.db.models import Q
 import datetime
@@ -45,8 +47,8 @@ class WorkspaceCreateForm(forms.ModelForm):
 
     class Meta:
         model = Workspace
-        exclude = ("owner", "visible_for", "editable_by", "schedule", "schedule_archive",
-                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id", "description")
+        exclude = ("owner", "visible_for", "editable_by", "schedule", "schedule_archive", "scheduled_compilation_id",
+                   "main_compilation_id", "main_compilation_archive_id", "event_rules", "description")
 
     def set_owner(self, user):
         workspace = self.instance
@@ -56,7 +58,12 @@ class WorkspaceCreateForm(forms.ModelForm):
     def set_schedules(self, schedule, schedule_archive):
         workspace = self.instance
         workspace.schedule_id = schedule.schedule_id
-        workspace.schedule_archive_id = schedule_archive.schedule_id
+        workspace.schedule_archive = schedule_archive
+        self.instance = workspace
+
+    def set_event_rules(self, event_rules):
+        workspace = self.instance
+        workspace.event_rules = event_rules
         self.instance = workspace
 
     def save(self, commit=True):
@@ -90,8 +97,8 @@ class WorkspaceEditForm(WorkspaceCreateForm):
 
     class Meta:
         model = Workspace
-        exclude = ("owner", "schedule", "schedule_archive",
-                   "scheduled_compilation_id", "main_compilation_id", "main_compilation_archive_id", "description")
+        exclude = ("owner", "schedule", "schedule_archive", "scheduled_compilation_id", "main_compilation_id",
+                   "main_compilation_archive_id", "event_rules", "description")
 
     def __init__(self, *args, **kwargs):
         super(WorkspaceEditForm, self).__init__(*args, **kwargs)
@@ -133,7 +140,7 @@ class WorkspaceUploadPostsForm(forms.Form):
     def upload_posts(self, schedule_id):
         # TODO: implement checking for events with late datetime and show error on frontend
         if Event.objects.filter(schedule_id=schedule_id).exists():
-            events = Event.objects.filter(schedule_id=schedule_id).order_by('start_date')
+            events = Event.objects.filter(schedule_id=schedule_id).order_by('datetime')
 
             vk_loader = VKLoader(vk_app_token=VK_APP_TOKEN)
             for event in events:
@@ -206,29 +213,9 @@ class CompilationHolderEditForm(forms.ModelForm):
         edited_holder.compilation_holder_id = holder.compilation_holder_id
         edited_holder.compilation_id        = holder.compilation_id
 
-        tags = []
-        for tag in self.cleaned_data["whitelisted_tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        edited_holder.whitelisted_tags = ' '.join(tags)
-
-        tags = []
-        for tag in self.cleaned_data["selected_tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        edited_holder.selected_tags = ' '.join(tags)
-
-        tags = []
-        for tag in self.cleaned_data["blacklisted_tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        edited_holder.blacklisted_tags = ' '.join(tags)
+        edited_holder.whitelisted_tags = parse_tags_from_input(self.cleaned_data["whitelisted_tags"])
+        edited_holder.selected_tags = parse_tags_from_input(self.cleaned_data["selected_tags"])
+        edited_holder.blacklisted_tags = parse_tags_from_input(self.cleaned_data["blacklisted_tags"])
 
         for blog_name in self.cleaned_data["whitelisted_blogs"].split():
             blog = Blog()
@@ -303,21 +290,36 @@ class CompilationHolderGetIdForm(forms.Form):
 
 
 class EventCreateForm(forms.ModelForm):
-    start_date  = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    # TODO: validate that datetime not earlier, than now
+    datetime    = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=False)
     post_id     = forms.CharField(required=True)
+    blogs       = forms.ModelChoiceField(Blog.objects.all(), required=False)
 
-    def safe_copied_post(self, workspace_id, recipient_compilation_id, delete_original_post=False):
-        post_id = self.instance.post_id
-        new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
-        if delete_original_post:
-            delete_post(post_id, delete_files=False)
-        self.instance.post_id = new_post_id
+    def save_copied_post(self, workspace_id, recipient_compilation_id, delete_original_post=False):
+        self.instance.post_id = move_post_to_compilation(workspace_id,
+                                                         recipient_compilation_id,
+                                                         self.instance.post_id,
+                                                         delete_original_post)
+
+    def set_datetime_if_did_not_selected(self):
+        event = self.instance
+        if not event.datetime:
+            calculated_datetime = calculate_datetime_from_event_rules(schedule=event.schedule)
+            if calculated_datetime:
+                event.datetime = calculated_datetime
+            else:
+                raise forms.ValidationError("No available auto calculated slots with current event rules!")
 
     def set_schedule(self, schedule):
         event = self.instance
         event.schedule = schedule
         self.instance = event
 
+    def save(self, commit=True):
+        event = self.instance
+        if commit:
+            event.save()
+        return event
 
     class Meta:
         model = Event
@@ -325,12 +327,12 @@ class EventCreateForm(forms.ModelForm):
 
 
 class EventEditForm(forms.ModelForm):
-    start_date = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
+    datetime = forms.DateTimeField(input_formats=["%d.%m.%Y %H:%M"], required=True)
 
     # TODO: check and fix
     def save(self, commit=True):
         event = self.instance
-        event.start_date = self.cleaned_data["start_date"]
+        event.datetime = self.cleaned_data["datetime"]
         if commit:
             event.save()
 
@@ -339,6 +341,16 @@ class EventEditForm(forms.ModelForm):
     class Meta:
         model = Event
         exclude = ('post_id', 'schedule_id', )
+
+
+class EventDeleteForm(forms.Form):
+    event_id = forms.CharField(required=True)
+
+    def delete(self):
+        event_id = self.data["event_id"]
+        event = Event.objects.get(event_id=event_id)
+        delete_post(event.post_id)
+        event.delete()
 
 
 class PostCreateForm(forms.Form):
@@ -389,15 +401,7 @@ class PostEditForm(forms.Form):
 
     def save(self, workspace, compilation, images=None, commit=True):
         post = Post.objects.get(id=self.cleaned_data["post_id"])
-
-        tags = list()
-        for tag in self.cleaned_data["tags"].split():
-            # TODO: checking for existing posts with this tag in selected resource
-            tag = ''.join(filter(str.isalnum, tag))
-            if tag not in tags:
-                tags.append(tag)
-        post.start_date = tags
-
+        post.tags = parse_tags_from_input(self.cleaned_data["tags"])
         post.text = self.cleaned_data["text"]
 
         if images:
@@ -496,7 +500,7 @@ class BlogCreateForm(forms.Form):
     workspace_id                 = forms.IntegerField(required=False)
     url                          = forms.CharField(max_length=2047, required=False)
 
-    def save(self, account=None, resource_account=None, avatar=None, commit=True):
+    def save(self, account=None, resource_account=None, commit=True):
         data = self.cleaned_data
 
         blog = Blog(
@@ -527,7 +531,7 @@ class BlogCreateForm(forms.Form):
                 blog.avatar = safe_as
                 blog.save()
 
-        return blog
+            return blog
 
 
 class BlogDeleteForm(forms.Form):

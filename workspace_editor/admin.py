@@ -1,10 +1,19 @@
 from django.contrib import admin
-
 from workspace_editor.models import *
 
 
-# Register your models here.
+@admin.register(Workspace)
+class WorkspaceAdmin(admin.ModelAdmin):
+    pass
 
+@admin.register(ScheduleArchived)
+class ScheduleArchiveAdmin(admin.ModelAdmin):
+    pass
+
+# @admin.register(Schedule)
+# class ScheduleAdmin(admin.ModelAdmin):
+#     pass
+#
 
 @admin.register(ResourceAccount)
 class ResourceAccountAdmin(admin.ModelAdmin):
@@ -23,4 +32,20 @@ class BlogAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
+    list_display = ('event_id', 'datetime', 'schedule')
+    pass
+
+
+@admin.register(TagRule)
+class TagRuleAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(PostingTime)
+class PostingTimeAdmin(admin.ModelAdmin):
+    list_display = ('posting_time_id', 'event_rules', 'priority', 'time')
+
+
+@admin.register(EventRules)
+class EventsRulesAdmin(admin.ModelAdmin):
     pass

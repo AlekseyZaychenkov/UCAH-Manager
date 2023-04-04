@@ -1,27 +1,19 @@
 from django.contrib.auth.decorators import login_required
-import logging
 
+from workspace_editor.forms.event_rules_forms import BlogAddTagRuleForm
 from loader.tumblr_loader import TumblrLoader
-from loader.vk_loader import VKLoader
 from UCA_Manager.settings import PATH_TO_STORE
-from workspace_editor.utils import copy_compilation_posts
-from workspace_editor.forms import EventCreateForm, EventEditForm
-from workspace_editor.models import Workspace
+from workspace_editor.utils.utils import copy_compilation_posts
+from workspace_editor.utils.event_utils import fill_schedule
 from workspace_editor.serializers import WorkspaceSerializer
-from django.views.generic import View, TemplateView, CreateView, FormView, DetailView, ListView
-from django.contrib.auth import authenticate, login, logout
+from django.http import QueryDict
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
 
-from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
-from django.core.mail import send_mail
-from django.http import JsonResponse
-from .models import *
+from workspace_editor.models import *
 import calendar
-from .forms import *
+from workspace_editor.forms.forms import *
 import datetime
-from loader.utils import delete_dir
 
 from loader.models import *
 
@@ -37,6 +29,7 @@ def resource_accounts(request, workspace_id=None, resource_account_id=None):
     context = dict()
     workspace = __workspace_choice(request, workspace_id)
 
+    # TODO: add if-else for workspace like in method event_rules (event_rules_view.py)
     if workspace:
         accounts = ResourceAccount.objects.filter(owner=request.user)
         resource_accounts_to_resource = dict()
@@ -103,9 +96,20 @@ def resource_account_add_blog(request, workspace_id, resource_account_id):
             resource_account = ResourceAccount.objects.get(resource_account_id=resource_account_id)
             form = BlogCreateForm(request.POST)
             if form.is_valid():
-                form.save(resource_account=resource_account,
-                          account=request.user,
-                          avatar=request.FILES.getlist('avatar'))
+                blog = form.save(resource_account=resource_account,
+                                 account=request.user)
+                workspace = Workspace.objects.get(workspace_id=workspace_id)
+                tag_rules = TagRule.objects.filter(event_rules=workspace.event_rules, for_all=True)
+                for tag_rule in tag_rules:
+                    query_dict = QueryDict('', mutable=True)
+                    query_dict.update({'blog_id': blog.blog_id,
+                                       'tag_rule_id': tag_rule.tag_rule_id,
+                                       'apply': True})
+                    form = BlogAddTagRuleForm(query_dict)
+                    if form.is_valid():
+                        form.save()
+                    else:
+                        log.error(form.errors.as_data())
             else:
                 log.error(form.errors.as_data())
 
@@ -128,6 +132,7 @@ def blogs(request, workspace_id=None, blog_id=None):
     context = dict()
     workspace = __workspace_choice(request, workspace_id)
 
+    # TODO: add if-else for workspace like in method event_rules (event_rules_view.py)
     if request.POST:
         if blog_id and request.POST['action'] == 'blog_delete':
             form = BlogDeleteForm(request.POST)
@@ -154,7 +159,7 @@ def blogs(request, workspace_id=None, blog_id=None):
 
 
 @login_required
-def home(request, workspace_id=None, post_id=None):
+def home(request, workspace_id=None, post_id=None, event_id=None):
     workspace = __workspace_choice(request, workspace_id)
 
     if request.POST:
@@ -162,7 +167,8 @@ def home(request, workspace_id=None, post_id=None):
 
         if workspace:
             schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
-            __event_request_handler(request, workspace, schedule)
+            __scheduling_left_panel_request_handler(request, workspace)
+            __event_request_handler(request, workspace, schedule, event_id)
             __post_request_handler(request, workspace, post_id)
 
         return redirect(f'workspace_by_id', workspace_id=workspace.workspace_id)
@@ -181,9 +187,6 @@ def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=
         workspace = __workspace_request_handler(request, workspace)
 
         if workspace:
-            schedule = Schedule.objects.get(schedule_id=int(workspace.schedule_id))
-            # TODO: check if __event_request_handler need here
-            __event_request_handler(request, workspace, schedule)
             __post_request_handler(request, workspace, post_id)
             __compilation_holder_request_handler(request, workspace, holder_id, holder_id_to_delete)
 
@@ -229,9 +232,15 @@ def __workspace_request_handler(request, workspace=None):
             form.set_owner(request.user)
             schedule = Schedule()
             schedule.save()
-            schedule_archive = ScheduleArchive()
-            schedule_archive.save()
-            form.set_schedules(schedule, schedule_archive)
+            schedule_archived = ScheduleArchived()
+            schedule_archived.save()
+            form.set_schedules(schedule, schedule_archived)
+            event_rules = EventRules.objects.create()
+            for i in range(0, 7):
+                for j in range(0, i):
+                    PostingTime.objects.create(time=datetime.time(hour=0, minute=0, second=0),
+                                               event_rules=event_rules, priority=i).save()
+            form.set_event_rules(event_rules)
             workspace = form.save()
         else:
             log.error(form.errors.as_data())
@@ -325,12 +334,13 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
             log.error(form.errors.as_data())
 
 
-def __event_request_handler(request, workspace, schedule):
+def __event_request_handler(request, workspace, schedule, event_id=None):
     if request.POST['action'] == "create_event":
         form = EventCreateForm(request.POST)
         if form.is_valid():
-            form.safe_copied_post(workspace.workspace_id, workspace.scheduled_compilation_id, delete_original_post=True)
             form.set_schedule(schedule)
+            form.set_datetime_if_did_not_selected()
+            form.save_copied_post(workspace.workspace_id, workspace.scheduled_compilation_id, delete_original_post=True)
             form.save()
         else:
             log.error(form.errors.as_data())
@@ -341,6 +351,18 @@ def __event_request_handler(request, workspace, schedule):
             form.save()
         else:
             log.error(form.errors.as_data())
+
+    elif request.POST['action'] == "delete_event":
+        form = EventDeleteForm(request.POST)
+        if form.is_valid():
+            form.delete()
+        else:
+            log.error(form.errors.as_data())
+
+
+def __scheduling_left_panel_request_handler(request, workspace):
+    if request.POST['action'] == 'add_all_posts':
+        fill_schedule(workspace.schedule)
 
 
 def __post_request_handler(request, workspace, post_id=None):
@@ -356,7 +378,6 @@ def __post_request_handler(request, workspace, post_id=None):
         form = PostEditForm(request.POST)
         if form.is_valid():
             compilation = Compilation.objects.get(id=workspace.main_compilation_id)
-            # form.text = ""
             form.save(workspace=workspace, compilation=compilation)
         else:
             log.error(form.errors.as_data())
@@ -395,10 +416,12 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
         context["event_create_form"] = EventCreateForm()
         # TODO: rename event_edit_form to event_edit_form
         context["edit_event_form"] = EventEditForm()
+        context["delete_event_form"] = EventDeleteForm()
 
         context["workspace_upload_posts_form"] = WorkspaceUploadPostsForm()
 
     return context
+
 
 
 def __prepare_downloading_context(request, workspace=None, holder_id=None, holder_id_to_delete=None, post_id=None):
@@ -477,7 +500,7 @@ def __prepare_mutual_context(request, workspace=None, post_id=None):
         context["post_create_form"] = PostCreateForm()
         if post_id:
             post = Post.objects.get(id=post_id)
-            context["post_edit_form"] = PostEditForm(initial={"tags": '#' + ' #'.join(post.tags),
+            context["post_edit_form"] = PostEditForm(initial={"tags": prepare_tags_for_edit_form(post.tags),
                                                               "text": post.text,
                                                               "description": post.description})
         else:
@@ -516,10 +539,10 @@ def __get_events_for_schedule(schedule_id):
     while True:
         day_of_week = calendar.day_name[date.weekday()]
         #  TODO: make more compact and remove db retry
-        if Event.objects.filter(schedule_id=schedule_id, start_date__year=date.year,
-                                start_date__month=date.month, start_date__day=date.day).exists():
-            events = Event.objects.filter(schedule_id=schedule_id, start_date__year=date.year,
-                                          start_date__month=date.month, start_date__day=date.day).order_by('start_date')
+        if Event.objects.filter(schedule_id=schedule_id, datetime__year=date.year,
+                                datetime__month=date.month, datetime__day=date.day).exists():
+            events = Event.objects.filter(schedule_id=schedule_id, datetime__year=date.year,
+                                          datetime__month=date.month, datetime__day=date.day).order_by('datetime')
             events_to_posts = dict()
             for event in events:
                 if Post.objects.filter(id=event.post_id).count() == 0:
@@ -536,7 +559,7 @@ def __get_events_for_schedule(schedule_id):
         date += datetime.timedelta(days=1)
         days_count += 1
         if days_count >= days_to_show \
-                and not Event.objects.filter(start_date__range=[date, date + datetime.timedelta(days=365)]).exists():
+                and not Event.objects.filter(datetime__range=[date, date + datetime.timedelta(days=365)]).exists():
             break
 
     return post_in_schedule, dates_to_events

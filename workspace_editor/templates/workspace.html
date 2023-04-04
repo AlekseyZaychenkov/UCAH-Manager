@@ -48,9 +48,9 @@
 
                         <div class="form-label-group">
                             {% if schedule != None %}
-                                {% render_field event_editform.start_date class="form-control" type="datetime-local" id="id_edit_start_date" %}
+                                {% render_field event_editform.datetime class="form-control" type="datetime-local" id="id_edit_datetime" %}
                                 <label>Beginning:</label>
-                                {{ event_editform.start_date.errors }}
+                                {{ event_editform.datetime.errors }}
                             {% endif %}
                         </div>
 
