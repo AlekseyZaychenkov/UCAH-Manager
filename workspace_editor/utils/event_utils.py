@@ -1,8 +1,9 @@
-from datetime import datetime, date, timedelta
 import logging
+import math
+
+from datetime import datetime, date, timedelta
 from django import forms
 from django.http import QueryDict
-
 from loader.models import Compilation
 from workspace_editor.models import Workspace, Blog, Event, EventRules, PostingTime, Schedule, EventArchived
 from workspace_editor.utils.utils import move_post_to_compilation, log
@@ -100,15 +101,28 @@ def __calculate_datetime_for_distribution_n_per_day(event_rules: EventRules,
         current_date = current_date + timedelta(days=1)
 
 
-def __get_day_numbers(first_day, last_day):
-    if last_day - first_day == 0:
-        return []
-    elif last_day - first_day == 1:
-        return [first_day]
-    else:
-        return [int((last_day - first_day) / 2 + first_day)] \
-            + __get_day_numbers(first_day, int((last_day - first_day) / 2 + first_day)) \
-            + __get_day_numbers(int((last_day - first_day) / 2 + first_day) + 1, last_day)
+def get_day_numbers(total_days: int):
+    results = list()
+    step = math.ceil(total_days / 2)
+
+    current_day = 0
+    while current_day <= total_days:
+        results.append(current_day)
+        current_day += step
+
+    if step <= 1:
+        return results
+
+    while True:
+        half_step = math.ceil(step / 2)
+        current_day = half_step
+        while current_day <= total_days:
+            results.append(current_day)
+            current_day += step
+
+        step = half_step
+        if step <= 1:
+            return results
 
 
 def __calculate_datetime_for_time_range(distribution_type_code: float,
@@ -121,13 +135,11 @@ def __calculate_datetime_for_time_range(distribution_type_code: float,
 
     target_event_density = distribution_type_code
     total_days_to_fill = int(1 / target_event_density + 0.5)
-    first_day = 0
-    end_day = total_days_to_fill
 
     for priority in range(1, slots_on_lowest_priority + 1):
         print(f"priority: {priority}")
 
-        day_numbers = __get_day_numbers(first_day, end_day)
+        day_numbers = get_day_numbers(total_days=total_days_to_fill)
         for day_number in day_numbers:
             print(f"day_number: {day_number}")
 

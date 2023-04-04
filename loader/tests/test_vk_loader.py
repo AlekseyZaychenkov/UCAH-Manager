@@ -1,11 +1,9 @@
 import os
-
-from credentials import VK_APP_TOKEN
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "UCA_Manager.settings")
 import django
 django.setup()
 
+from credentials import VK_APP_TOKEN
 from django.test import SimpleTestCase
 from cassandra.cqlengine.management import sync_table
 from loader.utils import Utils
