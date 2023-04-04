@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from workspace_editor.forms.event_rules_forms import BlogAddTagRuleForm
 from loader.tumblr_loader import TumblrLoader
 from UCA_Manager.settings import PATH_TO_STORE
+from workspace_editor.utils_text import prepare_tags_for_edit_form
 from workspace_editor.utils.utils import copy_compilation_posts
 from workspace_editor.utils.event_utils import fill_schedule
 from workspace_editor.serializers import WorkspaceSerializer

@@ -10,6 +10,7 @@ from credentials import VK_APP_TOKEN
 from loader.models import Post
 
 from loader.vk_loader import VKLoader
+from workspace_editor.utils_text import parse_tags_from_input
 from workspace_editor.utils.utils import delete_post, delete_compilation_holder, move_post_to_compilation
 from workspace_editor.utils.event_utils import calculate_datetime_from_event_rules
 from workspace_editor.models import Workspace, Event, CompilationHolder, Blog, WhiteListedBlog, \
