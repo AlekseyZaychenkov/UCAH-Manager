@@ -1,5 +1,4 @@
-{% load widget_tweaks %} {% block content %}
-{% load static %}
+{% load widget_tweaks %} {% block content %} {% load static %}
 
 
 <div class="container">
@@ -9,20 +8,24 @@
     {% for post in main_compilation %}
     <div class="col-md-6 card">
       <div class="m-2">
+        <div class="float-right">
+            <div class="btn-group">
+              {% block post_edit_button %}
+              {% include 'post/post_edit_button.html' %}
+              {% endblock %}
 
+              {% block post_clean_text_button %}
+              {% include 'post/post_clean_text_button.html' %}
+              {% endblock %}
 
-
-
-
-
+              {% block post_delete_button %}
+              {% include 'post/post_delete_button.html' %}
+              {% endblock %}
+            </div>
+        </div>
         {% block post_info %}
-        {% include 'post_info.html' %}
+        {% include 'post/post_info.html' %}
         {% endblock %}
-
-
-
-
-
       </div>
     </div>
     {% endfor %}

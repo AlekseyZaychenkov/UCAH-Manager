@@ -1,0 +1,109 @@
+{% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
+
+
+<div class="card mb-2">
+    <div class="row btn-group" role="group">
+
+        <div class="col col-md-5">
+            <form method="post"> {% csrf_token %}
+                <div class="btn-group">
+                    <!-- TODO: add dropdown for history previous week -->
+                    <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="schedule_history_previous_week">History previous week</button>
+
+                    <!-- TODO: add dropdown for all history -->
+                    <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="schedule_history_all">History All</button>
+
+                    <!-- TODO: add modal for statistic -->
+                    <a type="button" class="btn btn-outline-dark btn-sm" data-toggle="modal" data-target="#schedule_statistic_modal">Statistic</a>
+                </div>
+            </form>
+        </div>
+
+
+        <div class="col align-self-center">
+            <div class="form-group-sm">
+                <label>Posts:</label>
+                <container class="border border-dark" style="width:fit-content;">
+                    {{post_in_schedule}}
+                </container>
+            </div>
+        </div>
+
+
+        <div class="col align-self-end">
+            <div class="row btn-group" role="group">
+                <form method="post"> {% csrf_token %}
+                    {{ workspace_upload_posts_form.event_id.as_hidden }}
+                    <div class="btn-group-horizontal">
+                        <button class="btn btn-outline-dark btn-sm" type="submit" name="action" value="upload_posts">Upload posts</button>
+                    </div>
+                </form>
+
+                <div class="btn-group-vertical">
+                    <div class="custom-control custom-switch">
+                        <label class="custom-control-label">Autoload</label>
+                        <input type="checkbox" class="custom-control-input">
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+{% for day, events_to_posts in schedule_events.items %}
+
+<div class="card mb-2">
+
+    <h5 class="px-3">{{day.0}}, {{day.1}}</h5>
+
+    <div class="row">
+        {% for event, post in events_to_posts.items %}
+        <!-- TODO: ml-4 mb-2 - indent from left and bottom - try to use it for more full filling of screen -->
+        <div class="col-md-4 ml-4 mb-2 card">
+            {% block event_info %}
+            {% include 'event/event_info.html' %}
+            {% endblock %}
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+
+{% endfor %}
+
+<nav aria-label="...">
+    <ul class="pagination">
+        {% if schedule_events.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ schedule_events.previous_page_number }}">Previous</a>
+            </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+        </li>
+        {% endif %}
+
+        {% for i in schedule_events.paginator.page_range %}
+            {% if i == schedule_events.number %}
+                <li class="page-item active"><a class="page-link">{{i}}</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{i}}">{{i}}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if schedule_events.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ schedule_events.next_page_number }}">Next</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock content %}

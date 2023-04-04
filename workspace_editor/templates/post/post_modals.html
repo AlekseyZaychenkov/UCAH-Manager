@@ -1,0 +1,171 @@
+{% load widget_tweaks %} {% block content %}
+
+<div class="modal fade" id="new_post_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Creating new post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form enctype="multipart/form-data" method="post" class="mt-3">
+                    {% csrf_token %}
+                    <div class="d-none">
+                        {% render_field post_create_form.workspace_id|append_attr:"readonly:readonly" class="form-control" id="workspace_id" value=workspace.workspace_id %}
+                    </div>
+                    <div class="form-row">
+                        <label>Tags:</label>
+                        {% render_field post_create_form.tags class="form-control" %}
+                        {{ post_create_form.text.errors }}
+                    </div>
+                    <div class="form-row">
+                        <label>Text:</label>
+                        {% render_field post_create_form.text class="form-control" %}
+                        {{ post_create_form.text.errors }}
+                    </div>
+                    <div class="form-row">
+                        <label>Images:</label>
+                        {% render_field post_create_form.images class+="form-control form-control" %}
+                        {{ post_create_form.images.errors }}
+                    </div>
+                    <div class="form-row">
+                        <label>Description:</label>
+                        {% render_field post_create_form.description class="form-control" %}
+                        {{ post_create_form.text.errors }}
+                    </div>
+                    <hr>
+                    <div class="float-right">
+                        <button class="btn btn-primary" type="submit" name="action" value="create_post">Create</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="edit_post_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Editing the post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form enctype="multipart/form-data" method="post" class="mt-3"> {% csrf_token %}
+
+                    <div class="d-none">
+                        {% render_field post_edit_form.post_id|append_attr:"readonly:readonly" class="form-control" value=selected_post_id %}
+                    </div>
+                    <div class="form-row">
+                        <label>Tags:</label>
+                        {% render_field post_edit_form.tags class="form-control" %}
+                        {{ post_edit_form.text.errors }}
+                    </div>
+                    <div class="form-row">
+                        <label>Text:</label>
+                        {% render_field post_edit_form.text class="form-control" %}
+                        {{ post_edit_form.text.errors }}
+                    </div>
+                    <div class="form-row">
+
+                        <div class="row">
+                            <label>Images:</label>
+                            {% for pi in post.stored_file_urls %}
+                                {% if forloop.counter == 1 %}
+                                    <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 100px; object-fit: contain;" alt="">
+                                {% else %}
+                                    <div class="col-md-4 col-lg-4 p-2">
+                                        <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 35px; object-fit: contain;" alt="">
+                                    </div>
+                                {% endif %}
+                                {% empty %}
+                            {% endfor %}
+                            {% render_field post_edit_form.images class+="form-control form-control" %}
+                            {{ post_edit_form.images.errors }}
+                        </div>
+
+                    </div>
+                    <div class="form-row">
+                        <label>Description:</label>
+                        {% render_field post_edit_form.description class="form-control" %}
+                        {{ post_edit_form.text.errors }}
+                    </div>
+
+                    <hr>
+
+                    <div class="float-right">
+                        <button class="btn btn-primary" type="submit" name="action" value="edit_post">Save</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    {% if workspace_id != '' %}
+        {% if "downloading" in request.path %}
+            $('#edit_post_modal').on('hidden.bs.modal', function (e) {
+                window.location = "{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}"
+            });
+        {% else %}
+            $('#edit_post_modal').on('hidden.bs.modal', function (e) {
+                window.location = "{% url 'workspace_by_id' workspace_id=workspace.workspace_id %}"
+            });
+        {% endif %}
+    {% endif %}
+</script>
+
+
+
+<div class="modal" tabindex="-1" role="dialog" id="delete_post_modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Deleting a post</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Do you really want to delete the post?</p>
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+
+                    <div class="d-none">
+                        {% render_field post_delete_form.post_id|append_attr:"readonly:readonly" class="form-control" value=selected_post_id %}
+                    </div>
+                    <button class="btn btn-danger" type="submit" name="action" value="delete_post">Yes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    {% if workspace_id != '' %}
+        {% if "downloading" in request.path %}
+            $('#delete_post_modal').on('hidden.bs.modal', function (e) {
+                window.location = "{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}"
+            });
+        {% else %}
+            $('#delete_post_modal').on('hidden.bs.modal', function (e) {
+                window.location = "{% url 'workspace_by_id' workspace_id=workspace.workspace_id %}"
+            });
+        {% endif %}
+    {% endif %}
+</script>
+
+{% endblock content %}

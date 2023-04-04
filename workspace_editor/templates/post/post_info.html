@@ -1,0 +1,31 @@
+{% load widget_tweaks %} {% block content %}
+
+
+<p class="font-weight-bold" style="font-size:14px; word-wrap: normal;">#{{post.tags|join:" #"}}</p>
+<!-- TODO: make a text foldable -->
+<p style="font-size:14px;">{{post.text}}</p>
+
+<!-- TODO: place picture more compact -->
+<div class="row">
+    {% for pi in post.stored_file_urls %}
+        {% if forloop.counter == 1 %}
+            <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 100px; object-fit: contain;" alt="">
+        {% else %}
+            <div class="col-md-4 col-lg-4 p-2">
+                <img src="{{MEDIA_LOCATION}}/{{pi}}" class="img-fluid" style="height: 35px; object-fit: contain;" alt="">
+            </div>
+        {% endif %}
+        {% empty %}
+    {% endfor %}
+</div>
+
+{% if post.blog_url is not None %}
+    <a href="{{post.original_post_url}}" target="_blank">Original post (for debug)</a>
+    <!-- TODO: figure out and add other useful information -->
+{% endif %}
+
+{% block post_modals %}
+{% include 'post/post_modals.html' %}
+{% endblock %}
+
+{% endblock content %}
