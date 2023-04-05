@@ -16,7 +16,7 @@ utc=pytz.UTC
 log = logging.getLogger(__name__)
 
 # TODO: change all post_id and compilation_id from :int to :str
-def copy_post_to(workspace_id: int, recipient_compilation_id: int, post_id: int):
+def copy_post_to(workspace_id: int, recipient_compilation_id: str, post_id: str):
     compilation = Compilation.objects.get(id=recipient_compilation_id)
     old_post = Post.objects.get(id=post_id)
     for existing_post_id in compilation.post_ids:
@@ -71,7 +71,7 @@ def copy_post_to(workspace_id: int, recipient_compilation_id: int, post_id: int)
     return new_post.id
 
 
-def delete_post(post_id: int, delete_files=True):
+def delete_post(post_id: str, delete_files=True):
     post = Post.objects.get(id=post_id)
 
     if post:
@@ -92,9 +92,14 @@ def delete_post(post_id: int, delete_files=True):
     else:
         log.error(f"No post with id='{post.id}' ")
 
-
-def move_post_to_compilation(workspace_id: int, recipient_compilation_id: int, post_id: int, delete_original_post=False):
-    new_post_id = copy_post_to(workspace_id, recipient_compilation_id, post_id)
+# TODO: unite move_post_to_compilation and copy_compilation_posts to one method
+def move_post_to_compilation(workspace_id: int,
+                             recipient_compilation_id: str,
+                             post_id: str,
+                             delete_original_post=False):
+    new_post_id = copy_post_to(workspace_id=workspace_id,
+                               recipient_compilation_id=recipient_compilation_id,
+                               post_id=post_id)
     # TODO: move to EventEditForm and applying blog to event
     apply_substitution_rules(workspace_id=workspace_id, post_id=new_post_id)
     if delete_original_post:
@@ -103,11 +108,18 @@ def move_post_to_compilation(workspace_id: int, recipient_compilation_id: int, p
     return new_post_id
 
 
-def copy_compilation_posts(workspace_id: int, sender_compilation_id: int, recipient_compilation_id: int):
+def copy_compilation_posts(workspace_id: int,
+                           sender_compilation_id: str,
+                           recipient_compilation_id: str,
+                           keep_posts_original_posts=False):
     sender_compilation = Compilation.objects.get(id=sender_compilation_id)
     post_ids = sender_compilation.post_ids
     for post_id in post_ids:
-        copy_post_to(workspace_id, recipient_compilation_id, post_id)
+        copy_post_to(workspace_id=workspace_id,
+                     recipient_compilation_id=recipient_compilation_id,
+                     post_id=post_id)
+        if not keep_posts_original_posts:
+            delete_post(post_id, delete_files=False)
 
 
 def delete_compilation_holder(holder_id: int):

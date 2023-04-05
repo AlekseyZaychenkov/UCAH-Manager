@@ -1,5 +1,7 @@
 from django.contrib.auth.decorators import login_required
 
+from loader.utils import generate_storage_path
+from workspace_editor.utils.utils_text import prepare_tags_for_edit_form
 from workspace_editor.forms.event_rules_forms import BlogAddTagRuleForm
 from loader.tumblr_loader import TumblrLoader
 from UCA_Manager.settings import PATH_TO_STORE
@@ -316,14 +318,19 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
         else:
             log.error(form.errors.as_data())
 
-    elif request.POST['action'] == 'copy_posts_to_main_compilation':
+    elif request.POST['action'] == 'send_posts_from_holder_to':
         form = CompilationHolderGetIdForm(request.POST)
         if form.is_valid():
             holder = CompilationHolder.objects.get(compilation_holder_id=form.get_holder_id())
             compilation = Compilation.objects.get(id=holder.compilation_id)
+            if holder.recipient:
+                recipient_compilation_id = holder.recipient.compilation_id
+            else:
+                recipient_compilation_id = workspace.main_compilation_id
             copy_compilation_posts(workspace_id=workspace.workspace_id,
                                    sender_compilation_id=compilation.id,
-                                   recipient_compilation_id=uuid.UUID(workspace.main_compilation_id))
+                                   recipient_compilation_id=recipient_compilation_id,
+                                   keep_posts_original_posts=holder.keep_posts_after_sending)
         else:
             log.error(form.errors.as_data())
     elif holder_id_to_delete and request.POST['action'] == 'delete_holder':
@@ -440,6 +447,7 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
 
             context['compilation_edit_form'] = CompilationHolderEditForm(
                  initial={'name': holder.name,
+
                           'whitelisted_blogs': whitelisted_blogs_names,
                           'selected_blogs': selected_blogs_names,
                           'blacklisted_blogs': blacklisted_blogs_names,
@@ -448,8 +456,12 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
                           'blacklisted_tags': holder.blacklisted_tags,
                           'resources': holder.resources,
                           'posts_per_download': holder.posts_per_download,
-                          # TODO: make constraints for number_on_list from 1 to N_holders - 1
+                          #TODO: make constraints for number_on_list from 1 to N_holders - 1
                           'number_on_list':  holder.number_on_list,
+
+                          'recipient': holder.recipient,
+                          'keep_posts_after_sending': holder.keep_posts_after_sending,
+
                           'description': holder.description})
         context['compilation_get_id_form'] = CompilationHolderGetIdForm()
         context['compilation_delete_form'] = CompilationHolderDeleteForm()
