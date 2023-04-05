@@ -11,6 +11,7 @@ from loader.models import Post
 
 from account.models import Account
 from loader.vk_loader import VKLoader
+from workspace_editor.utils.utils_text import parse_tags_from_input
 from workspace_editor.utils.utils import delete_post, delete_compilation_holder, move_post_to_compilation
 from workspace_editor.utils.event_utils import calculate_datetime_from_event_rules
 from workspace_editor.models import Workspace, Event, CompilationHolder, Blog, WhiteListedBlog, \
@@ -94,12 +95,6 @@ class WorkspaceEditForm(WorkspaceCreateForm):
     visible_for  = forms.CharField(required=False)
     editable_by  = forms.CharField(required=False)
 
-
-    class Meta:
-        model = Workspace
-        exclude = ("owner", "schedule", "schedule_archive", "scheduled_compilation_id", "main_compilation_id",
-                   "main_compilation_archive_id", "event_rules", "description")
-
     def __init__(self, *args, **kwargs):
         super(WorkspaceEditForm, self).__init__(*args, **kwargs)
         if self.initial:
@@ -134,6 +129,11 @@ class WorkspaceEditForm(WorkspaceCreateForm):
 
         return edited_workspace
 
+    class Meta:
+        model = Workspace
+        exclude = ("owner", "schedule", "schedule_archive", "scheduled_compilation_id", "main_compilation_id",
+                   "main_compilation_archive_id", "event_rules", "description")
+
 
 class WorkspaceUploadPostsForm(forms.Form):
 
@@ -146,23 +146,17 @@ class WorkspaceUploadPostsForm(forms.Form):
             for event in events:
                 vk_loader.upload(event)
 
-
     class Meta:
         widgets = {'empty_field': forms.HiddenInput(),}
 
 
 class CompilationHolderCreateForm(forms.ModelForm):
     name                = forms.CharField(required=True)
-    resources           = forms.ChoiceField(choices=RESOURCES)
+
     posts_per_download  = forms.ChoiceField(initial=25, choices=POSTS_PER_DOWNLOAD_CHOICES)
+    resources           = forms.ChoiceField(choices=RESOURCES)
+
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows":2, "cols":20}), required=False)
-
-
-    class Meta:
-        model = CompilationHolder
-        exclude = ('workspace', 'whitelisted_blog_id', 'blacklisted_blog_id', 'whitelisted_tags', 'blacklisted_tags',
-                   'number_on_list', 'compilation_id', )
-
 
     def set_workspace(self, workspace):
         holder = self.instance
@@ -189,12 +183,20 @@ class CompilationHolderCreateForm(forms.ModelForm):
 
         return holder
 
+    class Meta:
+        model = CompilationHolder
+        exclude = ('workspace', 'whitelisted_blog_id', 'blacklisted_blog_id', 'whitelisted_tags', 'blacklisted_tags',
+                   'number_on_list', 'compilation_id', )
+
 
 class CompilationHolderEditForm(forms.ModelForm):
     # TODO: implement mechanism for creating list of all blogs urls and blog names in resource - two dicts
     #  (call asynchron before each downloading context recreation)
     # TODO: implement mechanism for hints during printing blogs names (from variant from the list)
     name                = forms.CharField(required=True)
+
+    posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
+    number_on_list      = forms.IntegerField(required=False)
     whitelisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     selected_blogs      = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     blacklisted_blogs   = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
@@ -202,8 +204,11 @@ class CompilationHolderEditForm(forms.ModelForm):
     selected_tags       = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     blacklisted_tags    = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
     resources           = forms.ChoiceField(choices=RESOURCES)
-    posts_per_download  = forms.ChoiceField(choices=POSTS_PER_DOWNLOAD_CHOICES)
-    number_on_list      = forms.IntegerField(required=False)
+
+    # TODO: filter to dont show the holder itself
+    recipient                = forms.ModelChoiceField(CompilationHolder.objects.all(), required=False)
+    keep_posts_after_sending = forms.BooleanField(required=False)
+
     description         = forms.CharField(widget=forms.Textarea(attrs={"rows": 2, "cols": 20}), required=False)
 
     def save_edited_holder(self, holder, commit=True):
@@ -216,6 +221,14 @@ class CompilationHolderEditForm(forms.ModelForm):
         edited_holder.whitelisted_tags = parse_tags_from_input(self.cleaned_data["whitelisted_tags"])
         edited_holder.selected_tags = parse_tags_from_input(self.cleaned_data["selected_tags"])
         edited_holder.blacklisted_tags = parse_tags_from_input(self.cleaned_data["blacklisted_tags"])
+
+        # edited_holder.posts_per_download = self.cleaned_data["posts_per_download"]
+        edited_holder.number_on_list = self.cleaned_data["number_on_list"]
+        other_holders = CompilationHolder.objects.filter(workspace=edited_holder.workspace_id)
+        for oh in other_holders:
+            if oh.number_on_list >= edited_holder.number_on_list:
+                oh.number_on_list += 1
+                oh.save()
 
         for blog_name in self.cleaned_data["whitelisted_blogs"].split():
             blog = Blog()
@@ -253,13 +266,6 @@ class CompilationHolderEditForm(forms.ModelForm):
             holder.blacklisted_blog.add(blacklisted_blog)
 
             edited_holder.blacklisted_blogs.add(blog)
-
-        edited_holder.number_on_list = self.cleaned_data["number_on_list"]
-        other_holders = CompilationHolder.objects.filter(workspace=edited_holder.workspace_id)
-        for oh in other_holders:
-            if oh.number_on_list >= edited_holder.number_on_list:
-                oh.number_on_list += 1
-                oh.save()
 
         if commit:
             edited_holder.save()

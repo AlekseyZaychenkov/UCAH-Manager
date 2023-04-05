@@ -84,18 +84,24 @@ def auto_delete_schedules_and_event_rules_with_workspace(sender, instance, **kwa
 
 class CompilationHolder(models.Model):
     compilation_holder_id        = models.AutoField(primary_key=True)
-
     workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-
+    compilation_id               = models.CharField(max_length=128)
     name                         = models.CharField(max_length=255)
+
     posts_per_download           = models.IntegerField()
     number_on_list               = models.IntegerField()
-    compilation_id               = models.CharField(max_length=128)
     whitelisted_tags             = models.TextField(null=True, blank=True)
     selected_tags                = models.TextField(null=True, blank=True)
     blacklisted_tags             = models.TextField(null=True, blank=True)
     resources                    = models.CharField(max_length=4095, null=True, blank=True)
+
+    recipient                    = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    keep_posts_after_sending     = models.BooleanField(default=False)
+
     description                  = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class WhiteListedBlog(models.Model):

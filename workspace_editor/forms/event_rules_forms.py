@@ -2,6 +2,7 @@ import logging
 
 from django import forms
 
+from workspace_editor.utils.utils_text import parse_tags_from_input
 from workspace_editor.models import *
 
 log = logging.getLogger(__name__)
@@ -60,6 +61,7 @@ class TagRuleDeleteForm(forms.Form):
         data = self.cleaned_data
         tag_rule = TagRule.objects.get(tag_rule_id=data.get("id"))
         tag_rule.delete()
+
 
 class PostingTimeEditForm(forms.ModelForm):
     posting_time_id = forms.IntegerField(required=True)

@@ -15,7 +15,7 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-8 mx-auto">
-                                <label for="name">Name:</label>
+                                <label>Name:</label>
                                 {% render_field compilation_create_form.name class="form-control" value="No named compilation" %}
                                 {{ compilation_create_form.name.errors }}
                             </div>
@@ -24,12 +24,12 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-6">
-                                <label for="resources">Resource:</label>
+                                <label>Resource:</label>
                                 {% render_field compilation_create_form.resources class="form-control" %}
                                 {{ compilation_create_form.resources.errors }}
                             </div>
                             <div class="col-md-6">
-                                <label for="posts_per_download">Maximum posts per download:</label>
+                                <label>Maximum posts per download:</label>
                                 {% render_field compilation_create_form.posts_per_download class="form-control"%}
                                 {{ compilation_edit_form.posts_per_download.errors }}
                             </div>
@@ -38,7 +38,7 @@
 
                     <div class="form-group">
                         <div class="form-row">
-                            <label for="description">Description:</label>
+                            <label>Description:</label>
                             {% render_field compilation_create_form.description class="form-control" %}
                             {{ compilation_create_form.description.errors }}
                         </div>
@@ -72,7 +72,7 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-6">
-                                <label for="name">Name:</label>
+                                <label>Name:</label>
                                 {% render_field compilation_edit_form.name class="form-control" value=selected_holder.name %}
                                 {{ compilation_edit_form.name.errors }}
                             </div>
@@ -81,17 +81,17 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-4">
-                                <label for="whitelisted_blogs">White list of blogs:</label>
+                                <label>White list of blogs:</label>
                                 {% render_field compilation_edit_form.whitelisted_blogs class="form-control" value=selected_holder.whitelisted_blogs %}
                                 {{ compilation_edit_form.whitelisted_blogs.errors }}
                             </div>
                             <div class="col-md-4">
-                                <label for="whitelisted_blogs">Selected list of blogs:</label>
+                                <label>Selected list of blogs:</label>
                                 {% render_field compilation_edit_form.selected_blogs class="form-control" value=selected_holder.selected_blogs %}
                                 {{ compilation_edit_form.selected_blogs.errors }}
                             </div>
                             <div class="col-md-4">
-                                <label for="blacklisted_blogs">Black list of blogs:</label>
+                                <label>Black list of blogs:</label>
                                 {% render_field compilation_edit_form.blacklisted_blogs class="form-control" value=selected_holder.blacklisted_blogs %}
                                 {{ compilation_edit_form.blacklisted_blogs.errors }}
                             </div>
@@ -100,17 +100,17 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-4">
-                                <label for="whitelisted_tags">White list of tags:</label>
+                                <label>White list of tags:</label>
                                 {% render_field compilation_edit_form.whitelisted_tags class="form-control" value=selected_holder.whitelisted_tags %}
                                 {{ compilation_edit_form.whitelisted_tags.errors }}
                             </div>
                             <div class="col-md-4">
-                                <label for="whitelisted_tags">Selected list of tags:</label>
+                                <label>Selected list of tags:</label>
                                 {% render_field compilation_edit_form.selected_tags class="form-control" value=selected_holder.selected_tags %}
                                 {{ compilation_edit_form.selected_tags.errors }}
                             </div>
                             <div class="col-md-4">
-                                <label for="blacklisted_tags">White list of tags:</label>
+                                <label>White list of tags:</label>
                                 {% render_field compilation_edit_form.blacklisted_tags class="form-control" value=selected_holder.blacklisted_tags %}
                                 {{ compilation_edit_form.blacklisted_tags.errors }}
                             </div>
@@ -119,28 +119,35 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div class="col-md-6">
-                                <label for="resources">Resource:</label>
+                                <label>Resource:</label>
                                 {% render_field compilation_edit_form.resources class="form-control"%}
                                 {{ compilation_edit_form.resources.errors }}
                             </div>
                             <div class="col-md-6">
-                                <label for="posts_per_download">Maximum posts per download:</label>
+                                <label>Maximum posts per download:</label>
                                 {% render_field compilation_edit_form.posts_per_download class="form-control"%}
                                 {{ compilation_edit_form.posts_per_download.errors }}
                             </div>
-
-
                             <div class="col-md-6">
-                                <label for="number_on_list">On list:</label>
+                                <label>Show in list:</label>
                                 {% render_field compilation_edit_form.number_on_list class="form-control"%}
                                 {{ compilation_edit_form.number_on_list.errors }}
                             </div>
+                            <div class="col-md-6">
+                                <label>Recipient:</label>
+                                {% render_field compilation_edit_form.recipient class="form-control" value=selected_holder.recipient %}
+                                {{ compilation_edit_form.recipient.errors }}
+                            </div>
 
+                            <label>Keep posts after sending:</label>
+                            {% render_field compilation_edit_form.keep_posts_after_sending class="boolean" class="form-control" %}
+                            {{ compilation_edit_form.keep_posts_after_sending.errors }}
                         </div>
                     </div>
+
                     <div class="form-group">
                         <div class="form-row">
-                            <label for="description">Description:</label>
+                            <label>Description:</label>
                             {% render_field compilation_edit_form.description class="form-control" value=selected_holder.description %}
                             {{ compilation_edit_form.description.errors }}
                         </div>
