@@ -1,7 +1,6 @@
 {% extends 'base.html' %} {% load widget_tweaks %} {% block content %}
 
 
-{% for holder, posts in holder_to_posts.items %}
 
 <div class="card mb-2">
     <div class="row btn-group" role="group">
@@ -99,14 +98,9 @@
         {% endfor %}
     </div>
 </div>
-{% endfor %}
-
-<div class="card">
-    <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_holder_modal"> + Add new compilation + </a>
-</div>
 
 {% block compilation_modals %}
-{% include 'downloading_holder_modals.html' %}
+{% include 'holder/holder_modals.html' %}
 {% endblock %}
 
 {% endblock content %}

@@ -19,6 +19,7 @@ class Post(Model):
     # TODO: rename to id_in_resource
     id_in_social_network  = columns.BigInt(required=False, index=True)
     original_post_url     = columns.Text(max_length=2048, required=False)
+
     posted_date           = columns.Text(max_length=30)
     posted_timestamp      = columns.Integer(required=False, index=True)
     tags                  = columns.List(value_type=columns.Text, required=False)

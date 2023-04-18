@@ -88,29 +88,67 @@ class CompilationHolder(models.Model):
     workspace                    = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     name                         = models.CharField(max_length=255)
+    TYPE_BY_POST_SOURCE_CHOICES = (
+        ('Downloader', 'Downloader'),
+        ('Mixer', 'Mixer'),
+    )
+    type_by_post_source          = models.CharField(max_length=10,
+                                                    choices=TYPE_BY_POST_SOURCE_CHOICES,
+                                                    default='Downloader')
     posts_per_download           = models.IntegerField()
     number_on_list               = models.IntegerField()
     compilation_id               = models.CharField(max_length=128)
+
+    description                  = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class CompilationHolderFilter(models.Model):
+    compilation_holder_filter_id = models.AutoField(primary_key=True)
+    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
+class CompilationHolderFilterDownloader(CompilationHolderFilter):
     whitelisted_tags             = models.TextField(null=True, blank=True)
     selected_tags                = models.TextField(null=True, blank=True)
     blacklisted_tags             = models.TextField(null=True, blank=True)
-    resources                    = models.CharField(max_length=4095, null=True, blank=True)
-    description                  = models.TextField(null=True, blank=True)
+    resource                     = models.CharField(max_length=31, null=True, blank=True)
 
 
 class WhiteListedBlog(models.Model):
-    whitelisted_blog_id          = models.AutoField(primary_key=True)
-    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+    whitelisted_blog_id           = models.AutoField(primary_key=True)
+    compilation_holder_filter     = models.ForeignKey(CompilationHolderFilterDownloader,
+                                                      on_delete=models.CASCADE,
+                                                      null=True)
 
 
 class SelectedBlog(models.Model):
-    selected_blog_id             = models.AutoField(primary_key=True)
-    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+    selected_blog_id              = models.AutoField(primary_key=True)
+    compilation_holder_filter     = models.ForeignKey(CompilationHolderFilterDownloader,
+                                                      on_delete=models.CASCADE,
+                                                      null=True)
 
 
 class BlackListedBlog(models.Model):
-    blacklisted_blog_id          = models.AutoField(primary_key=True)
-    compilation_holder           = models.ForeignKey(CompilationHolder, on_delete=models.CASCADE)
+    blacklisted_blog_id = models.AutoField(primary_key=True)
+    compilation_holder_filter     = models.ForeignKey(CompilationHolderFilterDownloader,
+                                                      on_delete=models.CASCADE,
+                                                      null=True)
+
+
+class CompilationHolderFilterMixer(CompilationHolderFilter):
+    source_compilation_holder     = models.OneToOneField(CompilationHolder,
+                                                         on_delete=models.CASCADE,
+                                                         related_name='+',
+                                                         null=True)
+    posts_likes_minimum           = models.IntegerField()
+    posts_likes_expected          = models.IntegerField()
+    priority                      = models.FloatField(max_length=3, default=1.0)
 
 
 class EventArchived(models.Model):

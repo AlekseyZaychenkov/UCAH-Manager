@@ -1,0 +1,273 @@
+{% load widget_tweaks %} {% block content %}
+
+
+<div class="modal fade" id="new_holder_modal" tabindex="-1" role="dialog" aria-labelledby="new_holder_modal_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Create new compilation</h5>
+                <a type="button" class="btn btn-sm btn-light rounded-circle" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}">X</a>
+            </div>
+
+            <div class="modal-body">
+                <form enctype="multipart/form-data" method="post"> {% csrf_token %}
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="col-md-8 mx-auto">
+                                <label>Name:</label>
+                                {% render_field compilation_create_form.name class="form-control" value="No named compilation" %}
+                                {{ compilation_create_form.name.errors }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <label>Type by post source:</label>
+                                {% render_field compilation_create_form.type_by_post_source class="form-control" %}
+                                {{ compilation_create_form.resources.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label>Maximum posts per download:</label>
+                                {% render_field compilation_create_form.posts_per_download class="form-control"%}
+                                {{ compilation_edit_form.posts_per_download.errors }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Description:</label>
+                            {% render_field compilation_create_form.description class="form-control" %}
+                            {{ compilation_create_form.description.errors }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="float-right">
+                            <a class="btn btn-danger" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}">Close</a>
+                            <button class="btn btn-primary" type="submit" name="action" value="create_holder">Create new compilation</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="edit_holder_modal" tabindex="-1" role="dialog" aria-labelledby="edit_holder_modal_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Edit compilation</h5>
+                <a type="button" class="btn btn-sm btn-light rounded-circle" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}">X</a>
+            </div>
+
+            <div class="modal-body">
+                <form enctype="multipart/form-data" method="post"> {% csrf_token %}
+
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <label>Name:</label>
+                                {% render_field compilation_edit_form.name class="form-control" value=selected_holder.name %}
+                                {{ compilation_edit_form.name.errors }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <label>Posts per download:</label>
+                                {% render_field compilation_edit_form.posts_per_download class="form-control"%}
+                                {{ compilation_edit_form.posts_per_download.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label>On list:</label>
+                                {% render_field compilation_edit_form.number_on_list class="form-control"%}
+                                {{ compilation_edit_form.number_on_list.errors }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Description:</label>
+                            {% render_field compilation_edit_form.description class="form-control" value=selected_holder.description %}
+                            {{ compilation_edit_form.description.errors }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 pl-0">
+                        <container>
+                            <label>Type by post source:</label>
+                        </container>
+                        <container class="border border-dark">
+                            {{ selected_holder.type_by_post_source }}
+                        </container>
+                    </div>
+
+
+
+                    <div class="card text-center mt-4 mb-3">
+                        <div class="card-header">
+                            <h5>Filter(-s)</h5>
+                                <ul class="nav nav-tabs card-header-tabs">
+                                {% for compilation_holder_filter in compilation_holder_filters %}
+                                    <li class="nav-item">
+                                    {% if compilation_holder_filter.compilation_holder_filter_id == request.resolver_match.kwargs.holder_filter_id %}
+                                         <a class="nav-link active">From '{{ compilation_holder_filter.source_compilation_holder }}'</a>
+                                    {% else %}
+                                         <a class="nav-link" href="{% url 'downloading_workspace_by_id_holder_by_id_by_holder_filter_id' workspace_id=workspace.workspace_id holder_id=selected_holder.compilation_holder_id holder_filter_id=compilation_holder_filter.compilation_holder_filter_id %}">
+                                             From '{{ compilation_holder_filter.source_compilation_holder }}' </a>
+                                    {% endif %}
+                                    </li>
+                                 {% endfor %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">+</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                              <div class="card-body">
+                                <h5 class="card-title">Special title treatment</h5>
+                                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                                <a href="#" class="btn btn-primary">Go somewhere</a>
+                              </div>
+
+                        <div class="card-body">
+                            {% if selected_holder.type_by_post_source == "Downloader" %}
+                                <div class="form-group">
+                                    <div class="form-row">
+                                        <div class="col-md-4">
+                                            <label>White list of blogs:</label>
+                                            {% render_field compilation_filter_downloader_edit_form.whitelisted_blogs class="form-control" value=compilation_filter_downloader_edit_form.whitelisted_blogs %}
+                                            {{ compilation_filter_downloader_edit_form.whitelisted_blogs.errors }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label>Selected list of blogs:</label>
+                                            {% render_field compilation_filter_downloader_edit_form.selected_blogs class="form-control" value=compilation_filter_downloader_edit_form.selected_blogs %}
+                                            {{ compilation_filter_downloader_edit_form.selected_blogs.errors }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label>Black list of blogs:</label>
+                                            {% render_field compilation_filter_downloader_edit_form.blacklisted_blogs class="form-control" value=compilation_filter_downloader_edit_form.blacklisted_blogs %}
+                                            {{ compilation_filter_downloader_edit_form.blacklisted_blogs.errors }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-row">
+                                        <div class="col-md-4">
+                                            <label>White list of tags:</label>
+                                            {% render_field compilation_filter_downloader_edit_form.whitelisted_tags class="form-control" value=compilation_filter_downloader_edit_form.whitelisted_tags %}
+                                            {{ compilation_filter_downloader_edit_form.whitelisted_tags.errors }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label>Selected list of tags:</label>
+                                            {% render_field compilation_filter_downloader_edit_form.selected_tags class="form-control" value=compilation_filter_downloader_edit_form.selected_tags %}
+                                            {{ compilation_filter_downloader_edit_form.selected_tags.errors }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label>White list of tags:</label>
+                                            {% render_field compilation_filter_downloader_edit_form.blacklisted_tags class="form-control" value=compilation_filter_downloader_edit_form.blacklisted_tags %}
+                                            {{ compilation_filter_downloader_edit_form.blacklisted_tags.errors }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Resource:</label>
+                                    {% render_field compilation_filter_downloader_edit_form.resource class="form-control" value=compilation_filter_downloader_edit_form.resource %}
+                                    {{ compilation_filter_downloader_edit_form.resource.errors }}
+                                </div>
+                            {% else %}
+                                {% for compilation_filter_mixer_edit_form in compilation_filter_mixer_edit_forms %}
+                                    <div class="form-group">
+                                        <div class="form-row">
+                                            <div class="col-md-4">
+                                                <label>Source compilation holder:</label>
+                                                {% render_field compilation_filter_mixer_edit_form.source_compilation_holder class="form-control" value=compilation_filter_mixer_edit_form.source_compilation_holder %}
+                                                {{ compilation_filter_mixer_edit_form.source_compilation_holder.errors }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label>Post's likes minimum:</label>
+                                                {% render_field compilation_filter_mixer_edit_form.posts_likes_minimum class="form-control" value=compilation_filter_mixer_edit_form.posts_likes_minimum %}
+                                                {{ compilation_filter_mixer_edit_form.whitelisted_blogs.errors }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label>Post's likes expected:</label>
+                                                {% render_field compilation_filter_mixer_edit_form.posts_likes_expected class="form-control" value=compilation_filter_mixer_edit_form.posts_likes_expected %}
+                                                {{ compilation_filter_mixer_edit_form.posts_likes_expected.errors }}
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-row">
+                                            <div class="col-md-4">
+                                                <label>Priority:</label>
+                                                {% render_field compilation_filter_mixer_edit_form.priority class="form-control" value=compilation_filter_mixer_edit_form.priority %}
+                                                {{ compilation_filter_mixer_edit_form.priority.errors }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <div class="float-right">
+                            <a class="btn btn-danger" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}">Close</a>
+                            <button class="btn btn-primary " type="submit" name="action" value="edit_holder_and_filters">Save changes</button>
+                        </div>
+                    </div>
+
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="delete_compilation_modal" tabindex="-1" role="dialog" aria-labelledby="delete_holder_modal_label">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete a compilation</h5>
+                <a type="button" class="btn btn-sm btn-light rounded-circle" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}">X</a>
+            </div>
+
+            <div class="modal-body">
+                <p>Do you really want to delete compilation '{{selected_for_delete_holder.name}}'?</p>
+                <form method="post" class="mt-3"> {% csrf_token %}
+                    <a class="btn btn-secondary" href="{% url 'downloading_workspace_by_id' workspace_id=workspace.workspace_id %}">No</a>
+                    <div class="d-none">
+                        {% render_field compilation_delete_form.compilation_holder_id|append_attr:"readonly:readonly" class="form-control" value=selected_for_delete_holder.compilation_holder_id %}
+                    </div>
+                    <button class="btn btn-danger" type="submit" name="action" value="delete_holder">Yes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!--                <div class="btn-group-horizontal">-->
+<!--                    <select class="form-control-sm">-->
+<!--                        {% for r in resources %}-->
+<!--                            <option>{{r.0}}</option>-->
+<!--                        {% endfor %}-->
+<!--                    </select>-->
+<!--                </div>-->
+
+{% endblock content %}

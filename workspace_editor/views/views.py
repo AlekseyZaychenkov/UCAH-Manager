@@ -1,5 +1,7 @@
 from django.contrib.auth.decorators import login_required
 
+from loader.utils import generate_storage_path
+from workspace_editor.services.text_services import prepare_tags_for_edit_form
 from workspace_editor.forms.event_rules_forms import BlogAddTagRuleForm
 from loader.tumblr_loader import TumblrLoader
 from UCA_Manager.settings import PATH_TO_STORE
@@ -12,6 +14,7 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from workspace_editor.models import *
 import calendar
+from workspace_editor.forms.compilation_holder_and_filter_forms import *
 from workspace_editor.forms.forms import *
 import datetime
 
@@ -180,7 +183,8 @@ def home(request, workspace_id=None, post_id=None, event_id=None):
 
 
 @login_required
-def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=None, post_id=None):
+def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=None, post_id=None,
+                holder_filter_id=None, action=None):
     workspace = __workspace_choice(request, workspace_id)
 
     if request.POST:
@@ -189,11 +193,12 @@ def downloading(request, workspace_id=None, holder_id=None, holder_id_to_delete=
         if workspace:
             __post_request_handler(request, workspace, post_id)
             __compilation_holder_request_handler(request, workspace, holder_id, holder_id_to_delete)
+            __compilation_holder_filter_request_handler(request, workspace, holder_id, holder_id_to_delete, action=None)
 
         return redirect(f'downloading_workspace_by_id', workspace_id=workspace.workspace_id)
 
     context = __prepare_downloading_context(request=request, workspace=workspace, holder_id=holder_id,
-                                            holder_id_to_delete=holder_id_to_delete, post_id=post_id)
+                                            holder_id_to_delete=holder_id_to_delete, post_id=post_id, action=None)
 
     return render(request, "downloading.html", context)
 
@@ -270,7 +275,7 @@ def __workspace_request_handler(request, workspace=None):
     return workspace
 
 
-def __compilation_holder_request_handler(request, workspace, holder_id=None, holder_id_to_delete=None,):
+def __compilation_holder_request_handler(request, workspace, holder_id=None, holder_id_to_delete=None):
     if request.POST['action'] == 'create_holder':
         form = CompilationHolderCreateForm(request.POST,
                                            initial={'name': "Compilation holder",
@@ -281,8 +286,36 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
         else:
             log.error(form.errors.as_data())
 
-    elif holder_id and request.POST['action'] == 'edit_holder':
+    elif holder_id and request.POST['action'] == 'edit_holder_and_filters':
         holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+
+        if holder.type_by_post_source == 'Downloader':
+            compilation_holder_filter_id_list = request.POST.getlist('compilation_holder_filter_id')
+            whitelisted_blogs_list = request.POST.getlist('whitelisted_blogs')
+            selected_blogs_list = request.POST.getlist('selected_blogs')
+            blacklisted_blogs_list = request.POST.getlist('blacklisted_blogs')
+            whitelisted_tags_list = request.POST.getlist('whitelisted_tags')
+            selected_tags_list = request.POST.getlist('selected_tags')
+            blacklisted_tags_list = request.POST.getlist('blacklisted_tags')
+            resource_list = request.POST.getlist('resource')
+            for i in range(len(compilation_holder_filter_id_list)):
+                query_dict = QueryDict('', mutable=True)
+                query_dict.update({'compilation_holder_filter_id': compilation_holder_filter_id_list[i],
+                                   'whitelisted_blogs': whitelisted_blogs_list[i],
+                                   'selected_blogs': selected_blogs_list[i],
+                                   'blacklisted_blogs': blacklisted_blogs_list[i],
+                                   'whitelisted_tags': whitelisted_tags_list[i],
+                                   'selected_tags': selected_tags_list[i],
+                                   'blacklisted_tags': blacklisted_tags_list[i],
+                                   'resource': resource_list[i]})
+
+                form = CompilationHolderFilterDownloaderEditForm(query_dict)
+                if form.is_valid():
+                    form.save()
+                else:
+                    log.error(form.errors.as_data())
+        else:
+            pass
 
         form = CompilationHolderEditForm(request.POST)
         if form.is_valid():
@@ -332,6 +365,11 @@ def __compilation_holder_request_handler(request, workspace, holder_id=None, hol
             form.delete()
         else:
             log.error(form.errors.as_data())
+
+
+def __compilation_holder_filter_request_handler(request, workspace, holder_id=None, holder_id_to_delete=None,
+                                                action=None):
+    pass
 
 
 def __event_request_handler(request, workspace, schedule, event_id=None):
@@ -423,34 +461,65 @@ def __prepare_workspace_context(request, workspace=None, post_id=None):
     return context
 
 
-
-def __prepare_downloading_context(request, workspace=None, holder_id=None, holder_id_to_delete=None, post_id=None):
+def __prepare_downloading_context(request, workspace=None, holder_id=None, holder_filter_id=None,
+                                  holder_id_to_delete=None, post_id=None, action=None):
     context = __prepare_mutual_context(request=request, workspace=workspace, post_id=post_id)
 
     if workspace:
         context['compilation_create_form'] = CompilationHolderCreateForm()
         if holder_id:
-            holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
-            whitelisted_blogs_names = ' '.join(list(map(lambda blog: blog.name,
-                                               WhiteListedBlog.objects.filter(compilation_holder=holder))))
-            selected_blogs_names = ' '.join(list(map(lambda blog: blog.name,
-                                               SelectedBlog.objects.filter(compilation_holder=holder))))
-            blacklisted_blogs_names = ' '.join(list(map(lambda blog: blog.name,
-                                               BlackListedBlog.objects.filter(compilation_holder=holder))))
+            selected_holder = CompilationHolder.objects.get(compilation_holder_id=holder_id)
+            context['selected_holder'] = selected_holder
+            context['compilation_filter_downloader_create_form'] = CompilationHolderFilterDownloaderCreateForm()
 
             context['compilation_edit_form'] = CompilationHolderEditForm(
-                 initial={'name': holder.name,
-                          'whitelisted_blogs': whitelisted_blogs_names,
-                          'selected_blogs': selected_blogs_names,
-                          'blacklisted_blogs': blacklisted_blogs_names,
-                          'whitelisted_tags': holder.whitelisted_tags,
-                          'selected_tags': holder.selected_tags,
-                          'blacklisted_tags': holder.blacklisted_tags,
-                          'resources': holder.resources,
-                          'posts_per_download': holder.posts_per_download,
+                 initial={'name': selected_holder.name,
+                          'type_by_post_source': selected_holder.type_by_post_source,
+                          'posts_per_download': selected_holder.posts_per_download,
                           # TODO: make constraints for number_on_list from 1 to N_holders - 1
-                          'number_on_list':  holder.number_on_list,
-                          'description': holder.description})
+                          'number_on_list':  selected_holder.number_on_list,
+                          'description': selected_holder.description})
+
+            context['selected_holder_filters'] = list()
+            if selected_holder.type_by_post_source == 'Downloader':
+                holder_filter_id = CompilationHolderFilterDownloader.objects\
+                    .filter(compilation_holder=selected_holder).first().compilation_holder_filter_id
+
+                holder_filter_downloader = CompilationHolderFilterDownloader.objects\
+                    .get(compilation_holder_filter_id=holder_filter_id)
+                whitelisted_blogs_names = ' '.join(list(map(lambda blog: blog.name, WhiteListedBlog.objects
+                                        .filter(compilation_holder_filter=holder_filter_downloader))))
+                selected_blogs_names = ' '.join(list(map(lambda blog: blog.name, SelectedBlog.objects
+                                        .filter(compilation_holder_filter=holder_filter_downloader))))
+                blacklisted_blogs_names = ' '.join(list(map(lambda blog: blog.name, BlackListedBlog.objects
+                                                            .filter(compilation_holder_filter=holder_filter_downloader))))
+
+                context['compilation_filter_downloader_edit_form'] = CompilationHolderFilterDownloaderEditForm(
+                    initial={'whitelisted_blogs': whitelisted_blogs_names,
+                             'selected_blogs': selected_blogs_names,
+                             'blacklisted_blogs': blacklisted_blogs_names,
+                             'whitelisted_tags': holder_filter_downloader.whitelisted_tags,
+                             'selected_tags': holder_filter_downloader.selected_tags,
+                             'blacklisted_tags': holder_filter_downloader.blacklisted_tags,
+                             'resource': holder_filter_downloader.resource})
+
+                context['selected_holder_filters'].append(CompilationHolderFilterDownloader.objects.get(
+                    compilation_holder=selected_holder))
+            else:
+                holder_filters = CompilationHolderFilterMixer.objects.filter(compilation_holder=selected_holder)
+                context['compilation_holder_filters'] = holder_filters
+
+                for holder_filter in holder_filters:
+                    context['compilation_filter_mixer_edit_forms'] = list()
+                    context['compilation_filter_mixer_edit_forms'].append(CompilationHolderFilterMixerEditForm(
+                        initial={'source_compilation_holder': holder_filter.source_compilation_holder,
+                                 'posts_likes_minimum': holder_filter.posts_likes_minimum,
+                                 'posts_likes_expected': holder_filter.posts_likes_expected,
+                                 'priority': holder_filter.priority}))
+                else:
+                    context['selected_holder_selected_filter'] = holder_filters[0]
+
+
         context['compilation_get_id_form'] = CompilationHolderGetIdForm()
         context['compilation_delete_form'] = CompilationHolderDeleteForm()
 
@@ -461,13 +530,10 @@ def __prepare_downloading_context(request, workspace=None, holder_id=None, holde
             compilation = Compilation.objects.get(id=holder.compilation_id)
             post_ids = compilation.post_ids
             posts = []
-            for id in post_ids:
-                posts.append(Post.objects.get(id=id))
+            for post_id in post_ids:
+                posts.append(Post.objects.get(id=post_id))
             holder_to_posts[holder] = posts
         context['holder_to_posts'] = holder_to_posts
-
-        if holder_id:
-            context['selected_holder'] = CompilationHolder.objects.get(compilation_holder_id=holder_id)
 
         if holder_id_to_delete:
             context['selected_for_delete_holder'] = CompilationHolder.objects.get(compilation_holder_id=holder_id_to_delete)

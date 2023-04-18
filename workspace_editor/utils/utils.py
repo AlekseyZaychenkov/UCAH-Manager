@@ -133,7 +133,4 @@ def delete_compilation(compilation_id: int):
             delete_post(post_id)
         shutil.rmtree(folder)
 
-
     compilation.delete()
-
-

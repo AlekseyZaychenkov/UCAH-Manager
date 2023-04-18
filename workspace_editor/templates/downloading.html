@@ -11,7 +11,6 @@
 <html>
 <head>
     <title>UCA Manager</title>
-<!--    <link rel="stylesheet" href="{% static 'my_css/main_pages.css' %}">-->
 </head>
 <body>
 <div class="container-fluid">
@@ -26,9 +25,15 @@
             {% endblock %}
         </div>
         <div class="col-7 col-lg-8">
-            {% block schedules %}
-            {% include 'downloading_holders_panel.html' %}
-            {% endblock %}
+            {% for holder, posts in holder_to_posts.items %}
+                {% block schedules %}
+                {% include 'holder/holder_panel.html' %}
+                {% endblock %}
+            {% endfor %}
+
+            <div class="card">
+                <a type="button" class="btn btn-outline-dark" data-toggle="modal" data-target="#new_holder_modal"> + Add new compilation + </a>
+            </div>
         </div>
     </div>
 

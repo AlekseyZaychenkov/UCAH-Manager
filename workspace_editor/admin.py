@@ -49,3 +49,18 @@ class PostingTimeAdmin(admin.ModelAdmin):
 @admin.register(EventRules)
 class EventsRulesAdmin(admin.ModelAdmin):
     pass
+
+
+
+@admin.register(CompilationHolder)
+class CompilationHolderAdmin(admin.ModelAdmin):
+    list_display = ('compilation_holder_id', 'name', 'type_by_post_source', 'compilation_id')
+
+
+@admin.register(CompilationHolderFilterDownloader)
+class CompilationHolderFilterDownloaderAdmin(admin.ModelAdmin):
+    list_display = ('compilation_holder', 'resource')
+
+@admin.register(CompilationHolderFilterMixer)
+class CompilationHolderFilterMixerAdmin(admin.ModelAdmin):
+    list_display = ('compilation_holder', 'source_compilation_holder', 'priority', 'posts_likes_minimum', 'posts_likes_expected')

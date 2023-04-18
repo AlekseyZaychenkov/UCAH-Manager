@@ -48,6 +48,7 @@ def __event_rules_request_handler(request, workspace):
         else:
             log.error(form.errors.as_data())
 
+
 def __tag_rule_request_handler(request, workspace):
     if request.POST['action'] == "tag_rule_create":
         form = TagRuleCreateForm(request.POST)
@@ -93,8 +94,6 @@ def __tag_rule_request_handler(request, workspace):
             form.delete()
         else:
             log.error(form.errors.as_data())
-
-
 
 
 def __prepare_event_rules_context(request, workspace):

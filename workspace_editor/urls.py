@@ -36,6 +36,10 @@ urlpatterns = [
          name="downloading_workspace_by_id_holder_by_id"),
     path('downloading?workspace_id=<int:workspace_id>?holder_id_to_delete=<int:holder_id_to_delete>', downloading,
          name="downloading_workspace_by_id_holder_by_id_to_delete"),
+    path('downloading?workspace_id=<int:workspace_id>?holder_id=<int:holder_id>?holder_filter_id=<int:holder_filter_id>',
+         downloading, name="downloading_workspace_by_id_holder_by_id_by_holder_filter_id"),
+    path('downloading?workspace_id=<int:workspace_id>?holder_id=<int:holder_id>?holder_filter_id=<int:holder_filter_id>?action=<str:action>',
+         downloading, name="downloading_workspace_by_id_holder_by_id_by_holder_filter_id_action"),
 
     path('workspace/workspace_id=<int:workspace_id>/resource_accounts', resource_accounts, name="resource_accounts"),
     path(
@@ -53,4 +57,3 @@ urlpatterns = [
     path('workspace/workspace_id=<int:workspace_id>/blogs', blogs, name="blogs"),
     path('workspace/workspace_id=<int:workspace_id>/blogs/blog_id=<int:blog_id>/delete', blogs, name="blog_delete"),
 ]
-
